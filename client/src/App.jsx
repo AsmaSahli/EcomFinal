@@ -5,15 +5,21 @@ import './App.css'
 import { Home } from "./Pages/Home";
 import Header from "./components/Header";
 import SignIn from "./Pages/SignIn";
+import AuthentificationRoute from "./components/AuthentificationRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Header/>
           <Routes>
+          <Route element={<AuthentificationRoute/>} >
+          <Route path="/login" element={< SignIn/>} />
+
+        </Route>
+
           <Route path="/" element={<Navigate to="/homePage" />} />
           <Route path="/homePage" element={< Home/>} />
-          <Route path="/login" element={<SignIn/>} />
+
           </Routes>
 
     </BrowserRouter>
