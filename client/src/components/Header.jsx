@@ -1,5 +1,5 @@
 import React from "react";
-import { FaBars, FaSearch, FaHeart, FaShoppingCart, FaUserPlus } from "react-icons/fa"; // Added FaUserPlus for the Join Us icon
+import { FaBars, FaSearch, FaHeart, FaShoppingCart, FaUserPlus } from "react-icons/fa"; 
 import { useNavigate } from "react-router-dom";
 import { categories } from "./categories";
 import logo from "../assets/ecomLogo.png";
