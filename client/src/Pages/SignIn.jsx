@@ -5,11 +5,12 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios"; // You can use axios for API requests
 import logo from "../assets/ecomLogo.png";
 import { FcGoogle } from "react-icons/fc"; // Google icon
+import { ToastContainer, toast } from "react-toastify"; // Import ToastContainer and toast
+import "react-toastify/dist/ReactToastify.css"; // Import CSS for Toastify
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -25,10 +26,11 @@ const SignIn = () => {
         { withCredentials: true } // Include credentials to send cookies
       );
       dispatch(signInSuccess(response.data.user)); // Dispatch success if login is successful
+      toast.success("Login successful!"); // Show success toast message
       navigate("/"); // Redirect to a dashboard or home page
     } catch (err) {
       dispatch(signInFailure(err.response.data.message || "Something went wrong!")); // Dispatch failure if there's an error
-      setError(err.response.data.message || "Something went wrong!");
+      toast.error(err.response.data.message || "Something went wrong!"); // Show error toast message
     }
   };
 
@@ -71,9 +73,6 @@ const SignIn = () => {
           />
         </div>
 
-        {/* Error Message */}
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-
         {/* Sign In Button */}
         <button
           onClick={handleSignIn}
@@ -103,6 +102,9 @@ const SignIn = () => {
           </button>
         </div>
       </div>
+
+      {/* ToastContainer for displaying toast messages */}
+      <ToastContainer />
     </div>
   );
 };
