@@ -1,13 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice"; // Importing actions
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // You can use axios for API requests
 import logo from "../assets/ecomLogo.png";
 import { FcGoogle } from "react-icons/fc"; // Google icon
 
 const SignIn = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleSignIn = () => {
-    navigate("/login");
+  const handleSignIn = async (e) => {
+    e.preventDefault();
+
+    dispatch(signInStart()); // Dispatching the start action to indicate loading
+
+    try {
+      const response = await axios.post(
+        "http://localhost:8000/signin", 
+        { email, password },
+        { withCredentials: true } // Include credentials to send cookies
+      );
+      dispatch(signInSuccess(response.data.user)); // Dispatch success if login is successful
+      navigate("/"); // Redirect to a dashboard or home page
+    } catch (err) {
+      dispatch(signInFailure(err.response.data.message || "Something went wrong!")); // Dispatch failure if there's an error
+      setError(err.response.data.message || "Something went wrong!");
+    }
   };
 
   return (
@@ -28,6 +50,8 @@ const SignIn = () => {
           </label>
           <input
             type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             placeholder="Enter your email"
             className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
@@ -40,10 +64,15 @@ const SignIn = () => {
           </label>
           <input
             type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
             className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
+
+        {/* Error Message */}
+        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
 
         {/* Sign In Button */}
         <button

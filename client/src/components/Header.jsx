@@ -1,15 +1,30 @@
 import React from "react";
-import { FaBars, FaSearch, FaHeart, FaShoppingCart, FaUserPlus } from "react-icons/fa"; 
+import { FaBars, FaSearch, FaHeart, FaShoppingCart, FaUserPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { categories } from "./categories";
 import logo from "../assets/ecomLogo.png";
-
+import { useSelector, useDispatch } from 'react-redux';  // Import useSelector and useDispatch
+import axios from 'axios';  // To make HTTP requests
+import { signoutSuccess } from '../redux/user/userSlice';
 const Header = () => {
   const navigate = useNavigate();
+  const currentUser = useSelector(state => state.user.currentUser); // Access currentUser from Redux state
+  const dispatch = useDispatch(); // For dispatching actions, if necessary
+  
+  // Sign out function
+  const signOut = async () => {
+    try {
+      await axios.post('http://localhost:8000/signout');  // Make a POST request to your signout endpoint
+      dispatch(signoutSuccess());  // Dispatch the correct action for sign out
+      navigate("/");  // Redirect to home page after logout
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
+  };
+  
 
   return (
     <div className="navbar bg-white shadow-lg px-4 sm:px-8 pt-4 sticky top-0 z-50" data-theme="light">
-
       <div className="flex-1 flex items-center">
         <a
           href="/"
@@ -55,7 +70,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Center Section: Search Bar */}
       <div className="flex-1 flex justify-center">
         <div className="form-control relative w-full max-w-md transition-all duration-500">
           <input
@@ -67,7 +81,6 @@ const Header = () => {
         </div>
       </div>
 
-      {/* Right Section: Icons and Buttons */}
       <div className="flex-1 flex items-center justify-end gap-4">
         <div className="dropdown dropdown-hover sm:hidden">
           <label
@@ -143,25 +156,54 @@ const Header = () => {
           </div>
         </div>
 
-
-        <button
-          onClick={() => navigate("/login")}
-          className="btn bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
-        >
-          Sign In
-        </button>
-
-
-        <div className="dropdown dropdown-end">
-          <label
-            tabIndex={0}
-            className="btn bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
-          >
-            <FaUserPlus className="inline-block mr-2 group-hover:animate-bounce" /> 
-            Join Us
-          </label>
-
-        </div>
+        {/* Conditionally render avatar or sign-in button */}
+        {currentUser ? (
+          <div className="dropdown dropdown-end">
+            <label tabIndex={0} className="btn btn-ghost btn-circle">
+              <img
+                src={currentUser.profilePicture}
+                alt="User Avatar"
+                className="w-10 h-10 rounded-full"
+              />
+            </label>
+            <ul
+              tabIndex={0}
+              className="dropdown-content menu p-2 shadow bg-white rounded-box w-52"
+            >
+              <li>
+                <a className="hover:bg-primary hover:text-white transition-colors duration-200">
+                  Profile
+                </a>
+              </li>
+              <li>
+                <a
+                  className="hover:bg-primary hover:text-white transition-colors duration-200"
+                  onClick={signOut} // Attach the signOut function
+                >
+                  Logout
+                </a>
+              </li>
+            </ul>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => navigate("/login")}
+              className="btn bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              Sign In
+            </button>
+            <div className="dropdown dropdown-end">
+              <label
+                tabIndex={0}
+                className="btn bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+              >
+                <FaUserPlus className="inline-block mr-2 group-hover:animate-bounce" />
+                Join Us
+              </label>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

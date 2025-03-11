@@ -88,8 +88,23 @@ module.exports = {
                 { expiresIn: "7d" }
             );
 
-            // Envoyer la réponse avec le token
-            res.status(200).json({ message: "Signin successful", token, user });
+            // Envoyer le token dans un cookie sécurisé
+            res.cookie("access_token", token, {
+                httpOnly: true, // Sécuriser l'accès du cookie
+                secure: process.env.NODE_ENV === "production", // Si en production, utiliser HTTPS
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+            });
+
+            // Réponse avec les détails de l'utilisateur
+            res.status(200).json({
+                message: "Signin successful",
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role,
+                },
+            });
         } catch (error) {
             next(error);
         }
