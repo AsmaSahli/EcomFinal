@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice"; // Importing actions
+import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // You can use axios for API requests
+import axios from "axios"; 
 import logo from "../assets/ecomLogo.png";
-import { FcGoogle } from "react-icons/fc"; // Google icon
-import { ToastContainer, toast } from "react-toastify"; // Import ToastContainer and toast
-import "react-toastify/dist/ReactToastify.css"; // Import CSS for Toastify
+import { FcGoogle } from "react-icons/fc"; 
+import { ToastContainer, toast } from "react-toastify"; 
+import "react-toastify/dist/ReactToastify.css";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
@@ -17,20 +17,20 @@ const SignIn = () => {
   const handleSignIn = async (e) => {
     e.preventDefault();
 
-    dispatch(signInStart()); // Dispatching the start action to indicate loading
+    dispatch(signInStart()); 
 
     try {
       const response = await axios.post(
         "http://localhost:8000/signin", 
         { email, password },
-        { withCredentials: true } // Include credentials to send cookies
+        { withCredentials: true }
       );
-      dispatch(signInSuccess(response.data.user)); // Dispatch success if login is successful
-      toast.success("Login successful!"); // Show success toast message
-      navigate("/"); // Redirect to a dashboard or home page
+      dispatch(signInSuccess(response.data.user)); 
+      toast.success("Login successful!"); 
+      navigate("/"); 
     } catch (err) {
-      dispatch(signInFailure(err.response.data.message || "Something went wrong!")); // Dispatch failure if there's an error
-      toast.error(err.response.data.message || "Something went wrong!"); // Show error toast message
+      dispatch(signInFailure(err.response.data.message || "Something went wrong!"));
+      toast.error(err.response.data.message || "Something went wrong!"); 
     }
   };
 
@@ -45,7 +45,6 @@ const SignIn = () => {
           Enter your email and password to sign in.
         </p>
 
-        {/* Email Field */}
         <div className="form-control w-full mb-4">
           <label className="label">
             <span className="label-text text-gray-600">Email</span>

@@ -23,6 +23,7 @@
     "react-router-dom": "^7.3.0",
     "react-toastify": "^11.0.5",
     "redux-persist": "^6.0.0",
+    "swiper": "^11.2.5",
     "tailwindcss": "^4.0.12"
   },
   "devDependencies": {

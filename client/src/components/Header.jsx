@@ -3,20 +3,20 @@ import { FaBars, FaSearch, FaHeart, FaShoppingCart, FaUserPlus } from "react-ico
 import { useNavigate } from "react-router-dom";
 import { categories } from "./categories";
 import logo from "../assets/ecomLogo.png";
-import { useSelector, useDispatch } from 'react-redux';  // Import useSelector and useDispatch
-import axios from 'axios';  // To make HTTP requests
+import { useSelector, useDispatch } from 'react-redux';  
+import axios from 'axios';  
 import { signoutSuccess } from '../redux/user/userSlice';
 const Header = () => {
   const navigate = useNavigate();
-  const currentUser = useSelector(state => state.user.currentUser); // Access currentUser from Redux state
-  const dispatch = useDispatch(); // For dispatching actions, if necessary
+  const currentUser = useSelector(state => state.user.currentUser);
+  const dispatch = useDispatch(); 
   
-  // Sign out function
+
   const signOut = async () => {
     try {
-      await axios.post('http://localhost:8000/signout');  // Make a POST request to your signout endpoint
-      dispatch(signoutSuccess());  // Dispatch the correct action for sign out
-      navigate("/");  // Redirect to home page after logout
+      await axios.post('http://localhost:8000/signout'); 
+      dispatch(signoutSuccess());
+      navigate("/");  
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -156,7 +156,7 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Conditionally render avatar or sign-in button */}
+
         {currentUser ? (
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-ghost btn-circle">
@@ -178,7 +178,7 @@ const Header = () => {
               <li>
                 <a
                   className="hover:bg-primary hover:text-white transition-colors duration-200"
-                  onClick={signOut} // Attach the signOut function
+                  onClick={signOut}
                 >
                   Logout
                 </a>
@@ -188,10 +188,10 @@ const Header = () => {
         ) : (
           <>
             <button
-              onClick={() => navigate("/login")}
-              className="btn bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300"
+            onClick={() => navigate("/login")}
+            className="btn border-2 border-transparent bg-transparent bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary  font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-3xl transition-all duration-300"
             >
-              Sign In
+            Sign In
             </button>
             <div className="dropdown dropdown-end">
               <label
