@@ -1,4 +1,3 @@
-
 const { User, Buyer, Seller, DeliveryPerson, Admin } = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -32,7 +31,7 @@ module.exports = {
             switch (userRole) {
                 case "buyer":
                     if (!address || !phoneNumber) {
-                        return next(e.errorHandler(400, "Buyer must have address and phone number"));
+                        return next(e.errorHandler(400, "Fields cannot be empty"));
                     }
                     newUser = new Buyer({ ...userData, address, phoneNumber });
                     break;
@@ -107,5 +106,92 @@ module.exports = {
         } catch (error) {
             next(error);
         }
-    }
-};
+    },
+
+    // 🔹 GOOGLE AUTH
+    google: async (req, res, next) => {
+        const { email, name, googlePhotoUrl } = req.body;
+    
+        try {
+            // Check if the user already exists
+            const user = await User.findOne({ email });
+            if (user) {
+                // Ensure the user is a buyer
+                if (user.role !== "buyer") {
+                    return next(e.errorHandler(403, "Google authentication is only available for buyers."));
+                }
+    
+                // Generate JWT token
+                const token = jwt.sign(
+                    { userId: user._id, role: user.role },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "7d" }
+                );
+    
+                // Remove password from the user object
+                const { password, ...rest } = user._doc;
+    
+                // Send response with token and user data
+                res
+                    .status(200)
+                    .cookie("access_token", token, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+                    })
+                    .json(rest);
+            } else {
+                // Generate a random password
+                const generatedPassword =
+                    Math.random().toString(36).slice(-8) +
+                    Math.random().toString(36).slice(-8);
+                const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
+    
+                // Split name into firstName and lastName
+                const [firstName, ...lastNameParts] = name?.split(" ") || [];
+                const lastName = lastNameParts.join(" ");
+    
+                // Validate name fields
+                if (!firstName || !lastName) {
+                    return next(e.errorHandler(400, "Invalid name provided from Google."));
+                }
+    
+                // Create a new buyer with default values for address and phoneNumber
+                const newUser = new Buyer({
+                    name: `${firstName} ${lastName}`,
+                    email,
+                    password: hashedPassword,
+                    profilePicture: googlePhotoUrl || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png', // Default profile picture
+                    role: "buyer", // Force the role to be "buyer"
+                    isActive: true,
+                    address: "Not provided", // Default value for address
+                    phoneNumber: "Not provided", // Default value for phoneNumber
+                });
+    
+                // Save the new user to the database
+                await newUser.save();
+    
+                // Generate JWT token for the new user
+                const token = jwt.sign(
+                    { userId: newUser._id, role: newUser.role },
+                    process.env.JWT_SECRET,
+                    { expiresIn: "7d" }
+                );
+    
+                // Remove password from the user object
+                const { password, ...rest } = newUser._doc;
+    
+                // Send response with token and user data
+                res
+                    .status(200)
+                    .cookie("access_token", token, {
+                        httpOnly: true,
+                        secure: process.env.NODE_ENV === "production",
+                        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+                    })
+                    .json(rest);
+            }
+        } catch (error) {
+            next(error);
+        }
+    },};

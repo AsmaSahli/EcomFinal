@@ -6,11 +6,11 @@ import logo from "../assets/ecomLogo.png";
 import { useSelector, useDispatch } from 'react-redux';  
 import axios from 'axios';  
 import { signoutSuccess } from '../redux/user/userSlice';
+
 const Header = () => {
   const navigate = useNavigate();
   const currentUser = useSelector(state => state.user.currentUser);
   const dispatch = useDispatch(); 
-  
 
   const signOut = async () => {
     try {
@@ -21,10 +21,10 @@ const Header = () => {
       console.error('Error signing out:', error);
     }
   };
-  
 
   return (
     <div className="navbar bg-white shadow-lg px-4 sm:px-8 pt-4 sticky top-0 z-50" data-theme="light">
+      {/* Logo and Categories */}
       <div className="flex-1 flex items-center">
         <a
           href="/"
@@ -34,7 +34,7 @@ const Header = () => {
           }}
           className="text-2xl font-bold text-primary hover:text-primary-focus transition-colors duration-200 pr-4 cursor-pointer"
         >
-          <img src={logo} alt="Ecom Logo" className="h-20" />
+          <img src={logo} alt="Ecom Logo" className="h-16 sm:h-20" />
         </a>
 
         <div className="dropdown dropdown-hover hidden sm:block ml-4">
@@ -70,6 +70,7 @@ const Header = () => {
         </div>
       </div>
 
+      {/* Search Bar */}
       <div className="flex-1 flex justify-center">
         <div className="form-control relative w-full max-w-md transition-all duration-500">
           <input
@@ -81,6 +82,7 @@ const Header = () => {
         </div>
       </div>
 
+      {/* Icons and User Actions */}
       <div className="flex-1 flex items-center justify-end gap-4">
         <div className="dropdown dropdown-hover sm:hidden">
           <label
@@ -114,11 +116,16 @@ const Header = () => {
           </ul>
         </div>
 
-        <button className="btn btn-ghost btn-circle hover:bg-primary hover:text-white transition-colors duration-200">
-          <FaHeart className="h-6 w-6 text-secondary" />
-        </button>
+        {/* Heart Icon with Text */}
+        <div className="flex flex-col items-center gap-1">
+          <button className="btn btn-ghost btn-circle hover:bg-primary hover:text-white transition-colors duration-200">
+            <FaHeart className="h-6 w-6 text-secondary" />
+          </button>
+          <span className="text-xs text-gray-600">Liked Items</span>
+        </div>
 
-        <div className="dropdown dropdown-end">
+        {/* Cart Icon with Text */}
+        <div className="dropdown dropdown-end flex flex-col items-center gap-1">
           <div
             tabIndex={0}
             role="button"
@@ -142,6 +149,7 @@ const Header = () => {
               <span className="badge badge-sm indicator-item">8</span>
             </div>
           </div>
+          <span className="text-xs text-gray-600">8 Items</span>
           <div
             tabIndex={0}
             className="card card-compact dropdown-content bg-base-100 z-1 mt-3 w-52 shadow"
@@ -155,7 +163,6 @@ const Header = () => {
             </div>
           </div>
         </div>
-
 
         {currentUser ? (
           <div className="dropdown dropdown-end">
@@ -188,16 +195,18 @@ const Header = () => {
         ) : (
           <>
             <button
-            onClick={() => navigate("/login")}
-            className="btn border-2 border-transparent bg-transparent bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary  font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-3xl transition-all duration-300"
+              onClick={() => navigate("/login")}
+              className="btn border-2 border-transparent bg-transparent bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-3xl transition-all duration-300"
             >
-            Sign In
+              Sign In
             </button>
             <div className="dropdown dropdown-end">
               <label
                 tabIndex={0}
-                className="btn bg-gradient-to-r from-purple-500 to-pink-500 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
+                style={{ background: "linear-gradient(to right,#560DF2, #4508C8)" }}
+                className="btn text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
               >
+              
                 <FaUserPlus className="inline-block mr-2 group-hover:animate-bounce" />
                 Join Us
               </label>

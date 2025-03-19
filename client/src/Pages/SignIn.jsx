@@ -1,36 +1,54 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
-import { useNavigate } from "react-router-dom";
-import axios from "axios"; 
+import { useNavigate, Link } from "react-router-dom";
+import axios from "axios";
 import logo from "../assets/ecomLogo.png";
-import { FcGoogle } from "react-icons/fc"; 
-import { ToastContainer, toast } from "react-toastify"; 
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import OAuth from "../components/OAuth";
+import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const auth = getAuth();
 
   const handleSignIn = async (e) => {
     e.preventDefault();
 
-    dispatch(signInStart()); 
+    dispatch(signInStart());
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/signin", 
+        "http://localhost:8000/signin",
         { email, password },
         { withCredentials: true }
       );
-      dispatch(signInSuccess(response.data.user)); 
-      toast.success("Login successful!"); 
-      navigate("/"); 
+      dispatch(signInSuccess(response.data.user));
+      toast.success("Login successful!");
+      navigate("/");
     } catch (err) {
       dispatch(signInFailure(err.response.data.message || "Something went wrong!"));
-      toast.error(err.response.data.message || "Something went wrong!"); 
+      toast.error(err.response.data.message || "Something went wrong!");
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error("Please enter your email address.");
+      return;
+    }
+
+    try {
+      const auth = getAuth();
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Password reset email sent. Check your inbox!");
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error(error.message);
     }
   };
 
@@ -58,7 +76,6 @@ const SignIn = () => {
           />
         </div>
 
-        {/* Password Field */}
         <div className="form-control w-full mb-6">
           <label className="label">
             <span className="label-text text-gray-600">Password</span>
@@ -70,9 +87,16 @@ const SignIn = () => {
             placeholder="Enter your password"
             className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
+          <div className="text-right mt-2">
+            <button
+              onClick={handleForgotPassword}
+              className="text-sm text-primary hover:underline"
+            >
+              Forgot Password?
+            </button>
+          </div>
         </div>
 
-        {/* Sign In Button */}
         <button
           onClick={handleSignIn}
           className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
@@ -80,29 +104,25 @@ const SignIn = () => {
           Sign In
         </button>
 
-        {/* Divider */}
         <div className="flex items-center my-6">
           <div className="flex-grow border-t border-gray-200"></div>
           <span className="mx-4 text-gray-400">OR</span>
           <div className="flex-grow border-t border-gray-200"></div>
         </div>
 
-        {/* Google Sign In Button */}
-        <button className="btn btn-outline w-full mb-4 flex items-center justify-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900">
-          <FcGoogle className="text-xl" />
-          <span>Continue with Google</span>
-        </button>
+        <OAuth />
 
-        {/* Sign Up Section */}
         <div className="text-center">
           <p className="mb-2 text-gray-600">New to Electsy?</p>
-          <button className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900">
+          <Link
+            to="/signup"
+            className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900"
+          >
             Create an account
-          </button>
+          </Link>
         </div>
       </div>
 
-      {/* ToastContainer for displaying toast messages */}
       <ToastContainer />
     </div>
   );

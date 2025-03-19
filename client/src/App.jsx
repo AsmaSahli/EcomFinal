@@ -6,6 +6,7 @@ import { Home } from "./Pages/Home";
 import Header from "./components/Header";
 import SignIn from "./Pages/SignIn";
 import AuthentificationRoute from "./components/AuthentificationRoute";
+import SignUp from "./Pages/SignUp";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Routes>
           <Route element={<AuthentificationRoute/>} >
           <Route path="/login" element={< SignIn/>} />
+          <Route path="/signup" element={<SignUp/>} />
 
         </Route>
 

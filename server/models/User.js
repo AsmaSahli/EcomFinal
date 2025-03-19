@@ -19,8 +19,8 @@ const UserSchema = new mongoose.Schema({
 }, { timestamps: true, discriminatorKey: 'role' });
 
 const BuyerSchema = new mongoose.Schema({
-    address: { type: String, required: true },
-    phoneNumber: { type: String, required: true }
+    address: { type: String, default: "Not provided" }, 
+    phoneNumber: { type: String, default: "Not provided" } 
 });
 
 const SellerSchema = new mongoose.Schema({
