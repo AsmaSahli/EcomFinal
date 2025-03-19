@@ -100,6 +100,7 @@ module.exports = {
                     id: user._id,
                     name: user.name,
                     email: user.email,
+                    profilePicture: user.profilePicture,
                     role: user.role,
                 },
             });
