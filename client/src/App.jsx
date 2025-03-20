@@ -7,6 +7,8 @@ import Header from "./components/Header";
 import SignIn from "./Pages/SignIn";
 import AuthentificationRoute from "./components/AuthentificationRoute";
 import SignUp from "./Pages/SignUp";
+import ForgotPassword from "./components/ForgotPassword ";
+import ResetPassword from "./components/ResetPassword";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
           <Route element={<AuthentificationRoute/>} >
           <Route path="/login" element={< SignIn/>} />
           <Route path="/signup" element={<SignUp/>} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         </Route>
 

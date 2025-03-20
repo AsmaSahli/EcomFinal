@@ -1,20 +1,18 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom"; // Import Link from react-router-dom
 import axios from "axios";
 import logo from "../assets/ecomLogo.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import OAuth from "../components/OAuth";
-import { getAuth, sendPasswordResetEmail } from "firebase/auth";
 
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const auth = getAuth();
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -33,22 +31,6 @@ const SignIn = () => {
     } catch (err) {
       dispatch(signInFailure(err.response.data.message || "Something went wrong!"));
       toast.error(err.response.data.message || "Something went wrong!");
-    }
-  };
-
-  const handleForgotPassword = async () => {
-    if (!email) {
-      toast.error("Please enter your email address.");
-      return;
-    }
-
-    try {
-      const auth = getAuth();
-      await sendPasswordResetEmail(auth, email);
-      toast.success("Password reset email sent. Check your inbox!");
-    } catch (error) {
-      console.error("Error:", error);
-      toast.error(error.message);
     }
   };
 
@@ -88,12 +70,13 @@ const SignIn = () => {
             className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
           <div className="text-right mt-2">
-            <button
-              onClick={handleForgotPassword}
+            {/* Update the Forgot Password link */}
+            <Link
+              to="/forgot-password" // Add the route to the Forgot Password page
               className="text-sm text-primary hover:underline"
             >
               Forgot Password?
-            </button>
+            </Link>
           </div>
         </div>
 

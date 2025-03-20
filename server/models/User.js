@@ -15,6 +15,8 @@ const UserSchema = new mongoose.Schema({
     },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Number },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
     isActive: { type: Boolean, default: true }
 }, { timestamps: true, discriminatorKey: 'role' });
 

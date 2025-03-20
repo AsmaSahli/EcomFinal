@@ -2,6 +2,16 @@ const { User, Buyer, Seller, DeliveryPerson, Admin } = require("../models/User")
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const e = require("../utils/error");
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
+
+    const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+        },
+    });
 
 module.exports = {
     // 🔹 SIGNUP
@@ -190,9 +200,89 @@ module.exports = {
                         secure: process.env.NODE_ENV === "production",
                         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                     })
-                    .json(rest);
+                        .json(rest);
+                }
+            } catch (error) {
+                next(error);
             }
-        } catch (error) {
+        },  forgotPassword: async (req, res, next) => {
+            try {
+            const { email } = req.body;
+        
+            // Check if the user exists
+            const user = await User.findOne({ email });
+            if (!user) {
+                return next(e.errorHandler(404, "User not found"));
+            }
+        
+            // Generate a reset token
+            const resetToken = crypto.randomBytes(20).toString("hex");
+            const resetPasswordToken = crypto
+                .createHash("sha256")
+                .update(resetToken)
+                .digest("hex");
+        
+            // Set token expiration (e.g., 1 hour)
+            const resetPasswordExpires = Date.now() + 3600000; // 1 hour
+        
+            // Save the token and expiration in the database
+            user.resetPasswordToken = resetPasswordToken;
+            user.resetPasswordExpires = resetPasswordExpires;
+            await user.save();
+        
+            // Send email with reset link
+            const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+            const mailOptions = {
+                to: user.email,
+                from: process.env.EMAIL_USER,
+                subject: "Password Reset",
+                text: `You are receiving this because you (or someone else) have requested the reset of the password for your account.\n\n
+                Please click on the following link, or paste this into your browser to complete the process:\n\n
+                ${resetUrl}\n\n
+                If you did not request this, please ignore this email and your password will remain unchanged.\n`,
+            };
+        
+            await transporter.sendMail(mailOptions);
+        
+            res.status(200).json({ message: "Password reset email sent" });
+            } catch (error) {
             next(error);
-        }
-    },};
+            }
+        },
+        
+        resetPassword: async (req, res, next) => {
+            try {
+            const { token } = req.params;
+            const { password } = req.body;
+        
+            // Hash the token to compare with the one in the database
+            const resetPasswordToken = crypto
+                .createHash("sha256")
+                .update(token)
+                .digest("hex");
+        
+            // Find the user with the matching token and check if it's still valid
+            const user = await User.findOne({
+                resetPasswordToken,
+                resetPasswordExpires: { $gt: Date.now() },
+            });
+        
+            if (!user) {
+                return next(e.errorHandler(400, "Invalid or expired token"));
+            }
+        
+            // Hash the new password
+            const hashedPassword = await bcrypt.hash(password, 10);
+        
+            // Update the user's password and clear the reset token
+            user.password = hashedPassword;
+            user.resetPasswordToken = undefined;
+            user.resetPasswordExpires = undefined;
+            await user.save();
+        
+            res.status(200).json({ message: "Password reset successful" });
+            } catch (error) {
+            next(error);
+            }
+        },
+        };
