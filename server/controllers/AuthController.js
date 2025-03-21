@@ -5,19 +5,19 @@ const e = require("../utils/error");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 
-    const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
-        },
-    });
+    },
+});
 
 module.exports = {
     // 🔹 SIGNUP
     signup: async (req, res, next) => {
         try {
-            const { name, email, password, confirmPassword, role, address, phoneNumber, shopName, headquartersAddress, vehicleType } = req.body;
+            const { name, email, password, confirmPassword, role, address, phoneNumber, shopName, vatNumber, returnAddress, headquartersAddress, customerServiceAddress, businessRegistrationNumber, vehicleType } = req.body;
 
             // Vérifier si l'email existe déjà
             if (await User.findOne({ email })) {
@@ -33,7 +33,7 @@ module.exports = {
             const hashedPassword = await bcrypt.hash(password, 10);
 
             // Définir "buyer" par défaut si le rôle n'est pas fourni
-            const userRole = role || "buyer"; 
+            const userRole = role || "buyer";
 
             let newUser;
             const userData = { name, email, password: hashedPassword, role: userRole };
@@ -46,10 +46,10 @@ module.exports = {
                     newUser = new Buyer({ ...userData, address, phoneNumber });
                     break;
                 case "seller":
-                    if (!shopName || !headquartersAddress) {
-                        return next(e.errorHandler(400, "Seller must have shop name and headquarters address"));
+                    if (!shopName || !businessRegistrationNumber || !vatNumber || !returnAddress || !headquartersAddress || !customerServiceAddress) {
+                        return next(e.errorHandler(400, "All seller fields are required"));
                     }
-                    newUser = new Seller({ ...userData, shopName, headquartersAddress });
+                    newUser = new Seller({ ...userData, shopName, businessRegistrationNumber, vatNumber, returnAddress, headquartersAddress, customerServiceAddress });
                     break;
                 case "delivery":
                     if (!vehicleType) {
@@ -122,7 +122,7 @@ module.exports = {
     // 🔹 GOOGLE AUTH
     google: async (req, res, next) => {
         const { email, name, googlePhotoUrl } = req.body;
-    
+
         try {
             // Check if the user already exists
             const user = await User.findOne({ email });
@@ -131,17 +131,17 @@ module.exports = {
                 if (user.role !== "buyer") {
                     return next(e.errorHandler(403, "Google authentication is only available for buyers."));
                 }
-    
+
                 // Generate JWT token
                 const token = jwt.sign(
                     { userId: user._id, role: user.role },
                     process.env.JWT_SECRET,
                     { expiresIn: "7d" }
                 );
-    
+
                 // Remove password from the user object
                 const { password, ...rest } = user._doc;
-    
+
                 // Send response with token and user data
                 res
                     .status(200)
@@ -157,16 +157,16 @@ module.exports = {
                     Math.random().toString(36).slice(-8) +
                     Math.random().toString(36).slice(-8);
                 const hashedPassword = bcrypt.hashSync(generatedPassword, 10);
-    
+
                 // Split name into firstName and lastName
                 const [firstName, ...lastNameParts] = name?.split(" ") || [];
                 const lastName = lastNameParts.join(" ");
-    
+
                 // Validate name fields
                 if (!firstName || !lastName) {
                     return next(e.errorHandler(400, "Invalid name provided from Google."));
                 }
-    
+
                 // Create a new buyer with default values for address and phoneNumber
                 const newUser = new Buyer({
                     name: `${firstName} ${lastName}`,
@@ -178,20 +178,20 @@ module.exports = {
                     address: "Not provided", // Default value for address
                     phoneNumber: "Not provided", // Default value for phoneNumber
                 });
-    
+
                 // Save the new user to the database
                 await newUser.save();
-    
+
                 // Generate JWT token for the new user
                 const token = jwt.sign(
                     { userId: newUser._id, role: newUser.role },
                     process.env.JWT_SECRET,
                     { expiresIn: "7d" }
                 );
-    
+
                 // Remove password from the user object
                 const { password, ...rest } = newUser._doc;
-    
+
                 // Send response with token and user data
                 res
                     .status(200)
@@ -200,36 +200,38 @@ module.exports = {
                         secure: process.env.NODE_ENV === "production",
                         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
                     })
-                        .json(rest);
-                }
-            } catch (error) {
-                next(error);
+                    .json(rest);
             }
-        },  forgotPassword: async (req, res, next) => {
-            try {
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    forgotPassword: async (req, res, next) => {
+        try {
             const { email } = req.body;
-        
+
             // Check if the user exists
             const user = await User.findOne({ email });
             if (!user) {
                 return next(e.errorHandler(404, "User not found"));
             }
-        
+
             // Generate a reset token
             const resetToken = crypto.randomBytes(20).toString("hex");
             const resetPasswordToken = crypto
                 .createHash("sha256")
                 .update(resetToken)
                 .digest("hex");
-        
+
             // Set token expiration (e.g., 1 hour)
             const resetPasswordExpires = Date.now() + 3600000; // 1 hour
-        
+
             // Save the token and expiration in the database
             user.resetPasswordToken = resetPasswordToken;
             user.resetPasswordExpires = resetPasswordExpires;
             await user.save();
-        
+
             // Send email with reset link
             const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
             const mailOptions = {
@@ -241,48 +243,48 @@ module.exports = {
                 ${resetUrl}\n\n
                 If you did not request this, please ignore this email and your password will remain unchanged.\n`,
             };
-        
+
             await transporter.sendMail(mailOptions);
-        
+
             res.status(200).json({ message: "Password reset email sent" });
-            } catch (error) {
+        } catch (error) {
             next(error);
-            }
-        },
-        
-        resetPassword: async (req, res, next) => {
-            try {
+        }
+    },
+
+    resetPassword: async (req, res, next) => {
+        try {
             const { token } = req.params;
             const { password } = req.body;
-        
+
             // Hash the token to compare with the one in the database
             const resetPasswordToken = crypto
                 .createHash("sha256")
                 .update(token)
                 .digest("hex");
-        
+
             // Find the user with the matching token and check if it's still valid
             const user = await User.findOne({
                 resetPasswordToken,
                 resetPasswordExpires: { $gt: Date.now() },
             });
-        
+
             if (!user) {
                 return next(e.errorHandler(400, "Invalid or expired token"));
             }
-        
+
             // Hash the new password
             const hashedPassword = await bcrypt.hash(password, 10);
-        
+
             // Update the user's password and clear the reset token
             user.password = hashedPassword;
             user.resetPasswordToken = undefined;
             user.resetPasswordExpires = undefined;
             await user.save();
-        
+
             res.status(200).json({ message: "Password reset successful" });
-            } catch (error) {
+        } catch (error) {
             next(error);
-            }
-        },
-        };
+        }
+    },
+};

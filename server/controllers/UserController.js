@@ -8,7 +8,7 @@ module.exports = {
     signout: (req, res, next) => {
         try {
             res
-                .clearCookie('access_token', { path: '/' }) 
+                .clearCookie('access_token', { path: '/' })
                 .status(200)
                 .json('User has been signed out');
         } catch (error) {
@@ -18,7 +18,7 @@ module.exports = {
 
     updateUser: async (req, res, next) => {
         const { id } = req.params;
-        const { name, email, password, newPassword, address, phoneNumber, shopName, headquartersAddress, vehicleType } = req.body;
+        const { name, email, password, newPassword, address, phoneNumber, shopName, headquartersAddress, businessRegistrationNumber, vatNumber, returnAddress, vehicleType, statusDelivery, customerServiceAddress } = req.body;
         const { role, userId } = req.user;
 
         try {
@@ -62,8 +62,14 @@ module.exports = {
             } else if (user.role === 'seller') {
                 if (shopName) user.shopName = shopName;
                 if (headquartersAddress) user.headquartersAddress = headquartersAddress;
+                if (businessRegistrationNumber) user.businessRegistrationNumber = businessRegistrationNumber;
+                if (vatNumber) user.vatNumber = vatNumber;
+                if (returnAddress) user.returnAddress = returnAddress;
+                if (headquartersAddress) user.headquartersAddress = headquartersAddress;
+                if (customerServiceAddress) user.customerServiceAddress = customerServiceAddress;
             } else if (user.role === 'delivery') {
                 if (vehicleType) user.vehicleType = vehicleType;
+                if (statusDelivery) user.statusDelivery = statusDelivery;
             }
 
             await user.save();
