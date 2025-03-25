@@ -15,13 +15,6 @@ const SignUp = () => {
   const [address, setAddress] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("+216"); // Default prefix for Tunisia
   const [role, setRole] = useState("buyer"); // Default role is "buyer"
-  const [shopName, setShopName] = useState("");
-  const [businessRegistrationNumber, setbusinessRegistrationNumber] = useState("");
-  const [vatNumber, setvatNumber] = useState("");
-  const [returnAddress, setreturnAddress] = useState("");
-  const [headquartersAddress, setHeadquartersAddress] = useState("");
-  const [customerServiceAddress, setcustomerServiceAddress] = useState("");
-  const [vehicleType, setVehicleType] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -43,30 +36,17 @@ const SignUp = () => {
     dispatch(signUpStart()); 
 
     try {
-      const userData = {
-        name, 
-        email, 
-        password, 
-        confirmPassword, 
-        role, 
-        address, 
-        phoneNumber,
-        ...(role === 'seller' && {
-          shopName,
-          businessRegistrationNumber,
-          vatNumber,
-          returnAddress,
-          headquartersAddress,
-          customerServiceAddress
-        }),
-        ...(role === 'delivery' && {
-          vehicleType
-        })
-      };
-
       const response = await axios.post(
         "http://localhost:8000/signup", 
-        userData,
+        { 
+          name, 
+          email, 
+          password, 
+          confirmPassword, 
+          role, 
+          address, 
+          phoneNumber 
+        },
         { withCredentials: true }
       );
       dispatch(signUpSuccess(response.data.user)); 
@@ -88,22 +68,6 @@ const SignUp = () => {
         <p className="text-center text-gray-600 mb-6">
           Enter your details to sign up.
         </p>
-
-        {/* Role Selection */}
-        <div className="form-control w-full mb-4">
-          <label className="label">
-            <span className="label-text text-gray-600">Role</span>
-          </label>
-          <select
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="buyer">Buyer</option>
-            <option value="seller">Seller</option>
-            <option value="delivery">Delivery</option>
-          </select>
-        </div>
 
         {/* Name Field */}
         <div className="form-control w-full mb-4">
@@ -197,104 +161,12 @@ const SignUp = () => {
           </div>
         </div>
 
-        {/* Seller-specific fields */}
-        {role === 'seller' && (
-          <>
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text text-gray-600">Shop Name</span>
-              </label>
-              <input
-                type="text"
-                value={shopName}
-                onChange={(e) => setShopName(e.target.value)}
-                placeholder="Enter your shop name"
-                className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text text-gray-600">Business Registration Number</span>
-              </label>
-              <input
-                type="text"
-                value={businessRegistrationNumber}
-                onChange={(e) => setbusinessRegistrationNumber(e.target.value)}
-                placeholder="Enter your business registration number"
-                className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text text-gray-600">VAT Number</span>
-              </label>
-              <input
-                type="text"
-                value={vatNumber}
-                onChange={(e) => setvatNumber(e.target.value)}
-                placeholder="Enter your VAT number"
-                className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text text-gray-600">Return Address</span>
-              </label>
-              <input
-                type="text"
-                value={returnAddress}
-                onChange={(e) => setreturnAddress(e.target.value)}
-                placeholder="Enter your return address"
-                className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text text-gray-600">Headquarters Address</span>
-              </label>
-              <input
-                type="text"
-                value={headquartersAddress}
-                onChange={(e) => setHeadquartersAddress(e.target.value)}
-                placeholder="Enter your headquarters address"
-                className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-
-            <div className="form-control w-full mb-4">
-              <label className="label">
-                <span className="label-text text-gray-600">Customer Service Address</span>
-              </label>
-              <input
-                type="text"
-                value={customerServiceAddress}
-                onChange={(e) => setcustomerServiceAddress(e.target.value)}
-                placeholder="Enter your customer service address"
-                className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-              />
-            </div>
-          </>
-        )}
-
-        {/* Delivery-specific fields */}
-        {role === 'delivery' && (
-          <div className="form-control w-full mb-4">
-            <label className="label">
-              <span className="label-text text-gray-600">Vehicle Type</span>
-            </label>
-            <input
-              type="text"
-              value={vehicleType}
-              onChange={(e) => setVehicleType(e.target.value)}
-              placeholder="Enter your vehicle type"
-              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-            />
-          </div>
-        )}
+        {/* Role Selection (Hidden for now, default is "buyer") */}
+        <input
+          type="hidden"
+          name="role"
+          value={role}
+        />
 
         {/* Sign Up Button */}
         <button

@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 
 const UserSchema = new mongoose.Schema({
-    name: { type: String, required: true },
+    name: { type: String },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: { type: String }, // Remove `required: true`
     role: { 
         type: String, 
         enum: ['buyer', 'seller', 'delivery', 'admin'], 
-        default: 'buyer' // 🟢 Définir "buyer" comme rôle par défaut
+        default: 'buyer' // Default role is "buyer"
     },
     profilePicture: { 
         type: String, 
@@ -17,9 +17,17 @@ const UserSchema = new mongoose.Schema({
     lockUntil: { type: Number },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
-    isActive: { type: Boolean, default: true },
-    isValidated: { type: Boolean, default: function () { return this.role === 'buyer' || this.role === 'admin'; } } // Only buyer & admin are auto-validated
+    isActive: { type: Boolean, default: true }
 }, { timestamps: true, discriminatorKey: 'role' });
+
+// Pre-save hook to enforce password requirement for specific roles
+UserSchema.pre("save", function (next) {
+    if (this.role !== "seller" && !this.password) {
+        const error = new Error("Password is required for this role.");
+        return next(error);
+    }
+    next();
+});
 
 const BuyerSchema = new mongoose.Schema({
     address: { type: String, default: "Not provided" }, 
@@ -27,17 +35,22 @@ const BuyerSchema = new mongoose.Schema({
 });
 
 const SellerSchema = new mongoose.Schema({
-    shopName: { type: String, required: true },
-    businessRegistrationNumber: { type: String, required: true }, // Business registration number
-    vatNumber: { type: String, required: true }, // VAT number
-    returnAddress: { type: String, required: true }, // Return address
-    headquartersAddress: { type: String, required: true }, // Headquarters address
-    customerServiceAddress: { type: String, required: true } // Customer service address
+    shopName: { type: String, required: true }, 
+    headquartersAddress: { type: String, required: true }, 
+    fiscalIdentificationCard: { type: String, required: true }, 
+    tradeRegister: { type: String, required: true },
+    businessDescription: { type: String },
+    logo: { type: String },
+    status: {
+        type: String,
+        enum: ["pending", "under_review", "approved", "rejected"],
+        default: "pending",
+    },
+    rejectionReason: { type: String }, 
 });
 
 const DeliveryPersonSchema = new mongoose.Schema({
-    vehicleType: { type: String, required: true },
-    statusDelivery: { type: String, enum: ["pending", "accepted", "in-progress", "delivered"], default: "pending" }
+    vehicleType: { type: String, required: true }
 });
 
 const AdminSchema = new mongoose.Schema({});

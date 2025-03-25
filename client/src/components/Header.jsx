@@ -1,11 +1,12 @@
 import React from "react";
-import { FaBars, FaSearch, FaHeart, FaShoppingCart, FaUserPlus } from "react-icons/fa";
+import { FaSearch, FaHeart, FaUserPlus } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { categories } from "./categories";
 import logo from "../assets/ecomLogo.png";
-import { useSelector, useDispatch } from 'react-redux';  
+import { useSelector, useDispatch } from "react-redux";  
 import axios from 'axios';  
 import { signoutSuccess } from '../redux/user/userSlice';
+import { FaStore, FaTruck } from "react-icons/fa";
+import AllCategories from "./AllCategories";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -24,7 +25,7 @@ const Header = () => {
 
   return (
     <div className="navbar bg-white shadow-lg px-4 sm:px-8 pt-4 sticky top-0 z-50" data-theme="light">
-      {/* Logo and Categories */}
+      {/* Logo and Categories Button */}
       <div className="flex-1 flex items-center">
         <a
           href="/"
@@ -37,37 +38,8 @@ const Header = () => {
           <img src={logo} alt="Ecom Logo" className="h-16 sm:h-20" />
         </a>
 
-        <div className="dropdown dropdown-hover hidden sm:block ml-4">
-          <label
-            tabIndex={0}
-            className="btn btn-ghost hover:bg-primary hover:text-white transition-colors duration-200 flex items-center gap-2"
-          >
-            <FaBars className="h-6 w-6" />
-            <span>All Categories</span>
-          </label>
-          <ul
-            tabIndex={0}
-            className="dropdown-content menu p-2 shadow bg-white rounded-box w-[800px] grid grid-cols-3 gap-4"
-          >
-            {categories.map((category, index) => (
-              <li key={index} className="flex flex-col">
-                <a className="font-semibold text-lg hover:bg-primary hover:text-white transition-colors duration-200 flex items-center gap-2">
-                  {category.icon}
-                  {category.name}
-                </a>
-                <ul className="pl-2">
-                  {category.subcategories.map((subcategory, subIndex) => (
-                    <li key={subIndex}>
-                      <a className="hover:bg-primary hover:text-white transition-colors duration-200">
-                        {subcategory}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {/* Single AllCategories Button */}
+        <AllCategories />
       </div>
 
       {/* Search Bar */}
@@ -76,7 +48,7 @@ const Header = () => {
           <input
             type="text"
             placeholder="Search"
-            className="input input-bordered w-full bg-white focus:w-[600px] focus:ring-2 focus:ring-primary focus:border-primary pl-10 transition-all duration-500"
+            className="input input-bordered w-full bg-white focus:ring-2 focus:ring-primary focus:border-primary pl-10 transition-all duration-500"
           />
           <FaSearch className="absolute left-3 top-3 text-gray-400 transition-transform duration-500 transform hover:scale-110" />
         </div>
@@ -84,39 +56,7 @@ const Header = () => {
 
       {/* Icons and User Actions */}
       <div className="flex-1 flex items-center justify-end gap-4">
-        <div className="dropdown dropdown-hover sm:hidden">
-          <label
-            tabIndex={0}
-            className="btn btn-ghost hover:bg-primary hover:text-white transition-colors duration-200 flex items-center gap-2"
-          >
-            <FaBars className="h-6 w-6" />
-            <span>All Categories</span>
-          </label>
-          <ul
-            tabIndex={0}
-            className="dropdown-content menu p-2 shadow bg-white rounded-box w-52"
-          >
-            {categories.map((category, index) => (
-              <li key={index}>
-                <a className="hover:bg-primary hover:text-white transition-colors duration-200 flex items-center gap-2">
-                  {category.icon}
-                  {category.name}
-                </a>
-                <ul className="pl-2">
-                  {category.subcategories.map((subcategory, subIndex) => (
-                    <li key={subIndex}>
-                      <a className="hover:bg-primary hover:text-white transition-colors duration-200">
-                        {subcategory}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Heart Icon with Text */}
+        {/* Heart Icon */}
         <div className="flex flex-col items-center gap-1">
           <button className="btn btn-ghost btn-circle hover:bg-primary hover:text-white transition-colors duration-200">
             <FaHeart className="h-6 w-6 text-secondary" />
@@ -124,7 +64,7 @@ const Header = () => {
           <span className="text-xs text-gray-600">Liked Items</span>
         </div>
 
-        {/* Cart Icon with Text */}
+        {/* Cart Icon */}
         <div className="dropdown dropdown-end flex flex-col items-center gap-1">
           <div
             tabIndex={0}
@@ -164,6 +104,7 @@ const Header = () => {
           </div>
         </div>
 
+        {/* User Authentication */}
         {currentUser ? (
           <div className="dropdown dropdown-end">
             <label tabIndex={0} className="btn btn-ghost btn-circle">
@@ -206,10 +147,32 @@ const Header = () => {
                 style={{ background: "linear-gradient(to right,#560DF2, #4508C8)" }}
                 className="btn text-white font-bold py-2 px-4 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 group"
               >
-              
                 <FaUserPlus className="inline-block mr-2 group-hover:animate-bounce" />
                 Join Us
               </label>
+              <ul
+                tabIndex={0}
+                className="dropdown-content menu p-2 shadow bg-white rounded-box w-52"
+              >
+                <li>
+                  <a
+                    className="hover:bg-primary hover:text-white transition-colors duration-200 flex items-center gap-2"
+                    onClick={() => navigate("/become-seller")}
+                  >
+                    <FaStore className="h-5 w-5" />
+                    Become a Seller
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className="hover:bg-primary hover:text-white transition-colors duration-200 flex items-center gap-2"
+                    onClick={() => navigate("/join-delivery-team")}
+                  >
+                    <FaTruck className="h-5 w-5" /> 
+                    Join Delivery Team
+                  </a>
+                </li>
+              </ul>
             </div>
           </>
         )}

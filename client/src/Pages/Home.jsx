@@ -5,6 +5,18 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import 'swiper/css/navigation';
 import { Pagination, Navigation, Autoplay } from 'swiper/modules';
+import { motion } from "framer-motion";
+import samsungLogo from "../assets/samsungLogo.png";
+import lenovo from "../assets/lenovo.png";
+import xiaomi from "../assets/xiaomi.png";
+import intel from "../assets/intel.png";
+import nvidia from "../assets/nvidia.png";
+import amd from "../assets/amd.png";
+import playstation from "../assets/playstation.png";
+import lg from "../assets/lg.png";
+import asus from "../assets/asus.png";
+import jbl from "../assets/jbl.png";
+
 
 export const Home = () => {
   // Dummy data for featured products
@@ -46,64 +58,122 @@ export const Home = () => {
       description: 'Amazing product description here.',
     },
   ];
+  const brands = [
+    { id: 1, logo: samsungLogo, name: 'Brand 1' },
+    { id: 2, logo: lenovo, name: 'Brand 2' },
+    { id: 3, logo: xiaomi, name: 'Brand 3' },
+    { id: 4, logo: intel, name: 'Brand 4' },
+    { id: 5, logo: nvidia, name: 'Brand 5' },
+    { id: 6, logo: amd, name: 'Brand 6' },
+    { id: 7, logo: playstation, name: 'Brand 7' },
+    { id: 8, logo: lg, name: 'Brand 8' },
+    { id: 9, logo: asus, name: 'Brand 9' },
+    { id: 10, logo: jbl, name: 'Brand 10' },
+    { id: 11, logo: samsungLogo, name: 'Brand 1' },
+    { id: 12, logo: lenovo, name: 'Brand 2' },
+    { id: 13, logo: xiaomi, name: 'Brand 3' },
+    { id: 14, logo: intel, name: 'Brand 4' },
+    { id: 15, logo: nvidia, name: 'Brand 5' },
+    { id: 16, logo: amd, name: 'Brand 6' },
+    { id: 17, logo: playstation, name: 'Brand 7' },
+    { id: 18, logo: lg, name: 'Brand 8' },
+    { id: 19, logo: asus, name: 'Brand 9' },
+    { id: 20, logo: jbl, name: 'Brand 10' },
+
+  ];
 
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Hero Section */}
-      <section className="text-center py-16 bg-gradient-to-r from-primary to-secondary text-white rounded-lg shadow-2xl mb-12">
-        <h1 className="text-5xl font-bold mb-4">Shop our most popular categories</h1>
-        <p className="text-xl mb-8">Even more reasons to shop with us</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 px-8">
-          <div className="card bg-white shadow-2xl hover:scale-105 transition-transform duration-300">
-            <figure className="px-6 pt-6">
-              <img
-                src="https://placehold.co/300x200"
-                alt="Elegant"
-                className="rounded-xl"
-              />
-            </figure>
-            <div className="card-body items-center text-center">
-              <h2 className="card-title text-2xl font-bold">Elegant</h2>
-              <p className="text-gray-600">Empowering your Tech Experience</p>
-              <div className="card-actions mt-4">
-                <button className="btn btn-primary">Explore</button>
+      <section className="relative flex flex-col items-center text-center min-h-[60vh] px-6 md:px-12 lg:px-24 bg-[#020617] overflow-hidden">
+      
+      {/* Glow Background Lights */}
+      <motion.div 
+        className="absolute top-[-50px] left-[-100px] w-[300px] h-[300px] bg-blue-500/30 blur-[100px]" 
+        animate={{ x: [0, 50, -50, 0], y: [0, 20, -20, 0] }} 
+        transition={{ repeat: Infinity, duration: 8, ease: "linear" }} 
+      />
+      <motion.div 
+        className="absolute bottom-[-50px] right-[-100px] w-[300px] h-[300px] bg-purple-500/30 blur-[100px]" 
+        animate={{ x: [0, -50, 50, 0], y: [0, -20, 20, 0] }} 
+        transition={{ repeat: Infinity, duration: 8, ease: "linear" }} 
+      />
+
+      {/* Hero Content */}
+      <motion.div 
+        className="relative z-10 max-w-3xl text-white backdrop-blur-md bg-white/5 p-6 md:p-8 rounded-2xl shadow-lg border border-white/10"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <motion.h1 
+          className="text-4xl md:text-5xl font-extrabold text-transparent bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+        >
+          Upgrade Your Tech Experience
+        </motion.h1>
+
+        <motion.p 
+          className="text-md md:text-lg text-gray-300 mt-2 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
+        >
+          Premium electronics at the best prices. Fast delivery, secure payments.
+        </motion.p>
+
+        {/* CTA Buttons */}
+        <motion.div 
+          className="mt-6 flex justify-center space-x-3"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.7, ease: "easeOut", delay: 0.3 }}
+        >
+          <motion.button
+            className="relative px-6 py-2 md:px-8 md:py-3 text-sm md:text-lg font-semibold rounded-full text-white bg-gradient-to-r from-blue-500 to-purple-500 hover:from-purple-500 hover:to-blue-500 transition-all duration-300 shadow-lg hover:shadow-purple-500/50"
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Shop Now
+          </motion.button>
+          
+          <motion.button
+            className="relative px-6 py-2 md:px-8 md:py-3 text-sm md:text-lg font-semibold rounded-full text-white border border-gray-300/50 hover:bg-gray-300/10 transition-all duration-300"
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            Learn More
+          </motion.button>
+        </motion.div>
+      </motion.div>
+
+      {/* Brand Slider */}
+      <div className="relative z-10 w-full mt-12 overflow-hidden">
+        <Swiper
+          slidesPerView={5}
+          spaceBetween={10} 
+          autoplay={{
+            delay: 0,
+            disableOnInteraction: false,
+          }}
+          speed={3000}
+          loop={true}
+          modules={[Autoplay]}
+          className="mySwiper"
+        >
+          {brands.map((brand) => (
+            <SwiperSlide key={brand.id}>
+              <div className="flex justify-center items-center h-16"> {/* Reduced height from h-20 to h-16 */}
+                <img src={brand.logo} alt={brand.name} className="max-h-12 max-w-full" /> {/* Reduced logo size */}
               </div>
-            </div>
-          </div>
-          <div className="card bg-white shadow-2xl hover:scale-105 transition-transform duration-300">
-            <figure className="px-6 pt-6">
-              <img
-                src="https://placehold.co/300x200"
-                alt="Shop"
-                className="rounded-xl"
-              />
-            </figure>
-            <div className="card-body items-center text-center">
-              <h2 className="card-title text-2xl font-bold">Shop</h2>
-              <p className="text-gray-600">Categories</p>
-              <div className="card-actions mt-4">
-                <button className="btn btn-primary">Explore</button>
-              </div>
-            </div>
-          </div>
-          <div className="card bg-white shadow-2xl hover:scale-105 transition-transform duration-300">
-            <figure className="px-6 pt-6">
-              <img
-                src="https://placehold.co/300x200"
-                alt="Sell"
-                className="rounded-xl"
-              />
-            </figure>
-            <div className="card-body items-center text-center">
-              <h2 className="card-title text-2xl font-bold">Sell</h2>
-              <p className="text-gray-600">Sell on Electsy</p>
-              <div className="card-actions mt-4">
-                <button className="btn btn-primary">Explore</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
+    </section>
+
 
       {/* Reasons to Shop Section */}
       <section className="py-16">

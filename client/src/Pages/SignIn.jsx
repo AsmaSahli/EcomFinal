@@ -13,6 +13,8 @@ const SignIn = () => {
   const [password, setPassword] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+
 
   const handleSignIn = async (e) => {
     e.preventDefault();
@@ -62,13 +64,23 @@ const SignIn = () => {
           <label className="label">
             <span className="label-text text-gray-600">Password</span>
           </label>
+          <div className="relative">
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter your password"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 pr-10"
           />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-3 text-gray-500"
+          >
+            {showPassword ? "🔓" : "🔒"}
+          </button>
+        </div>
+
           <div className="text-right mt-2">
             {/* Update the Forgot Password link */}
             <Link

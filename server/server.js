@@ -22,6 +22,8 @@ app.use(cookieParser());
 // Routes
 require("./routes/User.routes")(app);
 require("./routes/Auth.routes")(app);
+require("./routes/Seller.routes")(app);
+require("./routes/Category.routes")(app);
 
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {
