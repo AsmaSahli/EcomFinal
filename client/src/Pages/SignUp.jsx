@@ -13,23 +13,28 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [address, setAddress] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("+216"); // Default prefix for Tunisia
-  const [role, setRole] = useState("buyer"); // Default role is "buyer"
+  const [phoneNumber, setPhoneNumber] = useState(""); // Only store the local part
+  const [role, setRole] = useState("buyer");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
+    if (value.length <= 8) { // Tunisian numbers are 8 digits after +216
+      setPhoneNumber(value);
+    }
+  };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
 
-    // Validate password match
     if (password !== confirmPassword) {
       toast.error("Passwords do not match!");
       return;
     }
 
-    // Validate phone number starts with +216
-    if (!phoneNumber.startsWith("+216")) {
-      toast.error("Phone number must start with +216 for Tunisia.");
+    if (phoneNumber.length !== 8) {
+      toast.error("Please enter a valid 8-digit Tunisian phone number");
       return;
     }
 
@@ -45,7 +50,7 @@ const SignUp = () => {
           confirmPassword, 
           role, 
           address, 
-          phoneNumber 
+          phoneNumber: `+216${phoneNumber}` // Combine with country code
         },
         { withCredentials: true }
       );
@@ -53,8 +58,8 @@ const SignUp = () => {
       toast.success("Signup successful!"); 
       navigate("/"); 
     } catch (err) {
-      dispatch(signUpFailure(err.response.data.message || "Something went wrong!"));
-      toast.error(err.response.data.message || "Something went wrong!"); 
+      dispatch(signUpFailure(err.response?.data?.message || "Something went wrong!"));
+      toast.error(err.response?.data?.message || "Something went wrong!"); 
     }
   };
 
@@ -69,118 +74,127 @@ const SignUp = () => {
           Enter your details to sign up.
         </p>
 
-        {/* Name Field */}
-        <div className="form-control w-full mb-4">
-          <label className="label">
-            <span className="label-text text-gray-600">Name</span>
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter your name"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        {/* Email Field */}
-        <div className="form-control w-full mb-4">
-          <label className="label">
-            <span className="label-text text-gray-600">Email</span>
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        {/* Password Field */}
-        <div className="form-control w-full mb-4">
-          <label className="label">
-            <span className="label-text text-gray-600">Password</span>
-          </label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        {/* Confirm Password Field */}
-        <div className="form-control w-full mb-4">
-          <label className="label">
-            <span className="label-text text-gray-600">Confirm Password</span>
-          </label>
-          <input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirm your password"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        {/* Address Field */}
-        <div className="form-control w-full mb-4">
-          <label className="label">
-            <span className="label-text text-gray-600">Address</span>
-          </label>
-          <input
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="Enter your address"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        {/* Phone Number Field */}
-        <div className="form-control w-full mb-6">
-          <label className="label">
-            <span className="label-text text-gray-600">Phone Number</span>
-          </label>
-          <div className="relative">
-            <span className="absolute left-3 top-3 text-gray-400">+216</span>
+        <form onSubmit={handleSignUp} className="space-y-4">
+          {/* Name Field */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-gray-600">Name</span>
+            </label>
             <input
-              type="tel"
-              value={phoneNumber}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value.startsWith("+216")) {
-                  setPhoneNumber(value);
-                }
-              }}
-              placeholder="Enter your phone number"
-              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 pl-12"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name"
+              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
             />
           </div>
-        </div>
 
-        {/* Role Selection (Hidden for now, default is "buyer") */}
-        <input
-          type="hidden"
-          name="role"
-          value={role}
-        />
+          {/* Email Field */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-gray-600">Email</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+            />
+          </div>
 
-        {/* Sign Up Button */}
-        <button
-          onClick={handleSignUp}
-          className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
-        >
-          Sign Up
-        </button>
+          {/* Password Field */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-gray-600">Password</span>
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+              minLength={6}
+            />
+          </div>
+
+          {/* Confirm Password Field */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-gray-600">Confirm Password</span>
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+              minLength={6}
+            />
+          </div>
+
+          {/* Address Field */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-gray-600">Address</span>
+            </label>
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Enter your address"
+              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+            />
+          </div>
+
+          {/* Phone Number Field */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text text-gray-600">Phone Number</span>
+            </label>
+            <div className="flex">
+              <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-600">
+                +216
+              </span>
+              <input
+                type="tel"
+                value={phoneNumber}
+                onChange={handlePhoneChange}
+                placeholder="20 123 456"
+                className="flex-1 input input-bordered rounded-r-md border-l-0 border-gray-300 bg-white focus:border-primary focus:ring-2 focus:ring-primary/20"
+                maxLength={8}
+                required
+              />
+            </div>
+            <label className="label">
+              <span className="label-text-alt text-gray-400">
+                Tunisian number (8 digits)
+              </span>
+            </label>
+          </div>
+
+          {/* Hidden Role Field */}
+          <input type="hidden" name="role" value={role} />
+
+          {/* Sign Up Button */}
+          <button
+            type="submit"
+            className="btn btn-primary w-full mt-2 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
+          >
+            Sign Up
+          </button>
+        </form>
 
         {/* Sign In Section */}
-        <div className="text-center">
+        <div className="text-center mt-4">
           <p className="mb-2 text-gray-600">Already have an account?</p>
           <Link
-            to="/login" // Add your signin route here
+            to="/login"
             className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900"
           >
             Sign In
@@ -188,8 +202,7 @@ const SignUp = () => {
         </div>
       </div>
 
-      {/* ToastContainer for displaying toast messages */}
-      <ToastContainer />
+      <ToastContainer position="top-right" autoClose={5000} />
     </div>
   );
 };

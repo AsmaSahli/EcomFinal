@@ -14,58 +14,51 @@ const transporter = nodemailer.createTransport({
 });
 
 module.exports = {
-    // 🔹 SIGNUP
+
+    // 🔹 SIGNUP (Buyers only)
     signup: async (req, res, next) => {
         try {
-            const { name, email, password, confirmPassword, role, address, phoneNumber, shopName, vatNumber, returnAddress, headquartersAddress, customerServiceAddress, businessRegistrationNumber, vehicleType } = req.body;
+            const { name, email, password, confirmPassword, address, phoneNumber } = req.body;
 
-            // Vérifier si l'email existe déjà
+            // Validate required fields
+            if (!name || !email || !password || !confirmPassword || !address || !phoneNumber) {
+                return next(e.errorHandler(400, "All fields are required"));
+            }
+
+            // Check if email already exists
             if (await User.findOne({ email })) {
                 return next(e.errorHandler(400, "Email already in use"));
             }
 
-            // Vérifier si les mots de passe correspondent
+            // Verify passwords match
             if (password !== confirmPassword) {
                 return next(e.errorHandler(400, "Passwords do not match"));
             }
 
-            // Hashage du mot de passe
+            // Hash password
             const hashedPassword = await bcrypt.hash(password, 10);
 
-            // Définir "buyer" par défaut si le rôle n'est pas fourni
-            const userRole = role || "buyer";
+            // Create new buyer
+            const newBuyer = new Buyer({
+                name,
+                email,
+                password: hashedPassword,
+                role: "buyer", // Explicitly set to buyer
+                address,
+                phoneNumber
+            });
 
-            let newUser;
-            const userData = { name, email, password: hashedPassword, role: userRole };
-
-            switch (userRole) {
-                case "buyer":
-                    if (!address || !phoneNumber) {
-                        return next(e.errorHandler(400, "Fields cannot be empty"));
-                    }
-                    newUser = new Buyer({ ...userData, address, phoneNumber });
-                    break;
-                case "seller":
-                    if (!shopName || !businessRegistrationNumber || !vatNumber || !returnAddress || !headquartersAddress || !customerServiceAddress) {
-                        return next(e.errorHandler(400, "All seller fields are required"));
-                    }
-                    newUser = new Seller({ ...userData, shopName, businessRegistrationNumber, vatNumber, returnAddress, headquartersAddress, customerServiceAddress });
-                    break;
-                case "delivery":
-                    if (!vehicleType) {
-                        return next(e.errorHandler(400, "Delivery person must have vehicle type"));
-                    }
-                    newUser = new DeliveryPerson({ ...userData, vehicleType });
-                    break;
-                case "admin":
-                    newUser = new Admin(userData);
-                    break;
-                default:
-                    return next(e.errorHandler(400, "Invalid role"));
-            }
-
-            await newUser.save();
-            res.status(201).json({ message: "User registered successfully", user: newUser });
+            await newBuyer.save();
+            
+            res.status(201).json({ 
+                message: "Buyer registered successfully", 
+                user: {
+                    id: newBuyer._id,
+                    name: newBuyer.name,
+                    email: newBuyer.email,
+                    role: newBuyer.role
+                }
+            });
         } catch (error) {
             next(error);
         }

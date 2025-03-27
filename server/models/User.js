@@ -3,11 +3,11 @@ const mongoose = require("mongoose");
 const UserSchema = new mongoose.Schema({
     name: { type: String },
     email: { type: String, required: true, unique: true },
-    password: { type: String }, // Remove `required: true`
+    password: { type: String }, 
     role: { 
         type: String, 
         enum: ['buyer', 'seller', 'delivery', 'admin'], 
-        default: 'buyer' // Default role is "buyer"
+        default: 'buyer' 
     },
     profilePicture: { 
         type: String, 
@@ -20,9 +20,9 @@ const UserSchema = new mongoose.Schema({
     isActive: { type: Boolean, default: true }
 }, { timestamps: true, discriminatorKey: 'role' });
 
-// Pre-save hook to enforce password requirement for specific roles
+
 UserSchema.pre("save", function (next) {
-    if (this.role !== "seller" && !this.password) {
+    if ((this.role !== "seller" && this.role !== "delivery") && !this.password) {
         const error = new Error("Password is required for this role.");
         return next(error);
     }
@@ -50,7 +50,18 @@ const SellerSchema = new mongoose.Schema({
 });
 
 const DeliveryPersonSchema = new mongoose.Schema({
-    vehicleType: { type: String, required: true }
+    vehicleType: { type: String, required: true },
+    vehicleNumber: { type: String, required: true },
+    deliveryArea: { type: String, required: true },
+    contactNumber: { type: String, required: true },
+    cv: { type: String },
+    reasonForRejection: { type: String },
+    status: {
+        type: String,
+        enum: ["pending", "under_review", "approved", "rejected"],
+        default: "pending",
+    },
+
 });
 
 const AdminSchema = new mongoose.Schema({});
