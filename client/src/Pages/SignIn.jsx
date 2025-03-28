@@ -1,7 +1,7 @@
-import React, { useState } from "react";
-import { useDispatch } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
-import { useNavigate, Link } from "react-router-dom"; // Import Link from react-router-dom
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/ecomLogo.png";
 import { ToastContainer, toast } from "react-toastify";
@@ -14,10 +14,12 @@ const SignIn = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-
+  const { currentUser, loading } = useSelector((state) => state.user);
 
   const handleSignIn = async (e) => {
     e.preventDefault();
+
+    if (loading) return;
 
     dispatch(signInStart());
 
@@ -27,14 +29,27 @@ const SignIn = () => {
         { email, password },
         { withCredentials: true }
       );
+      
       dispatch(signInSuccess(response.data.user));
       toast.success("Login successful!");
+    // Check the user object
+    console.log("User role:", response.data.user.role);
+    console.log("User isActive:", response.data.user.isActive);
+    
+    if (response.data.user.role === "seller") {
+      navigate("/seller-dashboard");
+    } else if (response.data.user.role === "delivery") {
+      navigate("/delivery-dashboard");
+    } else {
       navigate("/");
+    }
     } catch (err) {
-      dispatch(signInFailure(err.response.data.message || "Something went wrong!"));
-      toast.error(err.response.data.message || "Something went wrong!");
+      dispatch(signInFailure(err.response?.data?.message || "Something went wrong!"));
+      toast.error(err.response?.data?.message || "Something went wrong!");
     }
   };
+
+  // Remove the useEffect for navigation as we're doing it immediately after sign-in
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-purple-50">
@@ -47,57 +62,61 @@ const SignIn = () => {
           Enter your email and password to sign in.
         </p>
 
-        <div className="form-control w-full mb-4">
-          <label className="label">
-            <span className="label-text text-gray-600">Email</span>
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        <div className="form-control w-full mb-6">
-          <label className="label">
-            <span className="label-text text-gray-600">Password</span>
-          </label>
-          <div className="relative">
-          <input
-            type={showPassword ? "text" : "password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 pr-10"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-3 text-gray-500"
-          >
-            {showPassword ? "🔓" : "🔒"}
-          </button>
-        </div>
-
-          <div className="text-right mt-2">
-            {/* Update the Forgot Password link */}
-            <Link
-              to="/forgot-password" // Add the route to the Forgot Password page
-              className="text-sm text-primary hover:underline"
-            >
-              Forgot Password?
-            </Link>
+        <form onSubmit={handleSignIn}>
+          <div className="form-control w-full mb-4">
+            <label className="label">
+              <span className="label-text text-gray-600">Email</span>
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
+              required
+            />
           </div>
-        </div>
 
-        <button
-          onClick={handleSignIn}
-          className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
-        >
-          Sign In
-        </button>
+          <div className="form-control w-full mb-6">
+            <label className="label">
+              <span className="label-text text-gray-600">Password</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 pr-10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-3 text-gray-500"
+              >
+                {showPassword ? "🔓" : "🔒"}
+              </button>
+            </div>
+
+            <div className="text-right mt-2">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-primary hover:underline"
+              >
+                Forgot Password?
+              </Link>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
+            disabled={loading}
+          >
+            {loading ? "Signing In..." : "Sign In"}
+          </button>
+        </form>
 
         <div className="flex items-center my-6">
           <div className="flex-grow border-t border-gray-200"></div>

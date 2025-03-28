@@ -11,6 +11,10 @@ import ForgotPassword from "./components/ForgotPassword ";
 import ResetPassword from "./components/ResetPassword";
 import BecomeSeller from "./Pages/BecomeSeller";
 import BecomeDelivery from "./Pages/BecomeDelivery";
+import ApplicationStatus from "./Pages/ApplicationStatus";
+import SetPassword from "./Pages/SetPassword";
+import SellerDashboard from "./Pages/SellerDashboard";
+import DeliveryDashboard from "./Pages/DeliveryDashboard";
 
 function App() {
   return (
@@ -25,7 +29,16 @@ function App() {
           <Route path="/become-seller" element={<BecomeSeller/>} />
           <Route path="/join-delivery-team" element={<BecomeDelivery/>} />
 
+          <Route path="/application-status" element={<ApplicationStatus/>} />
+          <Route path="/set-password" element={<SetPassword />} />
+          
+        <Route path="/seller-dashboard" element={<SellerDashboard />} />
+        <Route path="/delivery-dashboard" element={<DeliveryDashboard />} />
+
+
         </Route>
+
+
 
           <Route path="/" element={<Navigate to="/homePage" />} />
           <Route path="/homePage" element={< Home/>} />

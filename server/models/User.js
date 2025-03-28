@@ -17,7 +17,9 @@ const UserSchema = new mongoose.Schema({
     lockUntil: { type: Number },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
-    isActive: { type: Boolean, default: true }
+    approvalToken: { type: String },
+    approvalTokenExpires: { type: Date },
+    isActive: { type: Boolean, default: false}
 }, { timestamps: true, discriminatorKey: 'role' });
 
 

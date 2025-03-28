@@ -68,47 +68,81 @@ module.exports = {
     signin: async (req, res, next) => {
         try {
             const { email, password } = req.body;
-
-            // Vérifier si l'utilisateur existe
-            const user = await User.findOne({ email });
-            if (!user) return next(e.errorHandler(400, "Invalid email or password"));
-
-            // Vérifier le mot de passe
-            const isMatch = await bcrypt.compare(password, user.password);
-            if (!isMatch) return next(e.errorHandler(400, "Invalid email or password"));
-
-            // Vérifier si le compte est actif
-            if (!user.isActive) {
-                return next(e.errorHandler(403, "Your account has been deactivated"));
+    
+            // Validate input
+            if (!email || !password) {
+                return next(e.errorHandler(400, "Email and password are required"));
             }
-
-            // Générer le token JWT
+    
+            // Find user and verify existence
+            const user = await User.findOne({ email }).select('+password');
+            if (!user) {
+                return next(e.errorHandler(400, "Invalid email or password"));
+            }
+    
+            // Verify password
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return next(e.errorHandler(400, "Invalid email or password"));
+            }
+    
+            // Check if account is active
+            if (!user.isActive) {
+                return next(e.errorHandler(403, "Your account has been deactivated. Please contact support."));
+            }
+    
+            // Check seller/delivery approval status
+            if (user.role === 'seller' && user.status !== 'approved') {
+                return next(e.errorHandler(403, "Your seller account is pending approval"));
+            }
+    
+            if (user.role === 'delivery' && user.status !== 'approved') {
+                return next(e.errorHandler(403, "Your delivery account is pending approval"));
+            }
+    
+            // Generate JWT token
             const token = jwt.sign(
-                { userId: user._id, role: user.role },
+                { 
+                    userId: user._id, 
+                    role: user.role,
+                    email: user.email,
+                    status: user.status
+                },
                 process.env.JWT_SECRET,
                 { expiresIn: "7d" }
             );
-
-            // Envoyer le token dans un cookie sécurisé
+    
+            // Set secure cookie
             res.cookie("access_token", token, {
-                httpOnly: true, // Sécuriser l'accès du cookie
-                secure: process.env.NODE_ENV === "production", // Si en production, utiliser HTTPS
-                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 jours
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "strict",
+                maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
             });
-
-            // Réponse avec les détails de l'utilisateur
+    
+            // Prepare user data to send to client
+            const userData = {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                profilePicture: user.profilePicture || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png",
+                role: user.role,
+                isActive: user.isActive,
+                status: user.status,
+                createdAt: user.createdAt
+            };
+    
+            // Successful response
             res.status(200).json({
+                success: true,
                 message: "Signin successful",
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                    profilePicture: user.profilePicture,
-                    role: user.role,
-                },
+                user: userData,
+                token: token
             });
+    
         } catch (error) {
-            next(error);
+            console.error("Signin error:", error);
+            next(e.errorHandler(500, "Internal server error during authentication"));
         }
     },
 
@@ -280,4 +314,29 @@ module.exports = {
             next(error);
         }
     },
+
+    setPassword: async (req, res, next) => {try {
+        const { token, password } = req.body;
+
+        const user = await User.findOne({
+            approvalToken: token,
+            approvalTokenExpires: { $gt: Date.now() }
+        });
+
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+
+        // Hash and save the new password
+        user.password = await bcrypt.hash(password, 10);
+        user.isActive = true; // Activate account
+        user.approvalToken = undefined; // Remove token
+        user.approvalTokenExpires = undefined;
+        await user.save();
+
+        res.json({ message: "Password set successfully. You can now log in." });
+    } catch (error) {
+        next(error);
+    }
+},
 };

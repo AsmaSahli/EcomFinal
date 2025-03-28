@@ -66,6 +66,7 @@ const BecomeSeller = () => {
         fiscalIdentificationCard: null,
         tradeRegister: null,
       });
+      navigate("/application-status");
     } catch (err) {
       // Show error alert
       setAlert({
@@ -209,6 +210,17 @@ const BecomeSeller = () => {
             >
               Sign In
             </button>
+            <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                Want to check your application status?{" "}
+                <a
+                    href="/application-status"
+                    className="text-blue-500 hover:underline"
+                >
+                    Click here
+                </a>
+                </p>
+            </div>
           </div>
         </div>
 

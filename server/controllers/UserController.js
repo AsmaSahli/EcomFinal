@@ -117,5 +117,24 @@ module.exports = {
         } catch (error) {
             next(error);
         }
+    },
+
+    getApplicationStatus: async (req, res, next) => { try {
+        const { email } = req.query;
+        const user = await User.findOne({ email });
+
+        if (!user || (user.role !== "seller" && user.role !== "delivery")) {
+            return res.status(404).json({ message: "Application not found" });
+        }
+
+        res.json({
+            status: user.status,
+            rejectionReason: user.status === "rejected" ? user.rejectionReason : null
+        });
+    } catch (error) {
+        next(error);
     }
+},
+
+
 };

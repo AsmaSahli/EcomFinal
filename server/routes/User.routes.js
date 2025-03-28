@@ -5,4 +5,5 @@ module.exports = (app) => {
     app.put("/user/:id", userController.updateUser);
     app.patch("/user/:id/deactivate", userController.deactivateAccount);
     app.get("/user/:id", userController.getUserById);
+    app.get("/application-status", userController.getApplicationStatus)
 };

@@ -91,6 +91,7 @@ const BecomeDelivery = () => {
         contactNumber: "",
         cv: null,
       });
+      navigate("/application-status");
     } catch (err) {
       setAlert({
         show: true,
@@ -242,6 +243,17 @@ const BecomeDelivery = () => {
               {loading ? "Submitting..." : "Submit Application"}
             </button>
           </form>
+          <div className="mt-4">
+                <p className="text-sm text-gray-600">
+                Want to check your application status?{" "}
+                <a
+                    href="/application-status"
+                    className="text-blue-500 hover:underline"
+                >
+                    Click here
+                </a>
+                </p>
+            </div>
         </div>
 
         {/* Right Design Section */}
