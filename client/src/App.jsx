@@ -15,6 +15,7 @@ import ApplicationStatus from "./Pages/ApplicationStatus";
 import SetPassword from "./Pages/SetPassword";
 import SellerDashboard from "./Pages/SellerDashboard";
 import DeliveryDashboard from "./Pages/DeliveryDashboard";
+import AdminDashboard from "./Pages/AdminDashboard";
 
 function App() {
   return (
@@ -42,6 +43,7 @@ function App() {
 
           <Route path="/" element={<Navigate to="/homePage" />} />
           <Route path="/homePage" element={< Home/>} />
+          <Route path="/admin-dashboard" element={< AdminDashboard/>} />
 
           </Routes>
 
