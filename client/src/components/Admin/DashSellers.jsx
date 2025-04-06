@@ -29,13 +29,8 @@ const DashSellers = () => {
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
             />
           </div>
-          <Link 
-            to="/admin/sellers/new"
-            className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
-          >
-            <FaPlus />
-            Add Seller
-          </Link>
+
+
         </div>
       </div>
 
