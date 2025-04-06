@@ -1,5 +1,5 @@
-import React from "react";
-import { Link, useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   FaHome, 
   FaTruck, 
@@ -10,19 +10,34 @@ import {
   FaBell,
   FaSearch,
   FaMapMarkerAlt,
-  FaClock,
-  FaCheckCircle,
-  FaDollarSign,
-  FaStar
+  FaCheckCircle
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
 import { signoutSuccess } from '../redux/user/userSlice';
+import DashOverview from "../components/Delivery/DashOverview";
+import DashMyDeliveries from "../components/Delivery/DashMyDeliveries";
+import DashDelivreyMap from "../components/Delivery/DashDelivreyMap";
+import DashDelivreyHistory from "../components/Delivery/DashDelivreyHistory";
+import DashSettings from "../components/Delivery/DashSettings";
+
 
 const DeliveryDashboard = () => {
   const currentUser = useSelector(state => state.user.currentUser);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const tabFromUrl = urlParams.get('tab');
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    } else {
+      setActiveTab('dashboard');
+    }
+  }, [location.search]);
 
   const signOut = async () => {
     try {
@@ -34,7 +49,7 @@ const DeliveryDashboard = () => {
     }
   };
 
-  // Mock delivery data - replace with your actual data from API
+  // Mock delivery data
   const deliveryData = {
     stats: {
       completed: 24,
@@ -73,13 +88,19 @@ const DeliveryDashboard = () => {
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-1">
             <li>
-              <Link to="/delivery-dashboard" className="flex items-center px-4 py-3 rounded-lg bg-[#4A12C4] text-white font-medium">
+              <Link 
+                to="/delivery-dashboard?tab=dashboard" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'dashboard' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+              >
                 <FaHome className="mr-3 text-purple-200" />
                 Dashboard
               </Link>
             </li>
             <li>
-              <Link to="/deliveries" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#4A12C4] hover:text-white transition">
+              <Link 
+                to="/delivery-dashboard?tab=deliveries" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'deliveries' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+              >
                 <FaClipboardList className="mr-3 text-purple-200" />
                 My Deliveries
                 <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
@@ -88,19 +109,28 @@ const DeliveryDashboard = () => {
               </Link>
             </li>
             <li>
-              <Link to="/map" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#4A12C4] hover:text-white transition">
+              <Link 
+                to="/delivery-dashboard?tab=map" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'map' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+              >
                 <FaMapMarkerAlt className="mr-3 text-purple-200" />
                 Delivery Map
               </Link>
             </li>
             <li>
-              <Link to="/history" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#4A12C4] hover:text-white transition">
+              <Link 
+                to="/delivery-dashboard?tab=history" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'history' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+              >
                 <FaCheckCircle className="mr-3 text-purple-200" />
                 Delivery History
               </Link>
             </li>
             <li>
-              <Link to="/settings" className="flex items-center px-4 py-3 rounded-lg hover:bg-[#4A12C4] hover:text-white transition">
+              <Link 
+                to="/delivery-dashboard?tab=settings" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'settings' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+              >
                 <FaCog className="mr-3 text-purple-200" />
                 Settings
               </Link>
@@ -157,160 +187,11 @@ const DeliveryDashboard = () => {
 
         {/* Dashboard Content */}
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
-          {/* Welcome Banner */}
-          <div className="bg-gradient-to-r from-[#3F0AAD] to-[#5E1ED1] text-white rounded-xl p-6 mb-6 shadow-lg">
-            <div className="flex justify-between items-center">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">Delivery Dashboard</h2>
-                <p className="text-purple-100">You have {deliveryData.currentDeliveries.length} active deliveries today</p>
-              </div>
-              <button className="bg-white text-[#3F0AAD] px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition">
-                View All Deliveries
-              </button>
-            </div>
-          </div>
-
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Today's Deliveries</p>
-                  <h3 className="text-2xl font-bold mt-1">{deliveryData.currentDeliveries.length}</h3>
-                </div>
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <FaTruck className="text-[#3F0AAD]" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center text-sm text-green-500">
-                <span>2 new assignments</span>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Completed</p>
-                  <h3 className="text-2xl font-bold mt-1">{deliveryData.stats.completed}</h3>
-                </div>
-                <div className="bg-green-100 p-3 rounded-lg">
-                  <FaCheckCircle className="text-green-600" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center text-sm text-gray-500">
-                <span>This week</span>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Total Earnings</p>
-                  <h3 className="text-2xl font-bold mt-1">{deliveryData.stats.earnings}</h3>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <FaDollarSign className="text-blue-600" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center text-sm text-green-500">
-                <span>↑ 8.5%</span>
-                <span className="ml-2 text-gray-500">vs last week</span>
-              </div>
-            </div>
-            
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex justify-between items-start">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Your Rating</p>
-                  <h3 className="text-2xl font-bold mt-1">{deliveryData.stats.rating}/5</h3>
-                </div>
-                <div className="bg-yellow-100 p-3 rounded-lg">
-                  <FaStar className="text-yellow-600" />
-                </div>
-              </div>
-              <div className="mt-4 flex items-center text-sm text-gray-500">
-                <span>From 42 customers</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Current Deliveries */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            {/* Active Deliveries */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Active Deliveries</h3>
-                <span className="text-sm text-[#3F0AAD] font-medium">View All</span>
-              </div>
-              
-              <div className="space-y-4">
-                {deliveryData.currentDeliveries.map(delivery => (
-                  <div key={delivery.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{delivery.customer}</h4>
-                        <p className="text-sm text-gray-500 mt-1">{delivery.address}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <FaClock className="text-gray-400" />
-                        <span className="text-sm text-gray-500">{delivery.time}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3 flex justify-between items-center">
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        delivery.status === 'in_progress' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {delivery.status === 'in_progress' ? 'In Progress' : 'Pending'}
-                      </span>
-                      <button className="text-sm text-[#3F0AAD] font-medium hover:underline">
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Deliveries */}
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Recent Deliveries</h3>
-                <span className="text-sm text-[#3F0AAD] font-medium">View All</span>
-              </div>
-              
-              <div className="space-y-4">
-                {deliveryData.recentDeliveries.map(delivery => (
-                  <div key={delivery.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-medium">{delivery.customer}</h4>
-                        <p className="text-sm text-gray-500 mt-1">{delivery.address}</p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-sm text-gray-500">{delivery.time}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3 flex justify-between items-center">
-                      <span className="flex items-center text-green-600 text-sm">
-                        <FaCheckCircle className="mr-1" />
-                        Delivered
-                      </span>
-                      <button className="text-sm text-[#3F0AAD] font-medium hover:underline">
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Delivery Map Placeholder */}
-
+          {activeTab === 'dashboard' && <DashOverview deliveryData={deliveryData} />}
+          {activeTab === 'deliveries' && <DashMyDeliveries deliveries={deliveryData.currentDeliveries} />}
+          {activeTab === 'map' && <DashDelivreyMap />}
+          {activeTab === 'history' && <DashDelivreyHistory deliveries={deliveryData.recentDeliveries} />}
+          {activeTab === 'settings' && <DashSettings />}
         </main>
       </div>
     </div>
