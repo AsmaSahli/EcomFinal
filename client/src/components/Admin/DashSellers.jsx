@@ -1,16 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import { FaStore, FaChartLine, FaSearch, FaPlus, FaEdit, FaBan } from "react-icons/fa";
 
 const DashSellers = () => {
-  // Mock sellers data
-  const sellers = [
-    { id: 1, name: "Tech Gadgets", owner: "Alex Johnson", products: 42, status: "verified", revenue: "$12,450" },
-    { id: 2, name: "Fashion Hub", owner: "Sarah Williams", products: 28, status: "verified", revenue: "$8,720" },
-    { id: 3, name: "Home Essentials", owner: "Mike Chen", products: 15, status: "pending", revenue: "$3,210" },
-    { id: 4, name: "Book World", owner: "Emma Davis", products: 37, status: "verified", revenue: "$5,890" },
-    { id: 5, name: "Sports Gear", owner: "James Wilson", products: 19, status: "suspended", revenue: "$2,340" },
-  ];
+  const [sellers, setSellers] = useState([]);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalSellers, setTotalSellers] = useState(0);
+  const [sellersPerPage, setSellersPerPage] = useState(8);
+  const [showingRange, setShowingRange] = useState("");
+  const [stats, setStats] = useState({
+    total: 0,
+    verified: 0,
+    pending: 0,
+    suspended: 0
+  });
+
+  useEffect(() => {
+    const fetchSellers = async () => {
+      try {
+        // Fetch sellers with pagination
+        const sellersResponse = await axios.get(`http://localhost:8000/users?page=${currentPage}&limit=${sellersPerPage}&role=seller`);
+        console.log(sellersResponse.data)
+        setSellers(sellersResponse.data.users);
+        setTotalSellers(sellersResponse.data.total);
+        setSellersPerPage(sellersResponse.data.limit);
+        setShowingRange(sellersResponse.data.showing);
+
+        // Fetch stats (you'll need to create this endpoint)
+        const statsResponse = await axios.get("http://localhost:8000/users/sellers/stats");
+        console.log(statsResponse.data)
+        setStats(statsResponse.data);
+      } catch (err) {
+        setError("Failed to fetch sellers data");
+        console.error("Failed to fetch sellers:", err);
+      }
+    };
+
+    fetchSellers();
+  }, [currentPage]);
 
   return (
     <div className="space-y-6">
@@ -29,28 +58,29 @@ const DashSellers = () => {
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
             />
           </div>
-
-
         </div>
       </div>
+
+      {/* Error Handling */}
+      {error && <p className="text-red-600 font-medium">{error}</p>}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="text-gray-500 text-sm">Total Sellers</div>
-          <div className="text-2xl font-bold mt-1">24</div>
+          <div className="text-2xl font-bold mt-1">{stats.total}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="text-gray-500 text-sm">Verified</div>
-          <div className="text-2xl font-bold mt-1">18</div>
+          <div className="text-2xl font-bold mt-1">{stats.verified}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="text-gray-500 text-sm">Pending</div>
-          <div className="text-2xl font-bold mt-1">4</div>
+          <div className="text-2xl font-bold mt-1">{stats.pending}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
           <div className="text-gray-500 text-sm">Suspended</div>
-          <div className="text-2xl font-bold mt-1">2</div>
+          <div className="text-2xl font-bold mt-1">{stats.suspended}</div>
         </div>
       </div>
 
@@ -70,22 +100,22 @@ const DashSellers = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {sellers.map(seller => (
-                <tr key={seller.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{seller.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{seller.owner}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{seller.products}</td>
+                <tr key={seller._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{seller.shopName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{seller.name}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{seller.productsCount || 0}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 text-xs rounded-full ${
-                      seller.status === 'verified' 
+                      seller.status === 'approved' 
                         ? 'bg-green-100 text-green-800' 
-                        : seller.status === 'pending'
+                        : seller.status === 'pending' || seller.status === 'under_review'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                     }`}>
                       {seller.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{seller.revenue}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">${seller.revenue || 0}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex gap-2">
                       <button className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50">
@@ -103,6 +133,51 @@ const DashSellers = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-500">
+          Showing {showingRange}
+        </div>
+
+        <div className="flex gap-1">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${
+              currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            Previous
+          </button>
+
+          {[...Array(Math.ceil(totalSellers / sellersPerPage)).keys()].map((num) => (
+            <button
+              key={num + 1}
+              onClick={() => setCurrentPage(num + 1)}
+              className={`px-3 py-1 rounded ${
+                currentPage === num + 1
+                  ? 'bg-gray-800 text-white'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              {num + 1}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage === Math.ceil(totalSellers / sellersPerPage)}
+            onClick={() =>
+              setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalSellers / sellersPerPage)))
+            }
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${
+              currentPage === Math.ceil(totalSellers / sellersPerPage) ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            Next
+          </button>
         </div>
       </div>
     </div>

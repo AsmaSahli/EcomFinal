@@ -1,16 +1,45 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
-import { FaTruck, FaSearch, FaMapMarkerAlt, FaCheck, FaTimes, FaInfo } from "react-icons/fa";
+import { FaPhone, FaCar, FaSearch, FaMapMarkerAlt, FaCheck, FaTimes, FaInfo } from "react-icons/fa";
 
 const DashDeliveries = () => {
-  // Mock deliveries data
-  const deliveries = [
-    { id: "#DL-1001", customer: "John Smith", driver: "Mike Chen", pickup: "Warehouse A", status: "in-progress", eta: "30 mins" },
-    { id: "#DL-1002", customer: "Emma Johnson", driver: "Sarah Williams", pickup: "Store Center", status: "pending", eta: "1 hour" },
-    { id: "#DL-1003", customer: "David Wilson", driver: "Alex Brown", pickup: "Warehouse B", status: "delivered", eta: "Completed" },
-    { id: "#DL-1004", customer: "Lisa Davis", driver: "James Miller", pickup: "Store Downtown", status: "failed", eta: "Returned" },
-    { id: "#DL-1005", customer: "Robert Taylor", driver: "Emily Wilson", pickup: "Warehouse A", status: "in-progress", eta: "45 mins" },
-  ];
+  const [deliveries, setDeliveries] = useState([]);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalDeliveries, setTotalDeliveries] = useState(0);
+  const [deliveriesPerPage, setDeliveriesPerPage] = useState(8);
+  const [showingRange, setShowingRange] = useState("");
+  const [stats, setStats] = useState({
+    todaysDeliveries: 0,
+    inProgress: 0,
+    pending: 0,
+    completed: 0
+  });
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  useEffect(() => {
+    const fetchDeliveries = async () => {
+      try {
+        // Fetch deliveries with pagination and status filter
+        const deliveriesResponse = await axios.get(`http://localhost:8000/users?page=${currentPage}&limit=${deliveriesPerPage}&role=delivery`);
+        console.log(deliveriesResponse.data)
+        setDeliveries(deliveriesResponse.data.users);
+        setTotalDeliveries(deliveriesResponse.data.total);
+        setDeliveriesPerPage(deliveriesResponse.data.limit);
+        setShowingRange(deliveriesResponse.data.showing);
+
+        // Fetch stats
+        const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
+        setStats(statsResponse.data);
+      } catch (err) {
+        setError("Failed to fetch deliveries data");
+        console.error("Failed to fetch deliveries:", err);
+      }
+    };
+
+    fetchDeliveries();
+  }, [currentPage, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -29,33 +58,43 @@ const DashDeliveries = () => {
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
             />
           </div>
-          <select className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-700">
-            <option>All Status</option>
-            <option>Pending</option>
-            <option>In Progress</option>
-            <option>Delivered</option>
-            <option>Failed</option>
+          <select
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-700"
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1); // Reset to first page when filter changes
+            }}
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending</option>
+            <option value="in-progress">In Progress</option>
+            <option value="delivered">Delivered</option>
+            <option value="failed">Failed</option>
           </select>
         </div>
       </div>
 
+      {/* Error Handling */}
+      {error && <p className="text-red-600 font-medium">{error}</p>}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">Today's Deliveries</div>
-          <div className="text-2xl font-bold mt-1">24</div>
+          <div className="text-gray-500 text-sm">Total Delivery Persons</div>
+          <div className="text-2xl font-bold mt-1">{stats.total}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">In Progress</div>
-          <div className="text-2xl font-bold mt-1">8</div>
+          <div className="text-gray-500 text-sm">Pending Approval</div>
+          <div className="text-2xl font-bold mt-1">{stats.pending}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">Pending</div>
-          <div className="text-2xl font-bold mt-1">5</div>
+          <div className="text-gray-500 text-sm">Approved</div>
+          <div className="text-2xl font-bold mt-1">{stats.approved}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">Completed</div>
-          <div className="text-2xl font-bold mt-1">11</div>
+          <div className="text-gray-500 text-sm">Rejected</div>
+          <div className="text-2xl font-bold mt-1">{stats.rejected}</div>
         </div>
       </div>
 
@@ -75,40 +114,64 @@ const DashDeliveries = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {deliveries.map(delivery => (
-                <tr key={delivery.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{delivery.id}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{delivery.customer}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{delivery.driver}</td>
+              {deliveries.map(person => (
+                <tr key={person._id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={person.profilePicture}
+                        alt="Profile"
+                        className="w-8 h-8 rounded-full object-cover"
+                      />
+                      {person.name || 'N/A'}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <FaPhone className="text-gray-400" />
+                      {person.contactNumber}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <FaCar className="text-blue-500" />
+                      {person.vehicleType} ({person.vehicleNumber})
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                     <div className="flex items-center gap-1">
                       <FaMapMarkerAlt className="text-red-500" />
-                      {delivery.pickup}
+                      {person.deliveryArea}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      delivery.status === 'delivered' 
-                        ? 'bg-green-100 text-green-800' 
-                        : delivery.status === 'in-progress'
-                          ? 'bg-blue-100 text-blue-800'
-                          : delivery.status === 'failed'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {delivery.status}
+                    <span className={`px-2 py-1 text-xs rounded-full ${person.status === 'approved'
+                      ? 'bg-green-100 text-green-800'
+                      : person.status === 'rejected'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                      {person.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{delivery.eta}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex gap-2">
-                      <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50">
+                      <button
+                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                        title="Approve"
+                      >
                         <FaCheck />
                       </button>
-                      <button className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50">
+                      <button
+                        className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                        title="Reject"
+                      >
                         <FaTimes />
                       </button>
-                      <button className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50">
+                      <button
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                        title="View Details"
+                      >
                         <FaInfo />
                       </button>
                     </div>
@@ -117,6 +180,48 @@ const DashDeliveries = () => {
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="flex justify-between items-center">
+        <div className="text-sm text-gray-500">
+          Showing {showingRange}
+        </div>
+
+        <div className="flex gap-1">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+          >
+            Previous
+          </button>
+
+          {[...Array(Math.ceil(totalDeliveries / deliveriesPerPage)).keys()].map((num) => (
+            <button
+              key={num + 1}
+              onClick={() => setCurrentPage(num + 1)}
+              className={`px-3 py-1 rounded ${currentPage === num + 1
+                ? 'bg-gray-800 text-white'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
+            >
+              {num + 1}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage === Math.ceil(totalDeliveries / deliveriesPerPage)}
+            onClick={() =>
+              setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalDeliveries / deliveriesPerPage)))
+            }
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === Math.ceil(totalDeliveries / deliveriesPerPage) ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+          >
+            Next
+          </button>
         </div>
       </div>
 

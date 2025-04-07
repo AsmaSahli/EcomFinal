@@ -18,7 +18,13 @@ module.exports = {
 
     updateUser: async (req, res, next) => {
         const { id } = req.params;
-        const { name, email, password, newPassword, address, phoneNumber, shopName, headquartersAddress, businessRegistrationNumber, vatNumber, returnAddress, vehicleType, statusDelivery, customerServiceAddress } = req.body;
+        const {
+            name, email, password, newPassword,
+            address, phoneNumber, // buyer
+            shopName, headquartersAddress, fiscalIdentificationCard, tradeRegister, businessDescription, logo, // seller
+            vehicleType, vehicleNumber, deliveryArea, contactNumber, cv, // delivery
+        } = req.body;
+
         const { role, userId } = req.user;
 
         try {
@@ -56,20 +62,23 @@ module.exports = {
 
             if (name) user.name = name;
 
+            // Role-based fields
             if (user.role === 'buyer') {
                 if (address) user.address = address;
                 if (phoneNumber) user.phoneNumber = phoneNumber;
             } else if (user.role === 'seller') {
                 if (shopName) user.shopName = shopName;
                 if (headquartersAddress) user.headquartersAddress = headquartersAddress;
-                if (businessRegistrationNumber) user.businessRegistrationNumber = businessRegistrationNumber;
-                if (vatNumber) user.vatNumber = vatNumber;
-                if (returnAddress) user.returnAddress = returnAddress;
-                if (headquartersAddress) user.headquartersAddress = headquartersAddress;
-                if (customerServiceAddress) user.customerServiceAddress = customerServiceAddress;
+                if (fiscalIdentificationCard) user.fiscalIdentificationCard = fiscalIdentificationCard;
+                if (tradeRegister) user.tradeRegister = tradeRegister;
+                if (businessDescription) user.businessDescription = businessDescription;
+                if (logo) user.logo = logo;
             } else if (user.role === 'delivery') {
                 if (vehicleType) user.vehicleType = vehicleType;
-                if (statusDelivery) user.statusDelivery = statusDelivery;
+                if (vehicleNumber) user.vehicleNumber = vehicleNumber;
+                if (deliveryArea) user.deliveryArea = deliveryArea;
+                if (contactNumber) user.contactNumber = contactNumber;
+                if (cv) user.cv = cv;
             }
 
             await user.save();
@@ -119,22 +128,146 @@ module.exports = {
         }
     },
 
-    getApplicationStatus: async (req, res, next) => { try {
-        const { email } = req.query;
-        const user = await User.findOne({ email });
+    getApplicationStatus: async (req, res, next) => {
+        try {
+            const { email } = req.query;
+            const user = await User.findOne({ email });
 
-        if (!user || (user.role !== "seller" && user.role !== "delivery")) {
-            return res.status(404).json({ message: "Application not found" });
+            if (!user || (user.role !== "seller" && user.role !== "delivery")) {
+                return res.status(404).json({ message: "Application not found" });
+            }
+
+            res.json({
+                status: user.status,
+                rejectionReason: user.status === "rejected" ? user.rejectionReason : null
+            });
+        } catch (error) {
+            next(error);
         }
+    },
+    getUsers: async (req, res, next) => {
+        try {
+            let { page = 1, limit = 10, role } = req.query;
+            page = parseInt(page);
+            limit = parseInt(limit);
 
-        res.json({
-            status: user.status,
-            rejectionReason: user.status === "rejected" ? user.rejectionReason : null
-        });
-    } catch (error) {
-        next(error);
-    }
-},
+            // Build query object
+            const query = {};
+            if (role) {
+                query.role = role;
+            }
 
+            const totalUsers = await User.countDocuments(query);
+            const users = await User.find(query)
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .sort({ createdAt: -1 });
+
+            const from = (page - 1) * limit + 1;
+            const to = Math.min(from + users.length - 1, totalUsers);
+
+            res.status(200).json({
+                users,
+                total: totalUsers,
+                page,
+                limit,
+                showing: `${from} - ${to} of ${totalUsers} users`,
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    getSellersStats: async (req, res, next) => {
+        try {
+            const total = await User.countDocuments({ role: 'seller' });
+            const verified = await User.countDocuments({ role: 'seller', status: 'approved' });
+            const pending = await User.countDocuments({ role: 'seller', status: { $in: ['pending', 'under_review'] } });
+            const suspended = await User.countDocuments({ role: 'seller', status: 'rejected' });
+
+            res.status(200).json({
+                total,
+                verified,
+                pending,
+                suspended
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    getDeliversStats: async (req, res, next) => {
+        try {
+            const total = await User.countDocuments({ role: 'delivery' });
+            const pending = await User.countDocuments({
+                role: 'delivery',
+                status: { $in: ['pending', 'under_review'] }
+            });
+            const approved = await User.countDocuments({
+                role: 'delivery',
+                status: 'approved'
+            });
+            const rejected = await User.countDocuments({
+                role: 'delivery',
+                status: 'rejected'
+            });
+
+            res.status(200).json({
+                total,
+                pending,
+                approved,
+                rejected
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
+
+    getDashboardStats: async (req, res, next) => {
+        try {
+            // Count all users
+            const totalUsers = await User.countDocuments({});
+
+            // Count active sellers (approved and active)
+            const activeSellers = await User.countDocuments({
+                role: 'seller',
+                status: 'approved',
+                isActive: true
+            });
+
+            // Count delivery persons (pending approval)
+            const pendingDeliveries = await User.countDocuments({
+                role: 'delivery',
+                status: { $in: ['pending', 'under_review'] }
+            });
+
+            // Count new users this week
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const newUsers = await User.countDocuments({
+                createdAt: { $gte: oneWeekAgo }
+            });
+
+            // Count approved delivery persons
+            const completedDeliveries = await User.countDocuments({
+                role: 'delivery',
+                status: 'approved'
+            });
+
+            // Mock revenue data (replace with actual calculation)
+            const revenue = 12500;
+
+            res.status(200).json({
+                totalUsers,
+                activeSellers,
+                pendingDeliveries,
+                revenue,
+                newUsers,
+                completedDeliveries
+            });
+        } catch (error) {
+            next(error);
+        }
+    },
 
 };

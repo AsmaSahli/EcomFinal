@@ -1,20 +1,34 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { FaUserEdit, FaUserTimes, FaUserPlus, FaSearch } from "react-icons/fa";
+import React, { useEffect, useState } from "react";
+import axios from "axios"; import { FaUserEdit, FaUserTimes, FaSearch } from "react-icons/fa";
 
 const DashUsers = () => {
-  // Mock user data
-  const users = [
-    { id: 1, name: "Alex Johnson", email: "alex@example.com", role: "admin", status: "active", lastActive: "2 hours ago" },
-    { id: 2, name: "Sarah Williams", email: "sarah@example.com", role: "seller", status: "active", lastActive: "1 day ago" },
-    { id: 3, name: "Mike Chen", email: "mike@example.com", role: "customer", status: "inactive", lastActive: "1 week ago" },
-    { id: 4, name: "Emma Davis", email: "emma@example.com", role: "delivery", status: "pending", lastActive: "Just now" },
-    { id: 5, name: "James Wilson", email: "james@example.com", role: "customer", status: "active", lastActive: "5 hours ago" },
-  ];
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [usersPerPage, setUsersPerPage] = useState(8);
+  const [showingRange, setShowingRange] = useState("");
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const response = await axios.get(`http://localhost:8000/users?page=${currentPage}&limit=${usersPerPage}&role=buyer`);
+        console.log(response.data)
+        setUsers(response.data.users);
+        setTotalUsers(response.data.total);
+        setUsersPerPage(response.data.limit); // optional if limit is dynamic
+        setShowingRange(response.data.showing); // e.g. "3 - 3 of 3 users"
+      } catch (err) {
+        setError("Failed to fetch users");
+        console.error("Failed to fetch users:", err);
+      }
+    };
+
+    fetchUsers();
+  }, [currentPage]);
 
   return (
     <div className="space-y-6">
-      {/* Header and Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold">User Management</h2>
@@ -29,9 +43,11 @@ const DashUsers = () => {
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
             />
           </div>
-
         </div>
       </div>
+
+      {/* Error Handling */}
+      {error && <p className="text-red-600 font-medium">{error}</p>}
 
       {/* Users Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -49,22 +65,21 @@ const DashUsers = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {users.map(user => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{user.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">{user.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500 capitalize">{user.role}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      user.status === 'active' 
-                        ? 'bg-green-100 text-green-800' 
-                        : user.status === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`px-2 py-1 text-xs rounded-full ${user.status === 'active'
+                      ? 'bg-green-100 text-green-800'
+                      : user.status === 'pending'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                      }`}>
                       {user.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{user.lastActive}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{user.lastActive || "—"}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">
                     <div className="flex gap-2">
                       <button className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50">
@@ -85,23 +100,46 @@ const DashUsers = () => {
       {/* Pagination */}
       <div className="flex justify-between items-center">
         <div className="text-sm text-gray-500">
-          Showing 1 to 5 of 24 users
+          Showing {showingRange}
         </div>
+
         <div className="flex gap-1">
-          <button className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+          >
             Previous
           </button>
-          <button className="px-3 py-1 rounded bg-gray-800 text-white">
-            1
-          </button>
-          <button className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100">
-            2
-          </button>
-          <button className="px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100">
+
+          {[...Array(Math.ceil(totalUsers / usersPerPage)).keys()].map((num) => (
+            <button
+              key={num + 1}
+              onClick={() => setCurrentPage(num + 1)}
+              className={`px-3 py-1 rounded ${currentPage === num + 1
+                  ? 'bg-gray-800 text-white'
+                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
+            >
+              {num + 1}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage === Math.ceil(totalUsers / usersPerPage)}
+            onClick={() =>
+              setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalUsers / usersPerPage)))
+            }
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === Math.ceil(totalUsers / usersPerPage) ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+          >
             Next
           </button>
         </div>
+
       </div>
+
     </div>
   );
 };
