@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { FaStore, FaChartLine, FaSearch, FaPlus, FaEdit, FaBan } from "react-icons/fa";
+import { FaCheck, FaTimes,FaInfo , FaStore, FaChartLine, FaSearch, FaPlus, FaEdit, FaBan } from "react-icons/fa";
 
 const DashSellers = () => {
   const [sellers, setSellers] = useState([]);
@@ -40,6 +40,67 @@ const DashSellers = () => {
 
     fetchSellers();
   }, [currentPage]);
+
+  const handleApprove = async (userId) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/users/${userId}/approve`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+
+      // Update the seller in state
+      setSellers(sellers.map(seller =>
+        seller._id === userId ? { ...seller, status: 'approved', isActive: true } : seller
+      ));
+
+      // Refresh stats
+      const statsResponse = await axios.get("http://localhost:8000/users/sellers/stats");
+      setStats(statsResponse.data);
+
+      alert('Seller approved successfully');
+    } catch (error) {
+      console.error('Failed to approve seller:', error);
+      alert(error.response?.data?.message || 'Failed to approve seller');
+    }
+  };
+
+  const handleReject = async (userId) => {
+    const reason = prompt('Please enter the reason for rejection:');
+    if (!reason) return;
+
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/users/${userId}/reject`,
+        { reason },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+
+      // Update the seller in state
+      setSellers(sellers.map(seller =>
+        seller._id === userId ? {
+          ...seller,
+          status: 'rejected',
+          isActive: false,
+          rejectionReason: reason
+        } : seller
+      ));
+
+      // Refresh stats
+      const statsResponse = await axios.get("http://localhost:8000/users/sellers/stats");
+      setStats(statsResponse.data);
+
+      alert('Seller rejected successfully');
+    } catch (error) {
+      console.error('Failed to reject seller:', error);
+      alert(error.response?.data?.message || 'Failed to reject seller');
+    }
+  };
+
+  const handleViewDetails = (userId) => {
+    // Navigate to user details page or show modal
+    console.log('View details for user:', userId);
+  };
 
   return (
     <div className="space-y-6">
@@ -105,13 +166,12 @@ const DashSellers = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">{seller.name}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">{seller.productsCount || 0}</td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      seller.status === 'approved' 
-                        ? 'bg-green-100 text-green-800' 
-                        : seller.status === 'pending' || seller.status === 'under_review'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                    }`}>
+                    <span className={`px-2 py-1 text-xs rounded-full ${seller.status === 'approved'
+                      ? 'bg-green-100 text-green-800'
+                      : seller.status === 'pending' || seller.status === 'under_review'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
+                      }`}>
                       {seller.status}
                     </span>
                   </td>
@@ -126,6 +186,33 @@ const DashSellers = () => {
                       </button>
                       <button className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50">
                         <FaChartLine />
+                      </button>
+                    </div>
+                    <div className="flex gap-2">
+                      {['pending', 'under_review'].includes(seller.status) && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(seller._id)}
+                            className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                            title="Approve"
+                          >
+                            <FaCheck />
+                          </button>
+                          <button
+                            onClick={() => handleReject(seller._id)}
+                            className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                            title="Reject"
+                          >
+                            <FaTimes />
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={() => handleViewDetails(seller._id)}
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                        title="View Details"
+                      >
+                        <FaInfo />
                       </button>
                     </div>
                   </td>
@@ -146,9 +233,8 @@ const DashSellers = () => {
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${
-              currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
           >
             Previous
           </button>
@@ -157,11 +243,10 @@ const DashSellers = () => {
             <button
               key={num + 1}
               onClick={() => setCurrentPage(num + 1)}
-              className={`px-3 py-1 rounded ${
-                currentPage === num + 1
-                  ? 'bg-gray-800 text-white'
-                  : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
-              }`}
+              className={`px-3 py-1 rounded ${currentPage === num + 1
+                ? 'bg-gray-800 text-white'
+                : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                }`}
             >
               {num + 1}
             </button>
@@ -172,9 +257,8 @@ const DashSellers = () => {
             onClick={() =>
               setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalSellers / sellersPerPage)))
             }
-            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${
-              currentPage === Math.ceil(totalSellers / sellersPerPage) ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === Math.ceil(totalSellers / sellersPerPage) ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
           >
             Next
           </button>

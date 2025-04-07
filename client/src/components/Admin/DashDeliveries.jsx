@@ -41,6 +41,63 @@ const DashDeliveries = () => {
     fetchDeliveries();
   }, [currentPage, statusFilter]);
 
+  const handleApprove = async (deliveryId) => {
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/users/${deliveryId}/approve`,
+        {},
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+
+      // Update the delivery status in state
+      setDeliveries(deliveries.map(delivery =>
+        delivery._id === deliveryId ? { ...delivery, status: 'approved' } : delivery
+      ));
+
+      // Refresh stats
+      const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
+      setStats(statsResponse.data);
+
+      alert('Delivery approved successfully');
+    } catch (error) {
+      console.error('Failed to approve delivery:', error);
+      alert(error.response?.data?.message || 'Failed to approve delivery');
+    }
+  };
+
+  const handleReject = async (deliveryId) => {
+    const reason = prompt('Please enter the reason for rejection:');
+    if (!reason) return;
+
+    try {
+      const response = await axios.put(
+        `http://localhost:8000/users/${deliveryId}/reject`,
+        { reason },
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+      );
+
+      // Update the delivery status in state
+      setDeliveries(deliveries.map(delivery =>
+        delivery._id === deliveryId ? { ...delivery, status: 'rejected', rejectionReason: reason } : delivery
+      ));
+
+      // Refresh stats
+      const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
+      setStats(statsResponse.data);
+
+      alert('Delivery rejected successfully');
+    } catch (error) {
+      console.error('Failed to reject delivery:', error);
+      alert(error.response?.data?.message || 'Failed to reject delivery');
+    }
+  };
+
+  const handleViewDetails = (deliveryId) => {
+    // Navigate to delivery details page or show modal
+    console.log('View details for delivery:', deliveryId);
+  };
+
+
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
@@ -156,19 +213,26 @@ const DashDeliveries = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex gap-2">
+                      {['pending', 'under_review'].includes(person.status) && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(person._id)}
+                            className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                            title="Approve"
+                          >
+                            <FaCheck />
+                          </button>
+                          <button
+                            onClick={() => handleReject(person._id)}
+                            className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                            title="Reject"
+                          >
+                            <FaTimes />
+                          </button>
+                        </>
+                      )}
                       <button
-                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                        title="Approve"
-                      >
-                        <FaCheck />
-                      </button>
-                      <button
-                        className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                        title="Reject"
-                      >
-                        <FaTimes />
-                      </button>
-                      <button
+                        onClick={() => handleViewDetails(person._id)}
                         className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
                         title="View Details"
                       >
