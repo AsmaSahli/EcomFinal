@@ -10,7 +10,5 @@ module.exports = (app) => {
     app.get("/users/sellers/stats", userController.getSellersStats);
     app.get("/users/deliveries/stats", userController.getDeliversStats);
     app.get("/dashboard/stats", userController.getDashboardStats);
-    app.put('/users/:id/approve', userController.approveUser);
-    app.put('/users/:id/reject', userController.rejectUser);
+
 };
-// app.put('/users/:id/approve', verifyToken, verifyAdmin, userController.approveUser);

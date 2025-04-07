@@ -44,7 +44,7 @@ const DashDeliveries = () => {
   const handleApprove = async (deliveryId) => {
     try {
       const response = await axios.put(
-        `http://localhost:8000/users/${deliveryId}/approve`,
+        `http://localhost:8000/approve/${deliveryId}`,
         {},
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
@@ -71,7 +71,7 @@ const DashDeliveries = () => {
 
     try {
       const response = await axios.put(
-        `http://localhost:8000/users/${deliveryId}/reject`,
+        `http://localhost:8000/reject/${deliveryId}`,
         { reason },
         { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
       );
