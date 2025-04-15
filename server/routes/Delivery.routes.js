@@ -5,7 +5,7 @@ const upload = require("../utils/upload");
 
 
 router.post("/register", upload.fields([{ name: "cv", maxCount: 1 }]), deliveryController.registerDeliveryPerson);
-
+router.get('/pending-count', deliveryController.getPendingDeliveriesCount);
 module.exports = (app) => {
   app.use("/api/delivery", router);
 };

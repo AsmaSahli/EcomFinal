@@ -9,6 +9,7 @@ router.post("/register", upload.fields([
   { name: "tradeRegister", maxCount: 1 },
 ]), sellerController.registerSeller);
 router.get("/getSellerDetails",sellerController.getSellerDetails)
+router.get('/pending-count', sellerController.getPendingSellersCount);
 
 module.exports = (app) => {
   app.use("/api/seller", router); 

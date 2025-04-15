@@ -27,13 +27,15 @@ import DashDeliveries from "../components/Admin/DashDeliveries";
 import DashAnalytics from "../components/Admin/DashAnalytics";
 import DashSettings from "../components/Admin/DashSettings";
 
-
 const AdminDashboard = () => {
   const currentUser = useSelector(state => state.user.currentUser);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [pendingSellersCount, setPendingSellersCount] = useState(0);
+  const [pendingDeliveriesCount, setPendingDeliveriesCount] = useState(0);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search);
@@ -45,6 +47,27 @@ const AdminDashboard = () => {
     }
   }, [location.search]);
 
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        setLoading(true);
+        // Fetch pending sellers count
+        const sellersRes = await axios.get('http://localhost:8000/api/seller/pending-count');
+        setPendingSellersCount(sellersRes.data.count);
+        
+        // Fetch pending deliveries count (you'll need to implement this endpoint)
+        const deliveriesRes = await axios.get('http://localhost:8000/api/delivery/pending-count');
+        setPendingDeliveriesCount(deliveriesRes.data.count);
+      } catch (error) {
+        console.error('Error fetching counts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCounts();
+  }, []);
+
   const signOut = async () => {
     try {
       await axios.post('http://localhost:8000/signout');
@@ -55,12 +78,13 @@ const AdminDashboard = () => {
     }
   };
 
-  // Mock data
+  // Mock data for other stats (you can replace these with real data later)
   const stats = {
     totalUsers: 142,
     newUsers: 8,
     activeSellers: 24,
-    pendingDeliveries: 15,
+    pendingSellers: pendingSellersCount,
+    pendingDeliveries: pendingDeliveriesCount,
     completedDeliveries: 89,
     revenue: "$12,845"
   };
@@ -107,9 +131,6 @@ const AdminDashboard = () => {
               >
                 <FaUsers className="mr-3 text-gray-300" />
                 User Management
-                <span className="ml-auto bg-gray-600 text-xs font-semibold px-2 py-1 rounded-full">
-                  {stats.totalUsers}
-                </span>
               </Link>
             </li>
             <li>
@@ -119,9 +140,11 @@ const AdminDashboard = () => {
               >
                 <FaStore className="mr-3 text-gray-300" />
                 Sellers
-                <span className="ml-auto bg-gray-600 text-xs font-semibold px-2 py-1 rounded-full">
-                  {stats.activeSellers}
-                </span>
+                {!loading && pendingSellersCount > 0 && (
+                  <span className="ml-auto bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                    {pendingSellersCount}
+                  </span>
+                )}
               </Link>
             </li>
             <li>
@@ -131,9 +154,11 @@ const AdminDashboard = () => {
               >
                 <FaTruck className="mr-3 text-gray-300" />
                 Deliveries
-                <span className="ml-auto bg-gray-600 text-xs font-semibold px-2 py-1 rounded-full">
-                  {stats.pendingDeliveries}
-                </span>
+                {!loading && pendingDeliveriesCount > 0 && (
+                  <span className="ml-auto bg-yellow-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                    {pendingDeliveriesCount}
+                  </span>
+                )}
               </Link>
             </li>
             <li>

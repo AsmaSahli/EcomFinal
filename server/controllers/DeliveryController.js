@@ -36,6 +36,16 @@ module.exports = {
       next(error);
     }
   },
+  getPendingDeliveriesCount: async (req, res, next) => {
+    try {
+      const count = await DeliveryPerson.countDocuments({ status: 'pending' });
+      res.status(200).json({ count });
+    } catch (error) {
+      next(error);
+    }
+  },
+
+
 
 
 };

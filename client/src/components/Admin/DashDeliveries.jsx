@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Link } from "react-router-dom";
-import { FaPhone, FaCar, FaSearch, FaMapMarkerAlt, FaCheck, FaTimes, FaInfo } from "react-icons/fa";
+import { FaCheck, FaUsers, FaTimes, FaInfo, FaTrash, FaTruck, FaChartLine, FaSearch, FaBan, FaFilePdf, FaDownload } from "react-icons/fa";
 
 const DashDeliveries = () => {
   const [deliveries, setDeliveries] = useState([]);
@@ -10,26 +9,26 @@ const DashDeliveries = () => {
   const [totalDeliveries, setTotalDeliveries] = useState(0);
   const [deliveriesPerPage, setDeliveriesPerPage] = useState(8);
   const [showingRange, setShowingRange] = useState("");
+
+  const [selectedDelivery, setSelectedDelivery] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [stats, setStats] = useState({
-    todaysDeliveries: 0,
-    inProgress: 0,
+    total: 0,
+    verified: 0,
     pending: 0,
-    completed: 0
+    suspended: 0
   });
-  const [statusFilter, setStatusFilter] = useState("all");
 
   useEffect(() => {
     const fetchDeliveries = async () => {
       try {
-        // Fetch deliveries with pagination and status filter
         const deliveriesResponse = await axios.get(`http://localhost:8000/users?page=${currentPage}&limit=${deliveriesPerPage}&role=delivery`);
-        console.log(deliveriesResponse.data)
         setDeliveries(deliveriesResponse.data.users);
         setTotalDeliveries(deliveriesResponse.data.total);
         setDeliveriesPerPage(deliveriesResponse.data.limit);
         setShowingRange(deliveriesResponse.data.showing);
 
-        // Fetch stats
         const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
         setStats(statsResponse.data);
       } catch (err) {
@@ -39,96 +38,105 @@ const DashDeliveries = () => {
     };
 
     fetchDeliveries();
-  }, [currentPage, statusFilter]);
+  }, [currentPage]);
 
-  const handleApprove = async (deliveryId) => {
+  const handleApprove = async (userId) => {
     try {
-      const response = await axios.put(
-        `http://localhost:8000/approve/${deliveryId}`,
-        {},
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
+      await axios.put(`http://localhost:8000/approve/${userId}`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
 
-      // Update the delivery status in state
       setDeliveries(deliveries.map(delivery =>
-        delivery._id === deliveryId ? { ...delivery, status: 'approved' } : delivery
+        delivery._id === userId ? { ...delivery, status: 'approved', isActive: true } : delivery
       ));
 
-      // Refresh stats
       const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
       setStats(statsResponse.data);
 
-      alert('Delivery approved successfully');
+      alert('Delivery person approved successfully');
     } catch (error) {
-      console.error('Failed to approve delivery:', error);
-      alert(error.response?.data?.message || 'Failed to approve delivery');
+      console.error('Failed to approve delivery person:', error);
+      alert(error.response?.data?.message || 'Failed to approve delivery person');
     }
   };
 
-  const handleReject = async (deliveryId) => {
+  const handleReject = async (userId) => {
     const reason = prompt('Please enter the reason for rejection:');
     if (!reason) return;
 
     try {
-      const response = await axios.put(
-        `http://localhost:8000/reject/${deliveryId}`,
-        { reason },
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
-      );
+      await axios.put(`http://localhost:8000/reject/${userId}`, { reason }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
 
-      // Update the delivery status in state
       setDeliveries(deliveries.map(delivery =>
-        delivery._id === deliveryId ? { ...delivery, status: 'rejected', rejectionReason: reason } : delivery
+        delivery._id === userId ? {
+          ...delivery,
+          status: 'rejected',
+          isActive: false,
+          rejectionReason: reason
+        } : delivery
       ));
 
-      // Refresh stats
       const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
       setStats(statsResponse.data);
 
-      alert('Delivery rejected successfully');
+      alert('Delivery person rejected successfully');
     } catch (error) {
-      console.error('Failed to reject delivery:', error);
-      alert(error.response?.data?.message || 'Failed to reject delivery');
+      console.error('Failed to reject delivery person:', error);
+      alert(error.response?.data?.message || 'Failed to reject delivery person');
+    }
+  };
+
+  const handleDelete = async (userId) => {
+    const confirmed = window.confirm("Are you sure you want to delete this delivery person?");
+    if (!confirmed) return;
+
+    try {
+      await axios.delete(`http://localhost:8000/delete/${userId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      setDeliveries(deliveries.filter(delivery => delivery._id !== userId));
+
+      const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
+      setStats(statsResponse.data);
+
+      alert("Delivery person deleted successfully.");
+    } catch (error) {
+      console.error("Failed to delete delivery person:", error);
+      alert(error.response?.data?.message || "Failed to delete delivery person");
     }
   };
 
   const handleViewDetails = (deliveryId) => {
-    // Navigate to delivery details page or show modal
-    console.log('View details for delivery:', deliveryId);
+    const delivery = deliveries.find(d => d._id === deliveryId);
+    setSelectedDelivery(delivery);
+    setIsModalOpen(true);
   };
 
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedDelivery(null);
+  };
 
   return (
     <div className="space-y-6">
       {/* Header and Actions */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold">Deliveries Management</h2>
-          <p className="text-gray-600">Track and manage all delivery orders</p>
+          <h2 className="text-2xl font-bold">Delivery Personnel Management</h2>
+          <p className="text-gray-600">Manage all delivery personnel and their information</p>
         </div>
         <div className="flex gap-3 w-full md:w-auto">
           <div className="relative flex-1 md:w-64">
             <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              placeholder="Search deliveries..."
+              placeholder="Search delivery personnel..."
               className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent"
             />
           </div>
-          <select
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-gray-700"
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1); // Reset to first page when filter changes
-            }}
-          >
-            <option value="all">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="in-progress">In Progress</option>
-            <option value="delivered">Delivered</option>
-            <option value="failed">Failed</option>
-          </select>
         </div>
       </div>
 
@@ -136,108 +144,161 @@ const DashDeliveries = () => {
       {error && <p className="text-red-600 font-medium">{error}</p>}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">Total Delivery Persons</div>
-          <div className="text-2xl font-bold mt-1">{stats.total}</div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Total Delivery Personnel Card */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                <FaUsers className="text-gray-400" />
+                Total Delivery Personnel
+              </p>
+              <h3 className="text-2xl font-bold mt-2">{stats.total}</h3>
+            </div>
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <FaTruck className="text-blue-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center text-sm text-green-500">
+            <span>↑ {Math.round((stats.total / (stats.total || 1)) * 100)}%</span>
+            <span className="ml-2 text-gray-500">all time</span>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">Pending Approval</div>
-          <div className="text-2xl font-bold mt-1">{stats.pending}</div>
+
+        {/* Verified Delivery Personnel Card */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                <FaCheck className="text-green-400" />
+                Verified
+              </p>
+              <h3 className="text-2xl font-bold mt-2">{stats.verified}</h3>
+            </div>
+            <div className="bg-green-50 p-3 rounded-lg">
+              <FaCheck className="text-green-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center text-sm text-green-500">
+            <span>↑ {Math.round((stats.verified / (stats.total || 1)) * 100)}%</span>
+            <span className="ml-2 text-gray-500">of total</span>
+          </div>
         </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">Approved</div>
-          <div className="text-2xl font-bold mt-1">{stats.approved}</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-          <div className="text-gray-500 text-sm">Rejected</div>
-          <div className="text-2xl font-bold mt-1">{stats.rejected}</div>
+
+        {/* Pending Approval Card */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+          <div className="flex justify-between items-start">
+            <div>
+              <p className="text-sm font-medium text-gray-500 flex items-center gap-2">
+                <FaInfo className="text-yellow-400" />
+                Pending Approval
+              </p>
+              <h3 className="text-2xl font-bold mt-2">{stats.pending}</h3>
+            </div>
+            <div className="bg-yellow-50 p-3 rounded-lg">
+              <FaInfo className="text-yellow-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center text-sm text-yellow-500">
+            <span>↑ {Math.round((stats.pending / (stats.total || 1)) * 100)}%</span>
+            <span className="ml-2 text-gray-500">awaiting review</span>
+          </div>
         </div>
       </div>
 
-      {/* Deliveries Table */}
+      {/* Delivery Personnel Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delivery ID</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Driver</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pickup Location</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Profile</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Number</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ETA</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {deliveries.map(person => (
-                <tr key={person._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={person.profilePicture}
-                        alt="Profile"
-                        className="w-8 h-8 rounded-full object-cover"
-                      />
-                      {person.name || 'N/A'}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <FaPhone className="text-gray-400" />
-                      {person.contactNumber}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <FaCar className="text-blue-500" />
-                      {person.vehicleType} ({person.vehicleNumber})
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <FaMapMarkerAlt className="text-red-500" />
-                      {person.deliveryArea}
-                    </div>
-                  </td>
+              {deliveries.map(delivery => (
+                <tr key={delivery._id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs rounded-full ${person.status === 'approved'
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <img 
+                          className="h-10 w-10 rounded-full object-cover" 
+                          src={delivery.profilePicture || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'} 
+                          alt="Profile"
+                        />
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{delivery.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{delivery.email}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-500">{delivery.contactNumber || 'N/A'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 py-1 text-xs rounded-full ${delivery.status === 'approved'
                       ? 'bg-green-100 text-green-800'
-                      : person.status === 'rejected'
-                        ? 'bg-red-100 text-red-800'
-                        : 'bg-yellow-100 text-yellow-800'
+                      : delivery.status === 'pending' || delivery.status === 'under_review'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-red-100 text-red-800'
                       }`}>
-                      {person.status}
+                      {delivery.status}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex gap-2">
-                      {['pending', 'under_review'].includes(person.status) && (
-                        <>
-                          <button
-                            onClick={() => handleApprove(person._id)}
-                            className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                            title="Approve"
-                          >
-                            <FaCheck />
-                          </button>
-                          <button
-                            onClick={() => handleReject(person._id)}
-                            className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                            title="Reject"
-                          >
-                            <FaTimes />
-                          </button>
-                        </>
-                      )}
+                      {/* Always show Info button */}
                       <button
-                        onClick={() => handleViewDetails(person._id)}
+                        onClick={() => handleViewDetails(delivery._id)}
                         className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
                         title="View Details"
                       >
                         <FaInfo />
                       </button>
+
+                      {/* Show different buttons based on status */}
+                      {delivery.status === 'rejected' ? (
+                        // Only show Trash for rejected delivery personnel
+                        <button
+                          onClick={() => handleDelete(delivery._id)}
+                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                          title="Delete"
+                        >
+                          <FaTrash />
+                        </button>
+                      ) : (
+                        // Show all other buttons for non-rejected delivery personnel
+                        <>
+                          <button className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50">
+                            <FaBan />
+                          </button>
+                          <button className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50">
+                            <FaChartLine />
+                          </button>
+                          
+                          {['pending', 'under_review'].includes(delivery.status) && (
+                            <>
+                              <button
+                                onClick={() => handleApprove(delivery._id)}
+                                className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                                title="Approve"
+                              >
+                                <FaCheck />
+                              </button>
+                              <button
+                                onClick={() => handleReject(delivery._id)}
+                                className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                                title="Reject"
+                              >
+                                <FaTimes />
+                              </button>
+                            </>
+                          )}
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -247,22 +308,128 @@ const DashDeliveries = () => {
         </div>
       </div>
 
+      {/* Delivery Personnel Details Modal */}
+      {isModalOpen && selectedDelivery && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Transparent overlay - click to close */}
+          <div 
+            className="absolute inset-0 bg-transparent"
+            onClick={closeModal}
+          ></div>
+          
+          {/* Popup container */}
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-bold text-gray-800">Delivery Personnel Details</h3>
+                <button
+                  onClick={closeModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="mt-6 flex items-center space-x-4">
+                <img 
+                  className="h-16 w-16 rounded-full object-cover" 
+                  src={selectedDelivery.profilePicture || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'} 
+                  alt="Profile"
+                />
+                <div>
+                  <h4 className="text-lg font-bold">{selectedDelivery.name}</h4>
+                  <p className="text-gray-600">{selectedDelivery.email}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Contact Number</label>
+                    <p className="mt-1 text-gray-900">{selectedDelivery.contactNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Vehicle Type</label>
+                    <p className="mt-1 text-gray-900">{selectedDelivery.vehicleType || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Vehicle Number</label>
+                    <p className="mt-1 text-gray-900">{selectedDelivery.vehicleNumber || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Delivery Area</label>
+                    <p className="mt-1 text-gray-900">{selectedDelivery.deliveryArea || 'N/A'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">CV Document</label>
+                    {selectedDelivery.cv ? (
+                      <a 
+                        href={`http://localhost:8000/uploads/${encodeURIComponent(selectedDelivery.cv?.replace(/^.*[\\/]/, ''))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-flex items-center text-blue-600 hover:text-blue-800"
+                      >
+                        <FaFilePdf className="mr-2" />
+                        View CV
+                        <FaDownload className="ml-2 text-sm" />
+                      </a>
+                    ) : (
+                      <p className="mt-1 text-gray-500">Not provided</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Status</label>
+                    <p className="mt-1">
+                      <span className={`px-2 py-1 text-xs rounded-full ${selectedDelivery.status === 'approved'
+                        ? 'bg-green-100 text-green-800'
+                        : selectedDelivery.status === 'pending' || selectedDelivery.status === 'under_review'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                        }`}>
+                        {selectedDelivery.status}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {selectedDelivery.rejectionReason && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-500">Rejection Reason</label>
+                    <p className="mt-1 text-gray-900">{selectedDelivery.rejectionReason}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Pagination */}
       <div className="flex justify-between items-center">
-        <div className="text-sm text-gray-500">
-          Showing {showingRange}
-        </div>
-
+        <div className="text-sm text-gray-500">Showing {showingRange}</div>
         <div className="flex gap-1">
           <button
             disabled={currentPage === 1}
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Previous
           </button>
-
           {[...Array(Math.ceil(totalDeliveries / deliveriesPerPage)).keys()].map((num) => (
             <button
               key={num + 1}
@@ -275,26 +442,14 @@ const DashDeliveries = () => {
               {num + 1}
             </button>
           ))}
-
           <button
             disabled={currentPage === Math.ceil(totalDeliveries / deliveriesPerPage)}
-            onClick={() =>
-              setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalDeliveries / deliveriesPerPage)))
-            }
-            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === Math.ceil(totalDeliveries / deliveriesPerPage) ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(totalDeliveries / deliveriesPerPage)))}
+            className={`px-3 py-1 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 ${currentPage === Math.ceil(totalDeliveries / deliveriesPerPage) ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Next
           </button>
         </div>
-      </div>
-
-      {/* Map View Button */}
-      <div className="flex justify-center">
-        <button className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition">
-          <FaMapMarkerAlt />
-          View Deliveries on Map
-        </button>
       </div>
     </div>
   );

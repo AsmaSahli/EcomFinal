@@ -44,4 +44,13 @@ module.exports = {
       next(error);
     }
   },
+  getPendingSellersCount: async (req, res, next) => {
+    try {
+      const count = await Seller.countDocuments({ status: 'pending' });
+      res.status(200).json({ count });
+    } catch (error) {
+      next(error);
+    }
+  },
+
 };

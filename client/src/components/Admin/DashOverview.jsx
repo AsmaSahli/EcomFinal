@@ -16,6 +16,7 @@ import {
   FaMapMarkerAlt,
   FaCar
 } from "react-icons/fa";
+import ReportModal from './ReportModal';
 
 const DashOverview = () => {
   const [stats, setStats] = useState({
@@ -32,6 +33,7 @@ const DashOverview = () => {
   const [activeTab, setActiveTab] = useState("buyers");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -305,9 +307,12 @@ const DashOverview = () => {
             <p className="text-gray-300">System overview and management tools</p>
           </div>
           <div className="flex gap-3 w-full md:w-auto">
-            <button className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition whitespace-nowrap">
-              Generate Reports
-            </button>
+          <button 
+  onClick={() => setShowReportModal(true)}
+  className="bg-white text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition whitespace-nowrap"
+>
+  Generate Reports
+</button>
           </div>
         </div>
       </div>
@@ -506,6 +511,15 @@ const DashOverview = () => {
           </div>
         </div>
       </div>
+      {showReportModal && (
+  <ReportModal 
+    onClose={() => setShowReportModal(false)}
+    stats={stats}
+    recentBuyers={recentBuyers}
+    recentSellers={recentSellers}
+    recentDeliveries={recentDeliveries}
+  />
+)}
     </div>
   );
 };
