@@ -91,12 +91,9 @@ module.exports = {
 
     deactivateAccount: async (req, res, next) => {
         const { id } = req.params;
-        const { role } = req.user;
 
         try {
-            if (role !== 'admin') {
-                return next(e.errorHandler(403, "Only admin can deactivate accounts"));
-            }
+
 
             const user = await User.findById(id);
             if (!user) {

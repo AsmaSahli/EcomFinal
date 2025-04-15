@@ -74,3 +74,19 @@
             next(error);
         }
     };
+    exports.deleteUser = async (req, res, next) => {
+        try {
+            const { userId } = req.params;
+    
+            const user = await User.findById(userId);
+            if (!user || (user.role !== "seller" && user.role !== "delivery")) {
+                return res.status(404).json({ message: "User not found or not eligible for deletion" });
+            }
+    
+            await User.findByIdAndDelete(userId);
+    
+            res.json({ message: "User deleted successfully", userId });
+        } catch (error) {
+            next(error);
+        }
+    };

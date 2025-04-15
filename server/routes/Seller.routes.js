@@ -8,6 +8,7 @@ router.post("/register", upload.fields([
   { name: "fiscalIdentificationCard", maxCount: 1 },
   { name: "tradeRegister", maxCount: 1 },
 ]), sellerController.registerSeller);
+router.get("/getSellerDetails",sellerController.getSellerDetails)
 
 module.exports = (app) => {
   app.use("/api/seller", router); 

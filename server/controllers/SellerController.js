@@ -30,4 +30,18 @@ module.exports = {
       next(error);
     }
   },
+  getSellerDetails: async (req, res, next) => {
+    try {
+      const { sellerId } = req.params;
+  
+      const seller = await Seller.findById(sellerId).select("-password -__v");
+      if (!seller) {
+        return next(e.errorHandler(404, "Seller not found"));
+      }
+  
+      res.status(200).json({ seller });
+    } catch (error) {
+      next(error);
+    }
+  },
 };
