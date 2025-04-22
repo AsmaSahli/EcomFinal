@@ -7,273 +7,256 @@ import ImageUploader from './ImageUploader';
 import { useSelector } from "react-redux";
 
 const DashAddInventory = () => {
-  // Get current user from Redux
-  const currentUser =useSelector(state => state.user.currentUser);  console.log("Current User from Redux:", currentUser);// Add this line
-  console.log("Current User ID:", currentUser?.id); // Add this line
-
-  // Form state
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: 0,
-    stock: 0,
-    images: [],
-    category: null,
-    subcategory: null,
-    tags: [],
-    sellerId: currentUser?.id 
-  });
-
-  // Dynamic data state
-  const [categories, setCategories] = useState([]);
-  const [tags, setTags] = useState([]);
-  const [loading, setLoading] = useState({
-    categories: true,
-    tags: true,
-    form: false,
-    images: false
-  });
-  const [error, setError] = useState(null);
-
-  // Fetch data on component mount
-  useEffect(() => {
-    const fetchData = async () => {
+    const currentUser = useSelector(state => state.user.currentUser);
+    console.log("Current User from Redux:", currentUser);
+    console.log("Current User ID:", currentUser?.id);
+  
+    const [formData, setFormData] = useState({
+      name: '',
+      description: '',
+      price: 0,
+      stock: 0,
+      images: [],
+      category: null,
+      subcategory: null,
+      tags: [],
+      sellerId: ''
+    });
+  
+    const [categories, setCategories] = useState([]);
+    const [tags, setTags] = useState([]);
+    const [loading, setLoading] = useState({
+      categories: true,
+      tags: true,
+      form: false,
+      images: false
+    });
+    const [error, setError] = useState(null);
+  
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const [categoriesRes, tagsRes] = await Promise.all([
+            axios.get('http://localhost:8000/api/categories'),
+            axios.get('http://localhost:8000/api/product-tags')
+          ]);
+  
+          setCategories(Array.isArray(categoriesRes?.data) ? categoriesRes.data : []);
+          setTags(Array.isArray(tagsRes?.data) ? tagsRes.data : []);
+  
+          setLoading(prev => ({ ...prev, categories: false, tags: false }));
+        } catch (err) {
+          setError(err.response?.data?.message || err.message);
+          setLoading(prev => ({ ...prev, categories: false, tags: false }));
+        }
+      };
+      fetchData();
+    }, []);
+  
+    useEffect(() => {
+      if (currentUser?.id) {
+        setFormData(prev => ({
+          ...prev,
+          sellerId: currentUser.id
+        }));
+      }
+    }, [currentUser]);
+  
+    const addNewCategory = async (categoryData) => {
+      const { name, group, item } = categoryData;
       try {
-        const [categoriesRes, tagsRes] = await Promise.all([
-          axios.get('http://localhost:8000/api/categories'),
-          axios.get('http://localhost:8000/api/product-tags')
-        ]);
-        
-        setCategories(Array.isArray(categoriesRes?.data) ? categoriesRes.data : []);
-        setTags(Array.isArray(tagsRes?.data) ? tagsRes.data : []);
-        
-        setLoading(prev => ({ ...prev, categories: false, tags: false }));
+        setLoading(prev => ({ ...prev, form: true }));
+        const response = await axios.post('http://localhost:8000/api/categories', {
+          name,
+          subcategories: [{ group, items: [item] }]
+        });
+  
+        setCategories(prev => [...prev, response.data]);
+        setFormData(prev => ({
+          ...prev,
+          category: response.data._id,
+          subcategory: null
+        }));
+        setError(null);
       } catch (err) {
         setError(err.response?.data?.message || err.message);
-        setLoading(prev => ({ ...prev, categories: false, tags: false }));
+      } finally {
+        setLoading(prev => ({ ...prev, form: false }));
       }
     };
-    fetchData();
-  }, []);
-
-  // Add new category handler
-  const addNewCategory = async (categoryData) => {
-    const { name, group, item } = categoryData;
-    try {
-      setLoading(prev => ({ ...prev, form: true }));
-      const response = await axios.post('http://localhost:8000/api/categories', {
-        name,
-        subcategories: [{
-          group,
-          items: [item]
-        }]
-      });
-      
-      setCategories(prev => [...prev, response.data]);
-      setFormData(prev => ({ 
-        ...prev, 
-        category: response.data._id,
-        subcategory: null
-      }));
-      setError(null);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message);
-    } finally {
-      setLoading(prev => ({ ...prev, form: false }));
-    }
-  };
-
-  // Add subcategory to existing category handler
-  const handleAddSubcategory = async (categoryId, subcategoryData) => {
-    try {
-      setLoading(prev => ({ ...prev, form: true }));
-      
-      // Find the category to update
-      const categoryToUpdate = categories.find(c => c._id === categoryId);
-      if (!categoryToUpdate) throw new Error('Category not found');
-      
-      // Prepare updated subcategories
-      const updatedSubcategories = [
-        ...(categoryToUpdate.subcategories || []),
-        {
-          group: subcategoryData.group,
-          items: [subcategoryData.item]
-        }
-      ];
-      
-      // Make API call to update category
-      const response = await axios.put(`http://localhost:8000/api/categories/${categoryId}`, {
-        subcategories: updatedSubcategories
-      });
-      
-      // Update local state
-      setCategories(prev => prev.map(cat => 
-        cat._id === categoryId ? response.data : cat
-      ));
-      
-      // Select the newly added subcategory
+  
+    const handleAddSubcategory = async (categoryId, subcategoryData) => {
+      try {
+        setLoading(prev => ({ ...prev, form: true }));
+        const categoryToUpdate = categories.find(c => c._id === categoryId);
+        if (!categoryToUpdate) throw new Error('Category not found');
+  
+        const updatedSubcategories = [
+          ...(categoryToUpdate.subcategories || []),
+          { group: subcategoryData.group, items: [subcategoryData.item] }
+        ];
+  
+        const response = await axios.put(`http://localhost:8000/api/categories/${categoryId}`, {
+          subcategories: updatedSubcategories
+        });
+  
+        setCategories(prev =>
+          prev.map(cat => (cat._id === categoryId ? response.data : cat))
+        );
+  
+        setFormData(prev => ({
+          ...prev,
+          subcategory: {
+            group: subcategoryData.group,
+            item: subcategoryData.item
+          }
+        }));
+  
+        setError(null);
+      } catch (err) {
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(prev => ({ ...prev, form: false }));
+      }
+    };
+  
+    const handleTagSelect = (tagId) => {
+      if (!formData.tags.includes(tagId)) {
+        setFormData(prev => ({ ...prev, tags: [...prev.tags, tagId] }));
+      }
+    };
+  
+    const removeTag = (tagId) => {
       setFormData(prev => ({
         ...prev,
-        subcategory: {
-          group: subcategoryData.group,
-          item: subcategoryData.item
-        }
+        tags: prev.tags.filter(id => id !== tagId)
       }));
-      
-      setError(null);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message);
-    } finally {
-      setLoading(prev => ({ ...prev, form: false }));
-    }
-  };
-
-  // Tag functions
-  const handleTagSelect = (tagId) => {
-    if (!formData.tags.includes(tagId)) {
-      setFormData(prev => ({ ...prev, tags: [...prev.tags, tagId] }));
-    }
-  };
-
-  const removeTag = (tagId) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(id => id !== tagId)
-    }));
-  };
-
-  const addNewTag = async (tagName) => {
-    if (!tagName) return;
-
-    try {
-      setLoading(prev => ({ ...prev, form: true }));
-      const response = await axios.post('http://localhost:8000/api/product-tags', { name: tagName });
-      
-      setTags(prev => [...prev, response.data]);
-      handleTagSelect(response.data._id);
-    } catch (err) {
-      setError(err.response?.data?.message || err.message);
-    } finally {
-      setLoading(prev => ({ ...prev, form: false }));
-    }
-  };
-
-  const handleImageUpload = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    };
   
-    try {
-      setLoading(prev => ({ ...prev, images: true }));
+    const addNewTag = async (tagName) => {
+      if (!tagName) return;
+      try {
+        setLoading(prev => ({ ...prev, form: true }));
+        const response = await axios.post('http://localhost:8000/api/product-tags', { name: tagName });
+        setTags(prev => [...prev, response.data]);
+        handleTagSelect(response.data._id);
+      } catch (err) {
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(prev => ({ ...prev, form: false }));
+      }
+    };
   
-      // Create preview URLs for the images
-      const imagePreviews = files.map(file => ({
-        file, // Store the actual File object
-        url: URL.createObjectURL(file) // Use 'url' instead of 'preview'
-      }));
+    const handleImageUpload = async (e) => {
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
   
-      // Update form data with the new image previews
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...imagePreviews]
-      }));
-    } catch (err) {
-      setError("Failed to process images");
-    } finally {
-      setLoading(prev => ({ ...prev, images: false }));
-    }
-  };
-
-  const removeImage = async (index) => {
-    try {
-      setLoading(prev => ({ ...prev, images: true }));
-      
-      // Remove from local state
-      setFormData(prev => {
-        const updatedImages = [...prev.images];
-        // Revoke the object URL to prevent memory leaks
-        if (updatedImages[index]?.url) {
-          URL.revokeObjectURL(updatedImages[index].url);
-        }
-        updatedImages.splice(index, 1);
-        return { ...prev, images: updatedImages };
-      });
-    } catch (err) {
-      setError("Failed to remove image");
-    } finally {
-      setLoading(prev => ({ ...prev, images: false }));
-    }
-  };
-
-  // Form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      setLoading(prev => ({ ...prev, form: true }));
+      try {
+        setLoading(prev => ({ ...prev, images: true }));
   
-      const formDataToSend = new FormData();
-      
-      // Append all basic fields
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('stock', formData.stock);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('sellerId',  currentUser.id.toString());
+        const imagePreviews = files.map(file => ({
+          file,
+          url: URL.createObjectURL(file)
+        }));
   
-      // Handle subcategory as stringified JSON
-      if (formData.subcategory) {
-        formDataToSend.append('subcategory', JSON.stringify(formData.subcategory));
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, ...imagePreviews]
+        }));
+      } catch (err) {
+        setError("Failed to process images");
+      } finally {
+        setLoading(prev => ({ ...prev, images: false }));
+      }
+    };
+  
+    const removeImage = async (index) => {
+      try {
+        setLoading(prev => ({ ...prev, images: true }));
+        setFormData(prev => {
+          const updatedImages = [...prev.images];
+          if (updatedImages[index]?.url) {
+            URL.revokeObjectURL(updatedImages[index].url);
+          }
+          updatedImages.splice(index, 1);
+          return { ...prev, images: updatedImages };
+        });
+      } catch (err) {
+        setError("Failed to remove image");
+      } finally {
+        setLoading(prev => ({ ...prev, images: false }));
+      }
+    };
+  
+    const handleSubmit = async (e) => {
+      e.preventDefault();
+  
+      if (!formData.name || !formData.price || !formData.stock || !formData.category || !formData.sellerId) {
+        setError("Please fill out all required fields.");
+        return;
       }
   
-      // Append each tag individually
-      formData.tags.forEach(tag => {
-        formDataToSend.append('tags', tag);
-      });
+      try {
+        setLoading(prev => ({ ...prev, form: true }));
   
-      // Append image files
-      formData.images.forEach((image) => {
-        if (image.file) {
-          formDataToSend.append('images', image.file);
+        const formDataToSend = new FormData();
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('price', formData.price);
+        formDataToSend.append('stock', formData.stock);
+        formDataToSend.append('category', formData.category?._id || formData.category);
+        formDataToSend.append('sellerId', formData.sellerId.toString());
+  
+        if (formData.subcategory) {
+          formDataToSend.append('subcategory', JSON.stringify(formData.subcategory));
         }
-      });
   
-      const response = await axios.post(
-        'http://localhost:8000/api/products',
-        formDataToSend,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data'
-          },
-          withCredentials: true
-        }
-      );
+        formData.tags.forEach(tag => {
+          formDataToSend.append('tags', tag);
+        });
   
-      // Reset form on success
-      setFormData({
-        name: '',
-        description: '',
-        price: 0,
-        stock: 0,
-        images: [],
-        category: null,
-        subcategory: null,
-        tags: [],
-        sellerId:''
-      });
+        formData.images.forEach((image) => {
+          if (image.file) {
+            formDataToSend.append('images', image.file);
+          }
+        });
   
-      setError(null);
-      alert('Product created successfully!');
-    } catch (err) {
-      console.error('Submission error:', err);
-      setError(err.response?.data?.error || err.response?.data?.message || "Failed to create product");
-    } finally {
-      setLoading(prev => ({ ...prev, form: false }));
+        await axios.post(
+          'http://localhost:8000/api/products',
+          formDataToSend,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data'
+            },
+            withCredentials: true
+          }
+        );
+  
+        setFormData({
+          name: '',
+          description: '',
+          price: 0,
+          stock: 0,
+          images: [],
+          category: null,
+          subcategory: null,
+          tags: [],
+          sellerId: currentUser?.id || ''
+        });
+  
+        setError(null);
+        alert('Product created successfully!');
+      } catch (err) {
+        console.error('Submission error:', err);
+        setError(err.response?.data?.error || err.response?.data?.message || "Failed to create product");
+      } finally {
+        setLoading(prev => ({ ...prev, form: false }));
+      }
+    };
+  
+    if (loading.categories || loading.tags) {
+      return <div className="text-center py-10">Loading data...</div>;
     }
-  };
-
-  if (loading.categories || loading.tags) {
-    return <div className="text-center py-10">Loading data...</div>;
-  }
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">

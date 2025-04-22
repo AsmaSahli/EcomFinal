@@ -34,10 +34,10 @@ const ProductSchema = new mongoose.Schema({
   }],
 
   sellerId: {
-    type: String,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: [true, "Product seller ID is required"]
   },
-  
 
   // 📂 Category
   category: {

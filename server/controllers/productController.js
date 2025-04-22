@@ -66,7 +66,8 @@ exports.getAllProducts = async (req, res) => {
       .populate("category")
       .populate("promotion")
       .populate("warranty")
-      .populate("reviews");
+      .populate("reviews")
+      .populate("sellerId");
       
     res.status(200).json(products);
   } catch (error) {
