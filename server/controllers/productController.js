@@ -1,6 +1,7 @@
 const Product = require("../models/Product");
 const { uploadToCloudinary, cloudinary } = require('../utils/uploadsImages');
 const mongoose = require('mongoose');
+const Review = require('../models/Review');
 
 // Helper function to process images
 const processImages = async (files) => {
