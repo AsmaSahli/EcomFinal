@@ -89,25 +89,6 @@ module.exports = {
         }
     },
 
-    deactivateAccount: async (req, res, next) => {
-        const { id } = req.params;
-
-        try {
-
-
-            const user = await User.findById(id);
-            if (!user) {
-                return next(e.errorHandler(404, "User not found"));
-            }
-
-            user.isActive = false;
-            await user.save();
-
-            res.status(200).json({ message: "Account deactivated successfully" });
-        } catch (error) {
-            next(error);
-        }
-    },
 
     // New method to get user by ID
     getUserById: async (req, res, next) => {
@@ -266,5 +247,6 @@ module.exports = {
             next(error);
         }
     },
+
 
 };

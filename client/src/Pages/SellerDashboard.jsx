@@ -12,7 +12,9 @@ import {
   FaSearch,
   FaShoppingBag,
   FaDollarSign,
-  FaUsers
+  FaUsers,
+  FaPlus ,
+  FaBoxes
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
@@ -24,6 +26,7 @@ import DashCustomers from "../components/Seller/DashCustomers";
 import DashSales from "../components/Seller/DashSales";
 import DashAnalytics from "../components/Seller/DashAnalytics";
 import DashSettings from "../components/Seller/DashSettings";
+import DashNewProduct from "../components/Seller/DashNewProduct";
 
 const SellerDashboard = () => {
   const currentUser = useSelector(state => state.user.currentUser);
@@ -103,7 +106,7 @@ const SellerDashboard = () => {
           </div>
         </div>
         
-        {/* Sidebar Navigation with tab links */}
+        {/* Sidebar Navigation */}
         <nav className="flex-1 p-4 overflow-y-auto">
           <ul className="space-y-1">
             <li>
@@ -121,10 +124,19 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'products' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaBox className="mr-3 text-purple-200" />
-                Products
+                Product Catalog
                 <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
                   {stats.products}
                 </span>
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/seller-dashboard?tab=add-inventory" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'add-inventory' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+              >
+                <FaBoxes className="mr-3 text-purple-200" />
+                Add Inventory
               </Link>
             </li>
             <li>
@@ -236,6 +248,7 @@ const SellerDashboard = () => {
             />
           )}
           {activeTab === 'products' && <DashProducts />}
+          {activeTab === 'add-inventory' && <DashNewProduct />}
           {activeTab === 'orders' && <DashOrders />}
           {activeTab === 'customers' && <DashCustomers />}
           {activeTab === 'sales' && <DashSales />}

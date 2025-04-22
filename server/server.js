@@ -26,6 +26,11 @@ require("./routes/Seller.routes")(app);
 require("./routes/Category.routes")(app);
 require("./routes/Delivery.routes")(app);
 require("./routes/Admin.routes")(app);
+const productRoutes = require("./routes/Product.routes");
+app.use("/api/products", productRoutes);
+const productTagRoutes = require("./routes/productTag.routes");
+app.use("/api/product-tags", productTagRoutes);
+
 
 // Middleware de gestion des erreurs
 app.use((err, req, res, next) => {

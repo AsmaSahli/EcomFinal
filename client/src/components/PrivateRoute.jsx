@@ -2,11 +2,17 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { Navigate, Outlet } from 'react-router-dom';
 
-const AuthentificationRoute = () => {
+const PrivateRoute = ({ allowedRoles }) => {
   const { currentUser } = useSelector((state) => state.user);
 
-  if (currentUser) {
-    // User is logged in - redirect to appropriate dashboard
+  if (!currentUser) {
+    // Not logged in - redirect to home
+    return <Navigate to="/" replace />;
+  }
+
+  // Check if user has any of the allowed roles
+  if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
+    // Logged in but not authorized - redirect to appropriate dashboard or home
     switch(currentUser.role) {
       case 'seller':
         return <Navigate to="/seller-dashboard" replace />;
@@ -19,8 +25,8 @@ const AuthentificationRoute = () => {
     }
   }
 
-  // Not logged in - allow access to auth pages
+  // Authorized - render the child routes
   return <Outlet />;
 };
 
-export default AuthentificationRoute;
+export default PrivateRoute;
