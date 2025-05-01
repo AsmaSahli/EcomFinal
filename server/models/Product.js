@@ -1,11 +1,48 @@
 const mongoose = require("mongoose");
 
-const imageSchema = new mongoose.Schema({
-    url: { type: String, required: true },
-    publicId: { type: String, required: true }
-  }, { _id: true });
-const ProductSchema = new mongoose.Schema({
+const sellerSpecificSchema = new mongoose.Schema({
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true,
+    min: [0, "Price cannot be negative"]
+  },
+  stock: {
+    type: Number,
+    required: true,
+    min: [0, "Stock cannot be negative"]
+  },
+  tags: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'ProductTag'
+  }],
+  warranty: {
+    type: String,
+    enum: ['', '1 year', '2 years', '3 years', 'lifetime'], // Example warranty options
+    default: ''
+  },
+  // Add any other seller-specific fields here
+}, { _id: false });
 
+const imageSchema = new mongoose.Schema({
+  url: { type: String, required: true },
+  publicId: { type: String, required: true }
+}, { _id: true });
+
+const ProductSchema = new mongoose.Schema({
+  // Unique product reference (like SKU or ISBN)
+  reference: {
+    type: String,
+    required: [true, "Product reference is required"],
+    unique: true,
+    trim: true
+  },
+  
+  // Common product information
   name: {
     type: String,
     required: [true, "Product name is required"],
@@ -15,77 +52,31 @@ const ProductSchema = new mongoose.Schema({
     type: String,
     required: [true, "Product description is required"]
   },
-  price: {
-    type: Number,
-    required: [true, "Product price is required"],
-    min: [0, "Price cannot be negative"]
-  },
-  stock: {
-    type: Number,
-    required: [true, "Product stock is required"],
-    min: [0, "Stock cannot be negative"]
-  },
   images: [imageSchema],
   
-  // 🔖 Tags
-  tags: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ProductTag'
-  }],
-
-  sellerId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, "Product seller ID is required"]
-  },
-
-  // 📂 Category
+  // Category information (common to all sellers)
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category'
   },
-
-  // ⭐ Reviews (Avis)
-  reviews: [{
+  
+  // // Reviews (common to all sellers)
+  // reviews: [{
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'Review'
+  // }],
+  
+  // Seller-specific information
+  sellers: [sellerSpecificSchema],
+  
+  // Original seller who created the product
+  createdBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Review'
-  }],
-
-  // ✅ Warranty (Garantie)
-  warranty: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Warranty'
-  },
-
-  // 🎁 Promotion
-  promotion: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Promotion'
+    ref: 'User',
+    required: true
   }
-
 }, {
   timestamps: true
 });
-
-
-// Generate product ID before saving
-ProductSchema.pre('save', function(next) {
-  if (!this.productId) {
-    this.productId = 'PROD-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-  }
-  next();
-});
-
-// Update stock method
-ProductSchema.methods.updateStock = async function(newStock) {
-  if (newStock < 0) {
-    throw new Error('Stock cannot be negative');
-  }
-  this.stock = newStock;
-  await this.save();
-  return this;
-};
-
-
 
 module.exports = mongoose.model("Product", ProductSchema);
