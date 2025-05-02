@@ -389,84 +389,105 @@ const DashAddInventory = () => {
               </div>
             )}
             
-            {isExistingProduct && selectedExistingProduct && (
-  <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg shadow-sm">
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-      <div className="flex-1">
-        <div className="flex items-center mb-2">
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-            Existing Product
-          </span>
+{isExistingProduct && selectedExistingProduct && (
+  <div className="mt-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div className="flex flex-col sm:flex-row gap-5">
+      {/* Product Image */}
+      {selectedExistingProduct.images?.length > 0 && (
+        <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+          <img
+            src={selectedExistingProduct.images[0].url}
+            alt={selectedExistingProduct.name}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "https://via.placeholder.com/150?text=No+Image";
+            }}
+          />
+        </div>
+      )}
+      
+      {/* Product Details */}
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-800 mb-2">
+              Existing Product
+            </span>
+            <h3 className="text-xl font-bold text-gray-900 truncate">
+              {selectedExistingProduct.name}
+            </h3>
+          </div>
           <button
             type="button"
             onClick={resetForm}
-            className="ml-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+            className="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium"
           >
-            Change Product
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+            </svg>
+            Change
           </button>
         </div>
         
-        <h3 className="text-lg font-semibold text-gray-800">{selectedExistingProduct.name}</h3>
-        
-        <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-          <div>
-            <span className="font-medium text-gray-600">Reference:</span>
-            <span className="ml-1 text-gray-800">{selectedExistingProduct.reference}</span>
+        {/* Metadata Grid */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+          <div className="bg-gray-50 p-2 rounded">
+            <p className="text-xs font-medium text-gray-500">Reference</p>
+            <p className="text-sm font-semibold text-gray-800">{selectedExistingProduct.reference}</p>
           </div>
           
           {selectedExistingProduct.category && (
-            <div>
-              <span className="font-medium text-gray-600">Category:</span>
-              <span className="ml-1 text-gray-800">
+            <div className="bg-gray-50 p-2 rounded">
+              <p className="text-xs font-medium text-gray-500">Category</p>
+              <p className="text-sm font-semibold text-gray-800">
                 {selectedExistingProduct.category.name}
-              </span>
+              </p>
             </div>
           )}
           
           {selectedExistingProduct.subcategory && (
-            <div>
-              <span className="font-medium text-gray-600">Subcategory:</span>
-              <span className="ml-1 text-gray-800">
+            <div className="bg-gray-50 p-2 rounded">
+              <p className="text-xs font-medium text-gray-500">Subcategory</p>
+              <p className="text-sm font-semibold text-gray-800">
                 {selectedExistingProduct.subcategory.name}
-              </span>
+              </p>
             </div>
           )}
         </div>
         
+        {/* Description with expand/collapse */}
         {selectedExistingProduct.description && (
-          <div className="mt-3">
-            <p className="text-sm text-gray-600 line-clamp-2">
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-medium text-gray-500">Description</p>
+            </div>
+            <p className="text-sm text-gray-700 line-clamp-2 hover:line-clamp-none transition-all">
               {selectedExistingProduct.description}
             </p>
           </div>
         )}
       </div>
-      
-        {selectedExistingProduct.images?.length > 0 && (
-          <div className="flex-shrink-0">
-            <div className="w-20 h-20 rounded-md overflow-hidden border border-gray-200">
-              <img
-                src={selectedExistingProduct.images[0].url}
-                alt={selectedExistingProduct.name}
-                className="w-full h-full object-cover"
-              />
+    </div>
+    
+    {/* Existing Offer Warning */}
+    {selectedExistingProduct.sellers?.some(s => s.sellerId.toString() === currentUser?.id) && (
+      <div className="mt-4 pt-3 border-t border-gray-200">
+        <div className="flex items-center px-3 py-2 bg-yellow-50 rounded-md">
+          <svg className="flex-shrink-0 h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-yellow-800">Existing offer detected</h3>
+            <div className="mt-1 text-sm text-yellow-700">
+              <p>You've already listed this product. Submitting will update your existing offer.</p>
             </div>
           </div>
-        )}
-      </div>
-      
-      {selectedExistingProduct.sellers?.some(s => s.sellerId.toString() === currentUser?.id) && (
-        <div className="mt-3 pt-3 border-t border-indigo-100">
-          <div className="flex items-center text-sm text-yellow-700">
-            <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-            <span>You already have an offer for this product</span>
-          </div>
         </div>
-      )}
-    </div>
-  )}
+      </div>
+    )}
+  </div>
+)}
           </div>
 
           {/* Basic Product Info - Only for new products */}
