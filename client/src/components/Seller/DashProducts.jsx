@@ -166,6 +166,9 @@ const DashProducts = () => {
                   Reference
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price
                 </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -194,7 +197,6 @@ const DashProducts = () => {
                           )}
                           <div>
                             <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                            <div className="text-sm text-gray-500 line-clamp-1">{product.description}</div>
                           </div>
                         </div>
                       </td>
@@ -202,6 +204,11 @@ const DashProducts = () => {
                         <div className="text-sm text-gray-900 font-mono bg-gray-100 px-2 py-1 rounded-md inline-block">
                           {product.reference}
                         </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-500 bg-blue-100 px-2 py-1 rounded-md">
+                          {product.category?.name || 'Uncategorized'}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         ${sellerInfo?.price?.toFixed(2)}
@@ -250,7 +257,7 @@ const DashProducts = () => {
                 })
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-8 text-center">
+                  <td colSpan="7" className="px-6 py-8 text-center">
                     <div className="text-gray-500 flex flex-col items-center">
                       <svg className="w-16 h-16 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />

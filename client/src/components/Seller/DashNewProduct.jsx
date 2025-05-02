@@ -390,25 +390,83 @@ const DashAddInventory = () => {
             )}
             
             {isExistingProduct && selectedExistingProduct && (
-              <div className="mt-2 p-2 bg-blue-50 text-blue-800 rounded-md">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="font-semibold">Existing product selected:</p>
-                    <p><span className="font-medium">Name:</span> {selectedExistingProduct.name}</p>
-                    {selectedExistingProduct.description && (
-                      <p className="truncate"><span className="font-medium">Description:</span> {selectedExistingProduct.description}</p>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                  >
-                    Change Product
-                  </button>
-                </div>
-              </div>
-            )}
+  <div className="mt-4 p-4 bg-indigo-50 border border-indigo-100 rounded-lg shadow-sm">
+    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex-1">
+        <div className="flex items-center mb-2">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+            Existing Product
+          </span>
+          <button
+            type="button"
+            onClick={resetForm}
+            className="ml-2 text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+          >
+            Change Product
+          </button>
+        </div>
+        
+        <h3 className="text-lg font-semibold text-gray-800">{selectedExistingProduct.name}</h3>
+        
+        <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <div>
+            <span className="font-medium text-gray-600">Reference:</span>
+            <span className="ml-1 text-gray-800">{selectedExistingProduct.reference}</span>
+          </div>
+          
+          {selectedExistingProduct.category && (
+            <div>
+              <span className="font-medium text-gray-600">Category:</span>
+              <span className="ml-1 text-gray-800">
+                {selectedExistingProduct.category.name}
+              </span>
+            </div>
+          )}
+          
+          {selectedExistingProduct.subcategory && (
+            <div>
+              <span className="font-medium text-gray-600">Subcategory:</span>
+              <span className="ml-1 text-gray-800">
+                {selectedExistingProduct.subcategory.name}
+              </span>
+            </div>
+          )}
+        </div>
+        
+        {selectedExistingProduct.description && (
+          <div className="mt-3">
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {selectedExistingProduct.description}
+            </p>
+          </div>
+        )}
+      </div>
+      
+        {selectedExistingProduct.images?.length > 0 && (
+          <div className="flex-shrink-0">
+            <div className="w-20 h-20 rounded-md overflow-hidden border border-gray-200">
+              <img
+                src={selectedExistingProduct.images[0].url}
+                alt={selectedExistingProduct.name}
+                className="w-full h-full object-cover"
+              />
+            </div>
+          </div>
+        )}
+      </div>
+      
+      {selectedExistingProduct.sellers?.some(s => s.sellerId.toString() === currentUser?.id) && (
+        <div className="mt-3 pt-3 border-t border-indigo-100">
+          <div className="flex items-center text-sm text-yellow-700">
+            <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span>You already have an offer for this product</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )}
           </div>
 
           {/* Basic Product Info - Only for new products */}
