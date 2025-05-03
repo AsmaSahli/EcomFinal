@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { FaEye, FaEdit, FaTrash, FaSearch, FaSpinner, FaPlus, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import ProductViewModal from './ProductViewModal';
+import debounce from 'lodash.debounce';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
@@ -22,30 +23,53 @@ const DashProducts = () => {
   const [productsPerPage] = useState(10);
   const [totalProducts, setTotalProducts] = useState(0);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`${API_BASE_URL}/products/seller/${currentUser.id}`, {
-          params: {
-            page: currentPage,
-            limit: productsPerPage,
-            search: searchTerm
-          }
-        });
-        setProducts(response.data.products);
-        setTotalProducts(response.data.total);
-      } catch (err) {
-        setError(err.response?.data?.message || err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((searchValue, page) => {
+      fetchProducts(searchValue, page);
+    }, 500),
+    []
+  );
 
-    if (currentUser?.id) {
-      fetchProducts();
+  const fetchProducts = async (search = '', page = 1) => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/products/seller/${currentUser.id}`, {
+        params: {
+          page,
+          limit: productsPerPage,
+          search
+        }
+      });
+      setProducts(response.data.products);
+      setTotalProducts(response.data.total);
+      setError(null);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
+      setProducts([]);
+      setTotalProducts(0);
+    } finally {
+      setLoading(false);
     }
-  }, [currentUser, currentPage, productsPerPage, searchTerm]);
+  };
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      debouncedSearch(searchTerm, currentPage);
+    }
+
+    // Cleanup debounce on unmount
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [currentUser, currentPage, productsPerPage, searchTerm, debouncedSearch]);
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset to first page on new search
+  };
 
   const handleViewProduct = (product) => {
     setSelectedProduct(product);
@@ -62,7 +86,8 @@ const DashProducts = () => {
       try {
         setDeleteLoading(productId);
         await axios.delete(`${API_BASE_URL}/products/${productId}`);
-        setProducts(products.filter(product => product._id !== productId));
+        // Refresh the products list after deletion
+        await fetchProducts(searchTerm, currentPage);
       } catch (err) {
         setError(err.response?.data?.message || err.message);
       } finally {
@@ -74,16 +99,10 @@ const DashProducts = () => {
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
-  // Filter products based on search term
-  const filteredProducts = products.filter(product =>
-    product.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   // Calculate page numbers
   const totalPages = Math.ceil(totalProducts / productsPerPage);
 
-  if (loading) {
+  if (loading && products.length === 0) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
         <div className="text-center">
@@ -128,7 +147,7 @@ const DashProducts = () => {
           <p className="text-gray-500 mt-1">Manage your product listings</p>
         </div>
         <Link
-          to="/dashboard/products/add"
+          to="/seller-dashboard?tab=add-inventory"
           className="flex items-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-lg transition-colors shadow-sm"
         >
           <FaPlus className="mr-2" />
@@ -144,14 +163,24 @@ const DashProducts = () => {
             </div>
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search by name, reference, or category..."
               className="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 focus:bg-white transition-all"
               value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1); // Reset to first page on new search
-              }}
+              onChange={handleSearchChange}
             />
+            {searchTerm && (
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+              >
+                <svg className="h-5 w-5 text-gray-400 hover:text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
 
@@ -183,8 +212,8 @@ const DashProducts = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => {
+              {products.length > 0 ? (
+                products.map((product) => {
                   const sellerInfo = product.sellers.find(s => s.sellerId._id === currentUser.id);
                   return (
                     <tr key={product._id} className="hover:bg-gray-50 transition-colors">
@@ -263,7 +292,11 @@ const DashProducts = () => {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                       </svg>
                       <p className="text-lg font-medium">No products found</p>
-                      <p className="mt-1 max-w-md">Try adjusting your search or add a new product.</p>
+                      <p className="mt-1 max-w-md">
+                        {searchTerm ? 
+                          `No products match your search for "${searchTerm}". Try a different term.` : 
+                          'You have no products yet. Add your first product to get started.'}
+                      </p>
                     </div>
                   </td>
                 </tr>
