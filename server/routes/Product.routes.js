@@ -3,28 +3,27 @@ const router = express.Router();
 const productController = require("../controllers/productController");
 const { upload, handleUploadErrors } = require("../utils/uploadsImages");
 
-// Search route should come first
+// Search and reference routes (should come first)
 router.get("/search", productController.searchProducts);
-
-// Then other specific routes
 router.get("/reference/:reference", productController.getProductByReference);
 
-// Then dynamic routes
-router.get("/:id", productController.getProductById);
+// Product listing with filters
+router.get("/", productController.getAllProducts);
 
-// Product creation
+// Product CRUD operations
 router.post("/", 
   upload.array('images', 10), 
   handleUploadErrors,
   productController.createProduct
 );
 
-// Update product
+router.get("/:id", productController.getProductById);
 router.put("/:id", 
   upload.array('images', 10),
   handleUploadErrors,
   productController.updateProduct
 );
+router.delete("/:id", productController.deleteProduct);
 
 // Seller management
 router.post("/:id/sellers", productController.addSellerToProduct);
@@ -37,8 +36,9 @@ router.post("/:id/images",
   handleUploadErrors,
   productController.addProductImages
 );
-
 router.delete("/:id/images/:publicId", productController.deleteProductImage);
+
+// Seller products
 router.get('/seller/:id', productController.getProductsBySeller);
 
 module.exports = router;

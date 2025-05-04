@@ -1,4 +1,18 @@
+// models/Product.js
 const mongoose = require("mongoose");
+
+// Define the promotion reference schema first
+const promotionReferenceSchema = new mongoose.Schema({
+  promotionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Promotion',
+    required: true
+  },
+  isActive: {
+    type: Boolean,
+    default: false
+  }
+}, { _id: false });
 
 const sellerSpecificSchema = new mongoose.Schema({
   sellerId: {
@@ -22,10 +36,14 @@ const sellerSpecificSchema = new mongoose.Schema({
   }],
   warranty: {
     type: String,
-    enum: ['', '1 year', '2 years', '3 years', 'lifetime'], // Example warranty options
+    enum: ['', '1 year', '2 years', '3 years', 'lifetime'],
     default: ''
   },
-  // Add any other seller-specific fields here
+  promotions: [promotionReferenceSchema],  // Use the defined schema here
+  activePromotion: {              // Currently active promotion
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Promotion'
+  }
 }, { _id: false });
 
 const imageSchema = new mongoose.Schema({
@@ -34,15 +52,12 @@ const imageSchema = new mongoose.Schema({
 }, { _id: true });
 
 const ProductSchema = new mongoose.Schema({
-  // Unique product reference (like SKU or ISBN)
   reference: {
     type: String,
     required: [true, "Product reference is required"],
     unique: true,
     trim: true
   },
-  
-  // Common product information
   name: {
     type: String,
     required: [true, "Product name is required"],
@@ -53,23 +68,11 @@ const ProductSchema = new mongoose.Schema({
     required: [true, "Product description is required"]
   },
   images: [imageSchema],
-  
-  // Category information (common to all sellers)
   category: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category'
   },
-  
-  // // Reviews (common to all sellers)
-  // reviews: [{
-  //   type: mongoose.Schema.Types.ObjectId,
-  //   ref: 'Review'
-  // }],
-  
-  // Seller-specific information
   sellers: [sellerSpecificSchema],
-  
-  // Original seller who created the product
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',

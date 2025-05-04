@@ -44,7 +44,9 @@ exports.getProductById = async (req, res) => {
       .populate("sellers.tags")
       .populate("category")
       .populate("reviews")
-      .populate("createdBy");
+      .populate("createdBy")
+      .populate('sellers.promotions.promotionId')
+      .populate('sellers.activePromotion');
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
