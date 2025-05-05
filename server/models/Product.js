@@ -1,4 +1,3 @@
-// models/Product.js
 const mongoose = require("mongoose");
 
 // Define the promotion reference schema first
@@ -39,11 +38,15 @@ const sellerSpecificSchema = new mongoose.Schema({
     enum: ['', '1 year', '2 years', '3 years', 'lifetime'],
     default: ''
   },
-  promotions: [promotionReferenceSchema],  // Use the defined schema here
-  activePromotion: {              // Currently active promotion
+  promotions: [promotionReferenceSchema],
+  activePromotion: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Promotion'
-  }
+  },
+  reviews: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Review'
+  }]
 }, { _id: false });
 
 const imageSchema = new mongoose.Schema({

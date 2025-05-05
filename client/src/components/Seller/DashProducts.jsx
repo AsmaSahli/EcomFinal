@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { FaEye, FaEdit, FaTrash, FaSearch, FaSpinner, FaPlus, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FiX } from 'react-icons/fi';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
@@ -17,6 +18,7 @@ const DashProducts = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,10 +70,15 @@ const DashProducts = () => {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    setCurrentPage(1); // Reset to first page on new search
+    setCurrentPage(1);
   };
 
   const handleViewProduct = (product) => {
+    setSelectedProduct(product);
+    setShowModal(true);
+  };
+
+  const handleEditProduct = (product) => {
     setSelectedProduct(product);
     setShowModal(true);
   };
@@ -81,20 +88,49 @@ const DashProducts = () => {
     setSelectedProduct(null);
   };
 
-  const handleDelete = async (productId) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
+  const handleProductUpdate = (updatedProduct) => {
+    setProducts(prevProducts => 
+      prevProducts.map(product => 
+        product._id === updatedProduct._id ? updatedProduct : product
+      )
+    );
+    setSuccessMessage('Product updated successfully!');
+  };
+
+  const handleRemoveFromInventory = async (productId, sellerId) => {
+    if (window.confirm('Are you sure you want to remove this product from your inventory?')) {
       try {
         setDeleteLoading(productId);
-        await axios.delete(`${API_BASE_URL}/products/${productId}`);
-        // Refresh the products list after deletion
-        await fetchProducts(searchTerm, currentPage);
+        await axios.delete(`${API_BASE_URL}/products/${productId}/sellers/${sellerId}`);
+        
+        // Option 1: Remove product completely from list
+        setProducts(prevProducts => prevProducts.filter(p => p._id !== productId));
+        
+        // Option 2: Just remove current seller from product's sellers array
+        // setProducts(prevProducts => 
+        //   prevProducts.map(p => 
+        //     p._id === productId 
+        //       ? {...p, sellers: p.sellers.filter(s => s.sellerId._id !== sellerId)} 
+        //       : p
+        //   )
+        // );
+        
+        setSuccessMessage('Product removed from inventory successfully!');
       } catch (err) {
-        setError(err.response?.data?.message || err.message);
+        setError(err.response?.data?.message || 'Failed to remove product');
       } finally {
         setDeleteLoading(null);
       }
     }
   };
+
+  // Auto-dismiss success messages
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
@@ -113,19 +149,6 @@ const DashProducts = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md shadow-sm max-w-4xl mx-auto">
-        <div className="flex items-center">
-          <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Modal */}
@@ -133,11 +156,7 @@ const DashProducts = () => {
         <ProductViewModal 
           product={selectedProduct} 
           onClose={handleCloseModal} 
-          onUpdate={(updatedProduct) => {
-            setProducts(products.map(p => 
-              p._id === updatedProduct._id ? updatedProduct : p
-            ));
-          }}
+          onUpdate={handleProductUpdate}
         />
       )}
 
@@ -154,6 +173,36 @@ const DashProducts = () => {
           Add New Product
         </Link>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md shadow-sm mb-6">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>{error}</span>
+            <button 
+              onClick={() => setError(null)} 
+              className="ml-auto text-red-700 hover:text-red-900"
+            >
+              <FiX className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-md shadow-sm mb-6">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{successMessage}</span>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
         <div className="p-4 border-b border-gray-100">
@@ -215,6 +264,8 @@ const DashProducts = () => {
               {products.length > 0 ? (
                 products.map((product) => {
                   const sellerInfo = product.sellers.find(s => s.sellerId._id === currentUser.id);
+                  if (!sellerInfo) return null;
+
                   return (
                     <tr key={product._id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -260,17 +311,17 @@ const DashProducts = () => {
                           >
                             <FaEye className="h-4 w-4" />
                           </button>
-                          <Link
-                            to={`/dashboard/products/edit/${product._id}`}
+                          <button
+                            onClick={() => handleEditProduct(product)}
                             className="text-yellow-600 hover:text-yellow-900 p-1.5 rounded-full hover:bg-yellow-50 transition-colors"
                             title="Edit"
                           >
                             <FaEdit className="h-4 w-4" />
-                          </Link>
+                          </button>
                           <button
-                            onClick={() => handleDelete(product._id)}
+                            onClick={() => handleRemoveFromInventory(product._id, sellerInfo.sellerId._id)}
                             className="text-red-600 hover:text-red-900 p-1.5 rounded-full hover:bg-red-50 transition-colors"
-                            title="Delete"
+                            title="Remove from Inventory"
                             disabled={deleteLoading === product._id}
                           >
                             {deleteLoading === product._id ? (

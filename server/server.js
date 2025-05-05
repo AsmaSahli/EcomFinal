@@ -28,6 +28,8 @@ require("./routes/Delivery.routes")(app);
 require("./routes/Admin.routes")(app);
 const promotionRoutes = require('./routes/Promotion.routes');
 app.use('/api/promotions', promotionRoutes);
+const reviewRoutes = require('./routes/Review.routes');
+app.use('/api/reviews', reviewRoutes);
 const productRoutes = require("./routes/Product.routes");
 app.use("/api/products", productRoutes);
 const productTagRoutes = require("./routes/productTag.routes");

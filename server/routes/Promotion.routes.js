@@ -2,23 +2,20 @@ const express = require("express");
 const router = express.Router();
 const promotionController = require("../controllers/promotionController");
 
+// Search promotions
+router.get("/search", promotionController.searchPromotions);
+
+// Get all promotions
+router.get("/", promotionController.getAllPromotions);
+
 // Promotion CRUD operations
 router.post("/", promotionController.createPromotion);
-router.get("/", promotionController.getAllPromotions);
-router.get("/product/:productId", promotionController.getProductPromotions);
 router.get("/:id", promotionController.getPromotionById);
 router.put("/:id", promotionController.updatePromotion);
 router.delete("/:id", promotionController.deletePromotion);
 
-// Promotion product management
-router.post("/:id/products", promotionController.addProductsToPromotion);
-router.delete("/:id/products", promotionController.removeProductsFromPromotion);
-
-// Promotion activation
-router.post("/activate", promotionController.activatePromotion);
-router.post("/deactivate", promotionController.deactivatePromotion);
-
-// Product-specific promotion routes
-router.get("/product/:productId/seller/:sellerId", promotionController.getProductPromotions);
+// Manage active promotions for a seller's product
+router.put("/:productId/sellers/:sellerId/promotions/:promotionId/active", promotionController.setActivePromotion);
+router.get("/:productId/sellers/:sellerId/promotions/active", promotionController.getActivePromotions);
 
 module.exports = router;

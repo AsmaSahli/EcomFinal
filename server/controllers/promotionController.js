@@ -1,349 +1,428 @@
-const Promotion = require("../models/Promotion");
-const Product = require("../models/Product");
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
+const Promotion = require('../models/Promotion');
+const Product = require('../models/Product');
 
-// Create a new promotion
-exports.createPromotion = async (req, res) => {
-  try {
-    const { name, description, discountRate, startDate, endDate, applicableProducts } = req.body;
-    
-    // Validate dates
-    if (new Date(startDate) >= new Date(endDate)) {
-      return res.status(400).json({ message: "End date must be after start date" });
-    }
-
-    // Validate discount rate
-    if (discountRate <= 0 || discountRate > 100) {
-      return res.status(400).json({ message: "Discount rate must be between 1 and 100" });
-    }
-
-    const promotion = new Promotion({
-      name,
-      description,
-      discountRate,
-      startDate,
-      endDate,
-      applicableProducts: applicableProducts || [],
-      createdBy: req.user?._id// Assuming user is attached to request
-    });
-
-    await promotion.save();
-
-    // Add promotion to applicable products if specified
-    if (applicableProducts && applicableProducts.length > 0) {
-      await Product.updateMany(
-        { _id: { $in: applicableProducts } },
-        { $push: { "sellers.$[].promotions": { promotionId: promotion._id, isActive: false } } }
-      );
-    }
-
-    res.status(201).json(promotion);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Get all active promotions
+// Get all promotions
 exports.getAllPromotions = async (req, res) => {
   try {
-    const { activeOnly } = req.query;
-    
-    let query = {};
-    if (activeOnly === 'true') {
-      query = {
-        startDate: { $lte: new Date() },
-        endDate: { $gte: new Date() }
-      };
-    }
-
-    const promotions = await Promotion.find(query)
-      .populate('applicableProducts', 'name reference images')
-      .sort({ startDate: 1 });
+    const promotions = await Promotion.find()
+      .populate('createdBy', 'name email')
+      .populate('applicableProducts', 'reference name')
+      .lean();
 
     res.status(200).json(promotions);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 
 // Get promotion by ID
 exports.getPromotionById = async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ error: 'Invalid promotion ID' });
+    }
+
     const promotion = await Promotion.findById(req.params.id)
-      .populate('applicableProducts', 'name reference images')
-      .populate('createdBy', 'name email');
+      .populate('createdBy', 'name email')
+      .populate('applicableProducts', 'reference name')
+      .lean();
 
     if (!promotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+      return res.status(404).json({ message: 'Promotion not found' });
     }
 
     res.status(200).json(promotion);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 
-// Update a promotion
+// Create new promotion
+exports.createPromotion = async (req, res) => {
+  try {
+    const { name, description, discountRate, startDate, endDate, applicableProducts, createdBy } = req.body;
+
+    // Validate required fields
+    if (!name || !description || discountRate === undefined || !startDate || !endDate || !createdBy) {
+      return res.status(400).json({ error: 'All required fields must be provided' });
+    }
+
+    // Validate ObjectId for createdBy
+    if (!mongoose.Types.ObjectId.isValid(createdBy)) {
+      return res.status(400).json({ error: 'Invalid createdBy ID' });
+    }
+
+    // Validate discountRate
+    if (discountRate < 0 || discountRate > 100) {
+      return res.status(400).json({ error: 'Discount rate must be between 0 and 100' });
+    }
+
+    // Validate dates
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
+    }
+    if (end <= start) {
+      return res.status(400).json({ error: 'endDate must be after startDate' });
+    }
+
+    // Validate applicableProducts
+    const productIds = Array.isArray(applicableProducts) ? applicableProducts : [];
+    if (productIds.length > 0) {
+      for (const productId of productIds) {
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+          return res.status(400).json({ error: `Invalid product ID: ${productId}` });
+        }
+      }
+      // Verify products exist
+      const products = await Product.find({ _id: { $in: productIds } });
+      if (products.length !== productIds.length) {
+        return res.status(400).json({ error: 'One or more products not found' });
+      }
+    }
+
+    const promotionData = {
+      name,
+      description,
+      discountRate,
+      startDate: start,
+      endDate: end,
+      applicableProducts: productIds,
+      createdBy
+    };
+
+    const promotion = await Promotion.create(promotionData);
+
+    // Update products to include this promotion in their sellers' promotions array
+    if (productIds.length > 0) {
+      await Product.updateMany(
+        { _id: { $in: productIds } },
+        {
+          $push: {
+            'sellers.$[].promotions': {
+              promotionId: promotion._id,
+              isActive: start <= new Date() && new Date() <= end
+            }
+          }
+        }
+      );
+    }
+
+    const populatedPromotion = await Promotion.findById(promotion._id)
+      .populate('createdBy', 'name email')
+      .populate('applicableProducts', 'reference name');
+
+    res.status(201).json(populatedPromotion);
+  } catch (error) {
+    res.status(400).json({ error: error.message, details: error.errors });
+  }
+};
+
+// Update promotion
 exports.updatePromotion = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid promotion ID' });
+    }
 
-    // Prevent changing certain fields
-    delete updates.createdBy;
-    delete updates.applicableProducts;
+    const updateData = { ...req.body };
 
-    const promotion = await Promotion.findByIdAndUpdate(id, updates, { 
+    // Prevent updating createdBy
+    delete updateData.createdBy;
+
+    // Validate discountRate if provided
+    if (updateData.discountRate !== undefined) {
+      if (updateData.discountRate < 0 || updateData.discountRate > 100) {
+        return res.status(400).json({ error: 'Discount rate must be between 0 and 100' });
+      }
+    }
+
+    // Validate dates if provided
+    if (updateData.startDate || updateData.endDate) {
+      const start = new Date(updateData.startDate || (await Promotion.findById(id)).startDate);
+      const end = new Date(updateData.endDate || (await Promotion.findById(id)).endDate);
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
+      if (end <= start) {
+        return res.status(400).json({ error: 'endDate must be after startDate' });
+      }
+      updateData.startDate = start;
+      updateData.endDate = end;
+    }
+
+    // Validate applicableProducts if provided
+    if (updateData.applicableProducts) {
+      const productIds = Array.isArray(updateData.applicableProducts) ? updateData.applicableProducts : [];
+      for (const productId of productIds) {
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+          return res.status(400).json({ error: `Invalid product ID: ${productId}` });
+        }
+      }
+      const products = await Product.find({ _id: { $in: productIds } });
+      if (products.length !== productIds.length) {
+        return res.status(400).json({ error: 'One or more products not found' });
+      }
+    }
+
+    const promotion = await Promotion.findByIdAndUpdate(id, updateData, {
       new: true,
-      runValidators: true 
+      runValidators: true
     });
 
     if (!promotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+      return res.status(404).json({ message: 'Promotion not found' });
     }
 
-    res.status(200).json(promotion);
+    // Update isActive status in products if dates changed
+    if (updateData.startDate || updateData.endDate) {
+      const now = new Date();
+      const isActive = promotion.startDate <= now && now <= promotion.endDate;
+      await Product.updateMany(
+        { 'sellers.promotions.promotionId': promotion._id },
+        {
+          $set: {
+            'sellers.$[].promotions.$[promo].isActive': isActive
+          }
+        },
+        {
+          arrayFilters: [{ 'promo.promotionId': promotion._id }]
+        }
+      );
+    }
+
+    // Update applicableProducts in products if changed
+    if (updateData.applicableProducts) {
+      // Remove promotion from products no longer applicable
+      await Product.updateMany(
+        {
+          _id: { $nin: updateData.applicableProducts },
+          'sellers.promotions.promotionId': promotion._id
+        },
+        {
+          $pull: {
+            'sellers.$[].promotions': { promotionId: promotion._id }
+          }
+        }
+      );
+
+      // Add promotion to new applicable products
+      await Product.updateMany(
+        {
+          _id: { $in: updateData.applicableProducts },
+          'sellers.promotions.promotionId': { $ne: promotion._id }
+        },
+        {
+          $push: {
+            'sellers.$[].promotions': {
+              promotionId: promotion._id,
+              isActive: promotion.startDate <= new Date() && new Date() <= promotion.endDate
+            }
+          }
+        }
+      );
+    }
+
+    const populatedPromotion = await Promotion.findById(promotion._id)
+      .populate('createdBy', 'name email')
+      .populate('applicableProducts', 'reference name');
+
+    res.status(200).json(populatedPromotion);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(400).json({ error: error.message, details: error.errors });
   }
 };
 
-// Delete a promotion
+// Delete promotion
 exports.deletePromotion = async (req, res) => {
   try {
     const { id } = req.params;
-
-    // Remove promotion from all products first
-    await Product.updateMany(
-      { "sellers.promotions.promotionId": id },
-      { $pull: { "sellers.$[].promotions": { promotionId: id } } }
-    );
-
-    // Remove as active promotion if set
-    await Product.updateMany(
-      { "sellers.activePromotion": id },
-      { $set: { "sellers.$[].activePromotion": null } }
-    );
-
-    const promotion = await Promotion.findByIdAndDelete(id);
-
-    if (!promotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid promotion ID' });
     }
 
-    res.status(200).json({ message: "Promotion deleted successfully" });
+    const promotion = await Promotion.findById(id);
+    if (!promotion) {
+      return res.status(404).json({ message: 'Promotion not found' });
+    }
+
+    // Remove promotion references from products
+    await Product.updateMany(
+      { 'sellers.promotions.promotionId': id },
+      {
+        $pull: {
+          'sellers.$[].promotions': { promotionId: id }
+        }
+      }
+    );
+
+    // Clear activePromotion if it references this promotion
+    await Product.updateMany(
+      { 'sellers.activePromotion': id },
+      {
+        $unset: { 'sellers.$[].activePromotion': '' }
+      }
+    );
+
+    await promotion.remove();
+
+    res.status(200).json({ message: 'Promotion deleted successfully' });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 
-// Add products to promotion
-exports.addProductsToPromotion = async (req, res) => {
+// Search promotions by name or applicable product reference
+exports.searchPromotions = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { productIds } = req.body;
+    const { query, productReference } = req.query;
 
-    // Validate product IDs
-    if (!Array.isArray(productIds) || productIds.length === 0) {
-      return res.status(400).json({ message: "Product IDs array is required" });
+    // If searching by product reference
+    if (productReference) {
+      const product = await Product.findOne({ reference: productReference });
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      const promotions = await Promotion.find({
+        applicableProducts: product._id
+      })
+        .populate('createdBy', 'name email')
+        .populate('applicableProducts', 'reference name')
+        .lean();
+      return res.status(200).json(promotions);
     }
 
-    const promotion = await Promotion.findByIdAndUpdate(
-      id,
-      { $addToSet: { applicableProducts: { $each: productIds } } },
-      { new: true }
-    );
-
-    if (!promotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+    // Traditional search
+    if (!query || query.length < 3) {
+      return res.status(400).json({
+        error: 'Search query must be at least 3 characters long'
+      });
     }
 
-    // Add promotion to products
-    await Product.updateMany(
-      { _id: { $in: productIds } },
-      { $addToSet: { "sellers.$[].promotions": { promotionId: id, isActive: false } } }
-    );
+    const promotions = await Promotion.find({
+      name: { $regex: query, $options: 'i' }
+    })
+      .populate('createdBy', 'name email')
+      .populate('applicableProducts', 'reference name')
+      .limit(10)
+      .lean();
 
-    res.status(200).json(promotion);
+    res.status(200).json(promotions);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 
-// Remove products from promotion
-exports.removeProductsFromPromotion = async (req, res) => {
+// Set active promotion for a seller's product
+exports.setActivePromotion = async (req, res) => {
   try {
-    const { id } = req.params;
-    const { productIds } = req.body;
+    const { productId, sellerId, promotionId } = req.params;
 
-    const promotion = await Promotion.findByIdAndUpdate(
-      id,
-      { $pull: { applicableProducts: { $in: productIds } } },
-      { new: true }
-    );
-
-    if (!promotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ error: 'Invalid product ID' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+      return res.status(400).json({ error: 'Invalid seller ID' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(promotionId)) {
+      return res.status(400).json({ error: 'Invalid promotion ID' });
     }
 
-    // Remove promotion from products
-    await Product.updateMany(
-      { _id: { $in: productIds } },
-      { $pull: { "sellers.$[].promotions": { promotionId: id } } }
-    );
+    // Find product and promotion
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
 
-    // If any of these products had this as active promotion, remove it
-    await Product.updateMany(
-      { 
-        _id: { $in: productIds },
-        "sellers.activePromotion": id 
-      },
-      { $set: { "sellers.$[].activePromotion": null } }
-    );
-
-    res.status(200).json(promotion);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Activate a promotion for a product
-exports.activatePromotion = async (req, res) => {
-  try {
-    const { productId, sellerId, promotionId } = req.body;
-    
-    // 1. Verify the promotion exists and is valid
     const promotion = await Promotion.findById(promotionId);
     if (!promotion) {
-      return res.status(404).json({ message: "Promotion not found" });
+      return res.status(404).json({ message: 'Promotion not found' });
     }
 
-    // Check if promotion is active
-    const now = new Date();
-    if (now < promotion.startDate || now > promotion.endDate) {
-      return res.status(400).json({ message: "Promotion is not currently active" });
-    }
-
-    // 2. Verify the product exists
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    // 3. Find the seller in the product
-    const sellerIndex = product.sellers.findIndex(s => 
-      s.sellerId.toString() === sellerId
-    );
-    if (sellerIndex === -1) {
-      return res.status(400).json({ message: "Seller not found for this product" });
-    }
-
-    // 4. Check if promotion is applicable to this product
+    // Verify promotion is applicable to this product
     if (!promotion.applicableProducts.includes(productId)) {
-      return res.status(400).json({ message: "Promotion not applicable to this product" });
+      return res.status(400).json({ error: 'Promotion not applicable to this product' });
     }
 
-    // 5. Check if seller has this promotion available
-    const hasPromotion = product.sellers[sellerIndex].promotions.some(
+    // Find seller's entry
+    const sellerIndex = product.sellers.findIndex(s => s.sellerId.toString() === sellerId);
+    if (sellerIndex === -1) {
+      return res.status(404).json({ message: 'Seller not found for this product' });
+    }
+
+    // Verify promotion exists in seller's promotions
+    const promotionEntry = product.sellers[sellerIndex].promotions.find(
       p => p.promotionId.toString() === promotionId
     );
-    if (!hasPromotion) {
-      return res.status(400).json({ message: "Promotion not available for this seller" });
+    if (!promotionEntry) {
+      return res.status(400).json({ error: 'Promotion not assigned to this seller' });
     }
 
-    // 6. Update the product with the active promotion
+    // Update isActive for all promotions
+    product.sellers[sellerIndex].promotions = product.sellers[sellerIndex].promotions.map(p => ({
+      ...p.toObject(),
+      isActive: p.promotionId.toString() === promotionId
+    }));
+
+    // Set activePromotion
     product.sellers[sellerIndex].activePromotion = promotionId;
-    
-    // Update the isActive flag in the promotions array
-    product.sellers[sellerIndex].promotions.forEach(p => {
-      p.isActive = (p.promotionId.toString() === promotionId);
-    });
 
     await product.save();
 
-    res.json({
-      message: "Promotion activated successfully",
-      product: await Product.findById(productId)
-        .populate('sellers.activePromotion')
-        .populate('sellers.promotions.promotionId')
-    });
+    const updatedProduct = await Product.findById(productId)
+      .populate('sellers.sellerId', 'name email')
+      .populate('sellers.promotions.promotionId')
+      .populate('sellers.activePromotion')
+      .populate('category', 'name')
+      .populate('createdBy', 'name email');
+
+    res.status(200).json(updatedProduct);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 
-// Deactivate promotion for a product
-exports.deactivatePromotion = async (req, res) => {
-  try {
-    const { productId, sellerId } = req.body;
-
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    const sellerIndex = product.sellers.findIndex(s => 
-      s.sellerId.toString() === sellerId
-    );
-    if (sellerIndex === -1) {
-      return res.status(400).json({ message: "Seller not found for this product" });
-    }
-
-    // Reset active promotion and isActive flags
-    product.sellers[sellerIndex].activePromotion = null;
-    product.sellers[sellerIndex].promotions.forEach(p => {
-      p.isActive = false;
-    });
-
-    await product.save();
-
-    res.json({
-      message: "Promotion deactivated successfully",
-      product: await Product.findById(productId)
-        .populate('sellers.promotions.promotionId')
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// Get product promotions
-exports.getProductPromotions = async (req, res) => {
+// Get active promotions for a seller's product
+exports.getActivePromotions = async (req, res) => {
   try {
     const { productId, sellerId } = req.params;
-    
-    // 1. Get all promotions applicable to this product
-    const promotions = await Promotion.find({
-      applicableProducts: productId,
-      startDate: { $lte: new Date() },
-      endDate: { $gte: new Date() }
-    }).select('name description discountRate startDate endDate');
 
-    // 2. Get current active promotion if any
+    // Validate IDs
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ error: 'Invalid product ID' });
+    }
+    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+      return res.status(400).json({ error: 'Invalid seller ID' });
+    }
+
     const product = await Product.findById(productId)
-      .select('sellers')
-      .populate('sellers.activePromotion', 'name discountRate');
+      .populate('sellers.promotions.promotionId')
+      .populate('sellers.activePromotion');
 
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({ message: 'Product not found' });
     }
 
     const seller = product.sellers.find(s => s.sellerId.toString() === sellerId);
     if (!seller) {
-      return res.status(404).json({ message: "Seller not found for this product" });
+      return res.status(404).json({ message: 'Seller not found for this product' });
     }
 
-    // 3. Get all promotions available to this seller
-    const sellerPromotions = await Promotion.find({
-      _id: { $in: seller.promotions.map(p => p.promotionId) }
-    }).select('name description discountRate startDate endDate');
+    const activePromotions = seller.promotions.filter(p => p.isActive).map(p => p.promotionId);
+    if (seller.activePromotion) {
+      activePromotions.push(seller.activePromotion);
+    }
 
-    res.json({
-      allApplicablePromotions: promotions,
-      sellerAvailablePromotions: sellerPromotions,
-      activePromotion: seller.activePromotion
-    });
+    const uniquePromotions = [...new Set(activePromotions.map(p => p._id.toString()))].map(id =>
+      activePromotions.find(p => p._id.toString() === id)
+    );
+
+    res.status(200).json(uniquePromotions);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };

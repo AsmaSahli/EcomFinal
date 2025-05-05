@@ -1,26 +1,33 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const ReviewSchema = new mongoose.Schema({
   product: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Product',
-    required: true
+    required: [true, 'Product reference is required']
   },
-  buyer: {
+  seller: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: [true, 'Seller reference is required']
+  },
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'User reference is required']
   },
   rating: {
     type: Number,
-    required: true,
-    min: [1, "Minimum rating is 1"],
-    max: [5, "Maximum rating is 5"]
+    required: [true, 'Rating is required'],
+    min: [1, 'Rating must be at least 1'],
+    max: [5, 'Rating cannot exceed 5']
   },
-  title: String,
-  description: String,
-  image: String,
-  dateReview: {
+  comment: {
+    type: String,
+    trim: true,
+    maxlength: [500, 'Comment cannot exceed 500 characters']
+  },
+  createdAt: {
     type: Date,
     default: Date.now
   }
@@ -28,4 +35,6 @@ const ReviewSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model("Review", ReviewSchema);
+
+
+module.exports = mongoose.model('Review', ReviewSchema);

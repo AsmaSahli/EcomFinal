@@ -9,6 +9,8 @@ router.get("/reference/:reference", productController.getProductByReference);
 
 // Product listing with filters
 router.get("/", productController.getAllProducts);
+router.get('/by-category', productController.getProductsByCategory);
+router.get('/category-stats', productController.getCategoryStats);
 
 // Product CRUD operations
 router.post("/", 
@@ -27,8 +29,8 @@ router.delete("/:id", productController.deleteProduct);
 
 // Seller management
 router.post("/:id/sellers", productController.addSellerToProduct);
-router.put("/:id/sellers/:sellerId", productController.updateSellerProduct);
-router.delete("/:id/sellers/:sellerId", productController.removeSellerFromProduct);
+router.put('/:productId/sellers/:sellerId', productController.updateSellerProduct);
+router.delete("/:productId/sellers/:sellerId", productController.removeSellerFromProduct);
 
 // Image management
 router.post("/:id/images",

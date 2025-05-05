@@ -27,7 +27,7 @@ exports.getAllProducts = async (req, res) => {
       .populate("sellers.sellerId")
       .populate("sellers.tags")
       .populate("category")
-      // .populate("reviews")
+      .populate("sellers.reviews") // Updated to populate seller-specific reviews
       .populate("createdBy");
       
     res.status(200).json(products);
@@ -43,7 +43,7 @@ exports.getProductById = async (req, res) => {
       .populate("sellers.sellerId")
       .populate("sellers.tags")
       .populate("category")
-      .populate("reviews")
+      .populate("sellers.reviews") // Updated to populate seller-specific reviews
       .populate("createdBy")
       .populate('sellers.promotions.promotionId')
       .populate('sellers.activePromotion');
@@ -63,7 +63,7 @@ exports.getProductByReference = async (req, res) => {
       .populate("sellers.sellerId")
       .populate("sellers.tags")
       .populate("category")
-      .populate("reviews")
+      .populate("sellers.reviews") // Updated to populate seller-specific reviews
       .populate("createdBy");
 
     if (!product) return res.status(404).json({ message: "Product not found" });
@@ -112,7 +112,8 @@ exports.createProduct = async (req, res) => {
         price: req.body.price,
         stock: req.body.stock,
         tags: Array.isArray(req.body.tags) ? req.body.tags : [],
-        warranty: req.body.warranty || ''
+        warranty: req.body.warranty || '',
+        reviews: [] // Initialize empty reviews array for the seller
       }]
     };
 
@@ -127,7 +128,7 @@ exports.createProduct = async (req, res) => {
   }
 };
 
-
+// Add seller to product
 exports.addSellerToProduct = async (req, res) => {
   try {
     const { id: productId } = req.params;
@@ -166,12 +167,15 @@ exports.addSellerToProduct = async (req, res) => {
             price: parseFloat(price),
             stock: parseInt(stock),
             tags: Array.isArray(tags) ? tags : [],
-            warranty: warranty || ''
+            warranty: warranty || '',
+            reviews: [] // Initialize empty reviews array for the new seller
           }
         }
       },
       { new: true, runValidators: true }
-    ).populate('sellers.sellerId');
+    )
+      .populate('sellers.sellerId')
+      .populate('sellers.reviews'); // Populate reviews for the updated product
 
     res.status(200).json(updatedProduct);
   } catch (error) {
@@ -183,50 +187,99 @@ exports.addSellerToProduct = async (req, res) => {
   }
 };
 
-// ... (keep other existing functions)
-
 // Update seller-specific product details
 exports.updateSellerProduct = async (req, res) => {
   try {
     const { productId, sellerId } = req.params;
-    const updateData = req.body;
+    const { price, stock, warranty } = req.body;
 
-    // Remove fields that shouldn't be updated
-    delete updateData.reference;
-    delete updateData.name;
-    delete updateData.description;
-    delete updateData.images;
-    delete updateData.category;
+    // Validate input
+    if (!price && !stock && !warranty) {
+      return res.status(400).json({
+        success: false,
+        message: "At least one field (price, stock, or warranty) must be provided"
+      });
+    }
 
-    const product = await Product.findById(productId);
+    // Prepare update object
+    const updateFields = {};
+    if (price !== undefined) {
+      if (typeof price !== 'number' || price < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Price must be a non-negative number"
+        });
+      }
+      updateFields['sellers.$.price'] = price;
+    }
+    if (stock !== undefined) {
+      if (typeof stock !== 'number' || stock < 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Stock must be a non-negative number"
+        });
+      }
+      updateFields['sellers.$.stock'] = stock;
+    }
+    if (warranty !== undefined) {
+      if (!['', '1 year', '2 years', '3 years', 'lifetime'].includes(warranty)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid warranty value"
+        });
+      }
+      updateFields['sellers.$.warranty'] = warranty;
+    }
+
+    // Update the product
+    const product = await Product.findOneAndUpdate(
+      { 
+        _id: productId,
+        "sellers.sellerId": sellerId
+      },
+      { $set: updateFields },
+      { 
+        new: true,
+        runValidators: true 
+      }
+    );
+
     if (!product) {
-      return res.status(404).json({ message: "Product not found" });
+      return res.status(404).json({
+        success: false,
+        message: "Product or seller not found"
+      });
     }
 
-    // Find the seller's entry
-    const sellerIndex = product.sellers.findIndex(s => s.sellerId.toString() === sellerId);
-    if (sellerIndex === -1) {
-      return res.status(404).json({ message: "Seller not found for this product" });
+    // Find the updated seller data
+    const updatedSeller = product.sellers.find(seller => 
+      seller.sellerId.toString() === sellerId
+    );
+
+    if (!updatedSeller) {
+      return res.status(404).json({
+        success: false,
+        message: "Seller data not found after update"
+      });
     }
 
-    // Update seller-specific fields
-    if (updateData.price !== undefined) {
-      product.sellers[sellerIndex].price = updateData.price;
-    }
-    if (updateData.stock !== undefined) {
-      product.sellers[sellerIndex].stock = updateData.stock;
-    }
-    if (updateData.tags !== undefined) {
-      product.sellers[sellerIndex].tags = Array.isArray(updateData.tags) ? updateData.tags : [];
-    }
-    if (updateData.warranty !== undefined) {
-      product.sellers[sellerIndex].warranty = updateData.warranty || '';
-    }
+    return res.status(200).json({
+      success: true,
+      message: "Seller product updated successfully",
+      data: {
+        price: updatedSeller.price,
+        stock: updatedSeller.stock,
+        warranty: updatedSeller.warranty
+      }
+    });
 
-    await product.save();
-    res.status(200).json(product);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error updating seller product:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while updating seller product",
+      error: error.message
+    });
   }
 };
 
@@ -250,9 +303,19 @@ exports.removeSellerFromProduct = async (req, res) => {
     product.sellers = product.sellers.filter(s => s.sellerId.toString() !== sellerId);
     await product.save();
 
+    // Populate reviews and other fields after saving
+    const updatedProduct = await Product.findById(productId)
+      .populate('sellers.sellerId')
+      .populate('sellers.tags')
+      .populate('sellers.reviews')
+      .populate('category')
+      .populate('createdBy')
+      .populate('sellers.promotions.promotionId')
+      .populate('sellers.activePromotion');
+
     res.status(200).json({
       message: "Seller removed from product",
-      product
+      product: updatedProduct
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -278,7 +341,14 @@ exports.updateProduct = async (req, res) => {
       req.params.id,
       productData,
       { new: true, runValidators: true }
-    );
+    )
+      .populate('sellers.sellerId')
+      .populate('sellers.tags')
+      .populate('sellers.reviews') // Populate reviews for the updated product
+      .populate('category')
+      .populate('createdBy')
+      .populate('sellers.promotions.promotionId')
+      .populate('sellers.activePromotion');
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
@@ -320,7 +390,16 @@ exports.addProductImages = async (req, res) => {
     product.images.push(...newImages);
     await product.save();
 
-    res.status(200).json(product);
+    const updatedProduct = await Product.findById(req.params.id)
+      .populate('sellers.sellerId')
+      .populate('sellers.tags')
+      .populate('sellers.reviews') // Populate reviews for the updated product
+      .populate('category')
+      .populate('createdBy')
+      .populate('sellers.promotions.promotionId')
+      .populate('sellers.activePromotion');
+
+    res.status(200).json(updatedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -350,13 +429,22 @@ exports.deleteProductImage = async (req, res) => {
     product.images.splice(imageIndex, 1);
     await product.save();
 
-    res.status(200).json(product);
+    const updatedProduct = await Product.findById(req.params.id)
+      .populate('sellers.sellerId')
+      .populate('sellers.tags')
+      .populate('sellers.reviews') // Populate reviews for the updated product
+      .populate('category')
+      .populate('createdBy')
+      .populate('sellers.promotions.promotionId')
+      .populate('sellers.activePromotion');
+
+    res.status(200).json(updatedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 // Search products by reference or name
-// Updated search function in productController.js
 exports.searchProducts = async (req, res) => {
   try {
     const { query, reference } = req.query;
@@ -365,6 +453,9 @@ exports.searchProducts = async (req, res) => {
     if (reference) {
       const product = await Product.findOne({ reference })
         .select('reference name description images')
+        .populate('sellers.sellerId')
+        .populate('sellers.tags')
+        .populate('sellers.reviews') // Populate reviews for search results
         .lean();
       
       return res.status(200).json(product ? [product] : []);
@@ -383,15 +474,19 @@ exports.searchProducts = async (req, res) => {
         { name: { $regex: query, $options: 'i' } }
       ]
     })
-    .limit(10)
-    .select('reference name description images')
-    .lean();
+      .limit(10)
+      .select('reference name description images')
+      .populate('sellers.sellerId')
+      .populate('sellers.tags')
+      .populate('sellers.reviews') // Populate reviews for search results
+      .lean();
 
     res.status(200).json(products);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
+
 // Get products by seller ID
 exports.getProductsBySeller = async (req, res) => {
   try {
@@ -424,11 +519,20 @@ exports.getProductsBySeller = async (req, res) => {
       .populate('createdBy')
       .populate({
         path: 'sellers.sellerId',
-        select: 'name email' // Only populate necessary fields
+        select: 'name email'
       })
       .populate({
         path: 'sellers.tags',
-        select: 'name' // Only populate necessary fields
+        select: 'name'
+      })
+      .populate({
+        path: 'sellers.reviews' // Populate seller-specific reviews
+      })
+      .populate({
+        path: 'sellers.promotions.promotionId'
+      })
+      .populate({
+        path: 'sellers.activePromotion'
       })
       .skip(skip)
       .limit(parseInt(limit))
@@ -463,5 +567,54 @@ exports.getProductsBySeller = async (req, res) => {
       error: "Internal server error",
       details: error.message 
     });
+  }
+};
+
+// Get products filtered by category structure
+exports.getProductsByCategory = async (req, res) => {
+  try {
+    const { category, group, item } = req.query;
+    const query = {};
+    
+    if (category) query['category.name'] = category;
+    if (group) query['category.subcategory.group'] = group;
+    if (item) query['category.subcategory.items'] = item;
+
+    const products = await Product.find(query);
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get category statistics (counts)
+exports.getCategoryStats = async (req, res) => {
+  try {
+    const stats = await Product.aggregate([
+      {
+        $group: {
+          _id: {
+            category: "$category.name",
+            group: "$category.subcategory.group"
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: "$_id.category",
+          groups: {
+            $push: {
+              group: "$_id.group",
+              count: "$count"
+            }
+          },
+          total: { $sum: "$count" }
+        }
+      }
+    ]);
+    res.json(stats);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

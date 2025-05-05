@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { FaSave, FaTag } from 'react-icons/fa';
-import { FiPlus, FiX } from 'react-icons/fi';
+import { FaSave } from 'react-icons/fa';
 
 const ProductEditForm = ({ 
   product, 
@@ -11,29 +10,24 @@ const ProductEditForm = ({
   onChange, 
   loading 
 }) => {
-  const [newTagInput, setNewTagInput] = useState('');
-  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [errors, setErrors] = useState({});
 
-  const handleAddTag = () => {
-    if (newTagInput.trim()) {
-      onChange({
-        target: {
-          name: 'tags',
-          value: [...editedProduct.tags, newTagInput.trim()]
-        }
-      });
-      setNewTagInput('');
-      setIsAddingTag(false);
+  const validateFields = () => {
+    const newErrors = {};
+    if (!editedProduct.price || editedProduct.price <= 0) {
+      newErrors.price = 'Price must be greater than 0';
     }
+    if (!editedProduct.stock || editedProduct.stock < 0) {
+      newErrors.stock = 'Stock cannot be negative';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleRemoveTag = (index) => {
-    onChange({
-      target: {
-        name: 'tags',
-        value: editedProduct.tags.filter((_, i) => i !== index)
-      }
-    });
+  const handleSave = () => {
+    if (validateFields()) {
+      onSave();
+    }
   };
 
   return (
@@ -58,10 +52,11 @@ const ProductEditForm = ({
                   name="price"
                   value={editedProduct.price}
                   onChange={onChange}
-                  className="w-full border border-gray-300 rounded-lg pl-8 pr-3 py-2.5 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-all duration-200"
+                  className={`w-full border ${errors.price ? 'border-red-500' : 'border-gray-300'} rounded-lg pl-8 pr-3 py-2.5 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-all duration-200`}
                   min="0"
                   step="0.01"
                 />
+                {errors.price && <p className="text-red-500 text-xs mt-1">{errors.price}</p>}
               </div>
             </div>
             
@@ -72,9 +67,10 @@ const ProductEditForm = ({
                 name="stock"
                 value={editedProduct.stock}
                 onChange={onChange}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-all duration-200"
+                className={`w-full border ${errors.stock ? 'border-red-500' : 'border-gray-300'} rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-all duration-200`}
                 min="0"
               />
+              {errors.stock && <p className="text-red-500 text-xs mt-1">{errors.stock}</p>}
             </div>
           </div>
           
@@ -96,69 +92,6 @@ const ProductEditForm = ({
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-        <div className="flex items-center mb-5">
-          <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-600 mr-3">
-            <FaTag className="w-5 h-5" />
-          </div>
-          <h3 className="text-xl font-semibold text-gray-900">Product Tags</h3>
-        </div>
-        <div className="pl-14">
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">
-              {editedProduct.tags.map((tag, index) => (
-                <div 
-                  key={index} 
-                  className="flex items-center bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-lg text-sm font-medium border border-indigo-100 transition-all duration-200 hover:bg-indigo-100"
-                >
-                  <FaTag className="mr-2 h-3 w-3 text-indigo-500" />
-                  {tag}
-                  <button 
-                    onClick={() => handleRemoveTag(index)}
-                    className="ml-2 text-indigo-500 hover:text-indigo-700 transition-colors duration-200"
-                  >
-                    <FiX className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            {isAddingTag ? (
-              <div className="flex space-x-2 mt-3">
-                <input
-                  type="text"
-                  value={newTagInput}
-                  onChange={(e) => setNewTagInput(e.target.value)}
-                  placeholder="Enter new tag"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition-all duration-200"
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                  autoFocus
-                />
-                <button
-                  onClick={handleAddTag}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm transition-all duration-200 shadow-sm"
-                >
-                  Add
-                </button>
-                <button
-                  onClick={() => setIsAddingTag(false)}
-                  className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setIsAddingTag(true)}
-                className="flex items-center text-sm text-indigo-600 hover:text-indigo-800 mt-3 transition-colors duration-200"
-              >
-                <FiPlus className="mr-1.5" />
-                Add New Tag
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
       <div className="flex justify-end space-x-3 mt-6">
         <button
           onClick={onCancel}
@@ -167,7 +100,7 @@ const ProductEditForm = ({
           Cancel
         </button>
         <button
-          onClick={onSave}
+          onClick={handleSave}
           disabled={loading}
           className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all duration-200 shadow-sm hover:shadow-md flex items-center"
         >
