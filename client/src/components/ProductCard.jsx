@@ -82,7 +82,7 @@ const ProductCard = ({ product, sellerOffer }) => {
         </Link>
         
         {/* Seller info would go here - you might want to display seller name/rating */}
-        <p className="text-sm text-gray-500 mb-2">Sold by: {sellerOffer.sellerId.name || 'Seller'}</p>
+        <p className="text-sm text-gray-500 mb-2">Sold by: {sellerOffer.sellerId.shopName || 'Seller'}</p>
         
         {/* Rating */}
         <div className="flex items-center mb-2">

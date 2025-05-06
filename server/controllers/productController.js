@@ -734,11 +734,16 @@ exports.getProductsByCategory = async (req, res) => {
     if (group) query["categoryDetails.subcategory.group"] = group;
     if (item) query["categoryDetails.subcategory.item"] = item;
 
-    // Find products matching the query
-    const products = await Product.find(query).populate({
-      path: "categoryDetails.category",
-      select: "name",
-    });
+    // Find products matching the query and populate category and seller details
+    const products = await Product.find(query)
+      .populate({
+        path: "categoryDetails.category",
+        select: "name",
+      })
+      .populate({
+        path: "sellers.sellerId",
+        select: "shopName",
+      });
 
     // Transform and return the products
     const transformedProducts = products.map(transformProductData);
