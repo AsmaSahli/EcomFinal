@@ -1,4 +1,5 @@
 const Product = require("../models/Product");
+const Category = require("../models/Category");
 const { uploadToCloudinary, cloudinary } = require('../utils/uploadsImages');
 const mongoose = require('mongoose');
 
@@ -20,17 +21,39 @@ const processImages = async (files) => {
   return imageUrls;
 };
 
+// Helper function to transform product data
+const transformProductData = (product) => {
+  const transformed = product.toObject ? product.toObject() : product;
+  
+  // Simplify category details
+  if (transformed.categoryDetails && transformed.categoryDetails.category) {
+    transformed.categoryDetails = {
+      category: {
+        _id: transformed.categoryDetails.category._id,
+        name: transformed.categoryDetails.category.name
+      },
+      subcategory: transformed.categoryDetails.subcategory
+    };
+  }
+  
+  return transformed;
+};
+
 // Get all products
 exports.getAllProducts = async (req, res) => {
   try {
     const products = await Product.find()
       .populate("sellers.sellerId")
       .populate("sellers.tags")
-      .populate("category")
-      .populate("sellers.reviews") // Updated to populate seller-specific reviews
+      .populate({
+        path: "categoryDetails.category",
+        select: "name"
+      })
+      .populate("sellers.reviews")
       .populate("createdBy");
       
-    res.status(200).json(products);
+    const transformedProducts = products.map(transformProductData);
+    res.status(200).json(transformedProducts);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -42,15 +65,19 @@ exports.getProductById = async (req, res) => {
     const product = await Product.findById(req.params.id)
       .populate("sellers.sellerId")
       .populate("sellers.tags")
-      .populate("category")
-      .populate("sellers.reviews") // Updated to populate seller-specific reviews
+      .populate({
+        path: "categoryDetails.category",
+        select: "name"
+      })
+      .populate("sellers.reviews")
       .populate("createdBy")
       .populate('sellers.promotions.promotionId')
       .populate('sellers.activePromotion');
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    res.status(200).json(product);
+    const transformedProduct = transformProductData(product);
+    res.status(200).json(transformedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -62,21 +89,26 @@ exports.getProductByReference = async (req, res) => {
     const product = await Product.findOne({ reference: req.params.reference })
       .populate("sellers.sellerId")
       .populate("sellers.tags")
-      .populate("category")
-      .populate("sellers.reviews") // Updated to populate seller-specific reviews
+      .populate({
+        path: "categoryDetails.category",
+        select: "name"
+      })
+      .populate("sellers.reviews")
       .populate("createdBy");
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    res.status(200).json(product);
+    const transformedProduct = transformProductData(product);
+    res.status(200).json(transformedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-// Create new product
+// Create new product (unchanged as it handles data storage)
 exports.createProduct = async (req, res) => {
   try {
+    // Validate required fields
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: "No images uploaded" });
     }
@@ -87,6 +119,15 @@ exports.createProduct = async (req, res) => {
 
     if (!req.body.sellerId || typeof req.body.sellerId !== 'string') {
       return res.status(400).json({ error: "Valid sellerId is required" });
+    }
+
+    // Validate category details
+    if (!req.body.categoryDetails || 
+        !req.body.categoryDetails.category ||
+        !req.body.categoryDetails.subcategory ||
+        !req.body.categoryDetails.subcategory.group ||
+        !req.body.categoryDetails.subcategory.item) {
+      return res.status(400).json({ error: "Complete category details are required (category, subcategory group, and item)" });
     }
 
     // Check if product with this reference already exists
@@ -106,19 +147,26 @@ exports.createProduct = async (req, res) => {
       description: req.body.description,
       images: uploadedImages,
       createdBy: req.body.sellerId,
-      category: req.body.category || null,
+      categoryDetails: {
+        category: req.body.categoryDetails.category,
+        subcategory: {
+          group: req.body.categoryDetails.subcategory.group,
+          item: req.body.categoryDetails.subcategory.item
+        }
+      },
       sellers: [{
         sellerId: req.body.sellerId,
         price: req.body.price,
         stock: req.body.stock,
         tags: Array.isArray(req.body.tags) ? req.body.tags : [],
         warranty: req.body.warranty || '',
-        reviews: [] // Initialize empty reviews array for the seller
+        reviews: []
       }]
     };
 
     const product = await Product.create(productData);
-    res.status(201).json(product);
+    const transformedProduct = transformProductData(product);
+    res.status(201).json(transformedProduct);
   } catch (error) {
     console.error('Error creating product:', error);
     res.status(400).json({ 
@@ -168,16 +216,21 @@ exports.addSellerToProduct = async (req, res) => {
             stock: parseInt(stock),
             tags: Array.isArray(tags) ? tags : [],
             warranty: warranty || '',
-            reviews: [] // Initialize empty reviews array for the new seller
+            reviews: []
           }
         }
       },
       { new: true, runValidators: true }
     )
       .populate('sellers.sellerId')
-      .populate('sellers.reviews'); // Populate reviews for the updated product
+      .populate('sellers.reviews')
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name'
+      });
 
-    res.status(200).json(updatedProduct);
+    const transformedProduct = transformProductData(updatedProduct);
+    res.status(200).json(transformedProduct);
   } catch (error) {
     console.error('Error adding seller:', error);
     res.status(500).json({ 
@@ -193,7 +246,6 @@ exports.updateSellerProduct = async (req, res) => {
     const { productId, sellerId } = req.params;
     const { price, stock, warranty } = req.body;
 
-    // Validate input
     if (!price && !stock && !warranty) {
       return res.status(400).json({
         success: false,
@@ -201,7 +253,6 @@ exports.updateSellerProduct = async (req, res) => {
       });
     }
 
-    // Prepare update object
     const updateFields = {};
     if (price !== undefined) {
       if (typeof price !== 'number' || price < 0) {
@@ -231,7 +282,6 @@ exports.updateSellerProduct = async (req, res) => {
       updateFields['sellers.$.warranty'] = warranty;
     }
 
-    // Update the product
     const product = await Product.findOneAndUpdate(
       { 
         _id: productId,
@@ -242,7 +292,11 @@ exports.updateSellerProduct = async (req, res) => {
         new: true,
         runValidators: true 
       }
-    );
+    )
+    .populate({
+      path: 'categoryDetails.category',
+      select: 'name'
+    });
 
     if (!product) {
       return res.status(404).json({
@@ -251,7 +305,6 @@ exports.updateSellerProduct = async (req, res) => {
       });
     }
 
-    // Find the updated seller data
     const updatedSeller = product.sellers.find(seller => 
       seller.sellerId.toString() === sellerId
     );
@@ -263,14 +316,12 @@ exports.updateSellerProduct = async (req, res) => {
       });
     }
 
+    const transformedProduct = transformProductData(product);
+
     return res.status(200).json({
       success: true,
       message: "Seller product updated successfully",
-      data: {
-        price: updatedSeller.price,
-        stock: updatedSeller.stock,
-        warranty: updatedSeller.warranty
-      }
+      data: transformedProduct
     });
 
   } catch (error) {
@@ -293,29 +344,30 @@ exports.removeSellerFromProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Check if the seller exists
     const sellerExists = product.sellers.some(s => s.sellerId.toString() === sellerId);
     if (!sellerExists) {
       return res.status(404).json({ message: "Seller not found for this product" });
     }
 
-    // Remove the seller
     product.sellers = product.sellers.filter(s => s.sellerId.toString() !== sellerId);
     await product.save();
 
-    // Populate reviews and other fields after saving
     const updatedProduct = await Product.findById(productId)
       .populate('sellers.sellerId')
       .populate('sellers.tags')
       .populate('sellers.reviews')
-      .populate('category')
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name'
+      })
       .populate('createdBy')
       .populate('sellers.promotions.promotionId')
       .populate('sellers.activePromotion');
 
+    const transformedProduct = transformProductData(updatedProduct);
     res.status(200).json({
       message: "Seller removed from product",
-      product: updatedProduct
+      product: transformedProduct
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -327,10 +379,19 @@ exports.updateProduct = async (req, res) => {
   try {
     const productData = { 
       name: req.body.name,
-      description: req.body.description,
-      category: req.body.category
-      // Don't include seller-specific fields here
+      description: req.body.description
     };
+
+    // Handle categoryDetails update if provided
+    if (req.body.categoryDetails) {
+      productData.categoryDetails = {
+        category: req.body.categoryDetails.category,
+        subcategory: {
+          group: req.body.categoryDetails.subcategory.group,
+          item: req.body.categoryDetails.subcategory.item
+        }
+      };
+    }
 
     if (req.files && req.files.length > 0) {
       const newImages = await processImages(req.files);
@@ -344,15 +405,19 @@ exports.updateProduct = async (req, res) => {
     )
       .populate('sellers.sellerId')
       .populate('sellers.tags')
-      .populate('sellers.reviews') // Populate reviews for the updated product
-      .populate('category')
+      .populate('sellers.reviews')
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name'
+      })
       .populate('createdBy')
       .populate('sellers.promotions.promotionId')
       .populate('sellers.activePromotion');
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    res.status(200).json(product);
+    const transformedProduct = transformProductData(product);
+    res.status(200).json(transformedProduct);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -364,7 +429,6 @@ exports.deleteProduct = async (req, res) => {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    // Delete images from Cloudinary
     if (product.images && product.images.length > 0) {
       for (const image of product.images) {
         await cloudinary.uploader.destroy(image.publicId);
@@ -393,13 +457,17 @@ exports.addProductImages = async (req, res) => {
     const updatedProduct = await Product.findById(req.params.id)
       .populate('sellers.sellerId')
       .populate('sellers.tags')
-      .populate('sellers.reviews') // Populate reviews for the updated product
-      .populate('category')
+      .populate('sellers.reviews')
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name'
+      })
       .populate('createdBy')
       .populate('sellers.promotions.promotionId')
       .populate('sellers.activePromotion');
 
-    res.status(200).json(updatedProduct);
+    const transformedProduct = transformProductData(updatedProduct);
+    res.status(200).json(transformedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -413,7 +481,6 @@ exports.deleteProductImage = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Find the image to delete
     const imageIndex = product.images.findIndex(
       img => img.publicId === req.params.publicId
     );
@@ -422,23 +489,25 @@ exports.deleteProductImage = async (req, res) => {
       return res.status(404).json({ message: "Image not found" });
     }
 
-    // Delete from Cloudinary
     await cloudinary.uploader.destroy(req.params.publicId);
 
-    // Remove from array
     product.images.splice(imageIndex, 1);
     await product.save();
 
     const updatedProduct = await Product.findById(req.params.id)
       .populate('sellers.sellerId')
       .populate('sellers.tags')
-      .populate('sellers.reviews') // Populate reviews for the updated product
-      .populate('category')
+      .populate('sellers.reviews')
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name'
+      })
       .populate('createdBy')
       .populate('sellers.promotions.promotionId')
       .populate('sellers.activePromotion');
 
-    res.status(200).json(updatedProduct);
+    const transformedProduct = transformProductData(updatedProduct);
+    res.status(200).json(transformedProduct);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -449,19 +518,21 @@ exports.searchProducts = async (req, res) => {
   try {
     const { query, reference } = req.query;
     
-    // If searching by reference
     if (reference) {
       const product = await Product.findOne({ reference })
         .select('reference name description images')
         .populate('sellers.sellerId')
         .populate('sellers.tags')
-        .populate('sellers.reviews') // Populate reviews for search results
+        .populate('sellers.reviews')
+        .populate({
+          path: 'categoryDetails.category',
+          select: 'name'
+        })
         .lean();
       
-      return res.status(200).json(product ? [product] : []);
+      return res.status(200).json(product ? [transformProductData(product)] : []);
     }
 
-    // Traditional search
     if (!query || query.length < 3) {
       return res.status(400).json({ 
         error: "Search query must be at least 3 characters long" 
@@ -478,10 +549,15 @@ exports.searchProducts = async (req, res) => {
       .select('reference name description images')
       .populate('sellers.sellerId')
       .populate('sellers.tags')
-      .populate('sellers.reviews') // Populate reviews for search results
+      .populate('sellers.reviews')
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name'
+      })
       .lean();
 
-    res.status(200).json(products);
+    const transformedProducts = products.map(transformProductData);
+    res.status(200).json(transformedProducts);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -493,19 +569,16 @@ exports.getProductsBySeller = async (req, res) => {
     const { id: sellerId } = req.params;
     const { page = 1, limit = 10, search = '' } = req.query;
 
-    // Validate sellerId
     if (!mongoose.Types.ObjectId.isValid(sellerId)) {
       return res.status(400).json({ error: "Invalid seller ID" });
     }
 
     const skip = (page - 1) * limit;
 
-    // Build query
     const query = {
       'sellers.sellerId': sellerId
     };
 
-    // Add search condition if search term exists
     if (search && search.trim().length > 0) {
       query.$or = [
         { reference: { $regex: search, $options: 'i' } },
@@ -513,9 +586,11 @@ exports.getProductsBySeller = async (req, res) => {
       ];
     }
 
-    // Get products with pagination
     const products = await Product.find(query)
-      .populate('category')
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name'
+      })
       .populate('createdBy')
       .populate({
         path: 'sellers.sellerId',
@@ -526,7 +601,7 @@ exports.getProductsBySeller = async (req, res) => {
         select: 'name'
       })
       .populate({
-        path: 'sellers.reviews' // Populate seller-specific reviews
+        path: 'sellers.reviews'
       })
       .populate({
         path: 'sellers.promotions.promotionId'
@@ -538,16 +613,14 @@ exports.getProductsBySeller = async (req, res) => {
       .limit(parseInt(limit))
       .lean();
 
-    // Transform the data to include only the relevant seller info
     const transformedProducts = products.map(product => {
-      // Find the specific seller's info
       const sellerInfo = product.sellers.find(s => 
         s.sellerId && s.sellerId._id.toString() === sellerId
       );
       
+      const transformed = transformProductData(product);
       return {
-        ...product,
-        // Override the sellers array with just the relevant seller info
+        ...transformed,
         sellers: sellerInfo ? [sellerInfo] : []
       };
     });
@@ -573,47 +646,31 @@ exports.getProductsBySeller = async (req, res) => {
 // Get products filtered by category structure
 exports.getProductsByCategory = async (req, res) => {
   try {
-    const { category, group, item } = req.query;
+    const { categoryDetails, group, item } = req.query;
     const query = {};
-    
-    if (category) query['category.name'] = category;
-    if (group) query['category.subcategory.group'] = group;
-    if (item) query['category.subcategory.items'] = item;
 
-    const products = await Product.find(query);
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Get category statistics (counts)
-exports.getCategoryStats = async (req, res) => {
-  try {
-    const stats = await Product.aggregate([
-      {
-        $group: {
-          _id: {
-            category: "$category.name",
-            group: "$category.subcategory.group"
-          },
-          count: { $sum: 1 }
-        }
-      },
-      {
-        $group: {
-          _id: "$_id.category",
-          groups: {
-            $push: {
-              group: "$_id.group",
-              count: "$count"
-            }
-          },
-          total: { $sum: "$count" }
-        }
+    // If categoryDetails is provided, find the category by name
+    if (categoryDetails) {
+      const category = await Category.findOne({ name: categoryDetails });
+      if (!category) {
+        return res.status(404).json({ message: `Category '${categoryDetails}' not found` });
       }
-    ]);
-    res.json(stats);
+      query["categoryDetails.category"] = category._id; // Use the category's ObjectId
+    }
+
+    // Add group and item to the query if provided
+    if (group) query["categoryDetails.subcategory.group"] = group;
+    if (item) query["categoryDetails.subcategory.item"] = item;
+
+    // Find products matching the query
+    const products = await Product.find(query).populate({
+      path: "categoryDetails.category",
+      select: "name",
+    });
+
+    // Transform and return the products
+    const transformedProducts = products.map(transformProductData);
+    res.json(transformedProducts);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

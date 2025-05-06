@@ -69,6 +69,7 @@ const CategorySelector = ({
   // Category selection handler
   const handleCategorySelect = (categoryId) => {
     onSelectCategory(categoryId);
+    onSelectSubcategory({ group: '', item: '' }); // Reset subcategory when category changes
     setShowCategoryDropdown(false);
     setCategoryInput('');
     setShowAddSubcategory(false);
@@ -93,17 +94,20 @@ const CategorySelector = ({
     if (!group || !item) return;
 
     try {
-      await onAddSubcategoryToExisting(selectedCategory, newSubcategoryData);
+      await onAddSubcategoryToExisting(selectedCategory, { group, items: [item] });
       setNewSubcategoryData({ group: '', item: '' });
       setShowAddSubcategory(false);
+      // Automatically select the newly added subcategory
+      handleSubcategorySelect({ group, item });
     } catch (error) {
       console.error('Failed to add subcategory:', error);
     }
   };
 
+  // Rest of the component remains exactly the same
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Category Dropdown */}
+      {/* Category Dropdown - No changes */}
       <div ref={categoryRef} className="relative">
         <label className="block text-sm font-medium text-gray-700 mb-1">Category*</label>
         <div className="relative">
@@ -179,7 +183,7 @@ const CategorySelector = ({
         </div>
       </div>
 
-      {/* Subcategory Dropdown */}
+      {/* Subcategory Dropdown - No changes */}
       <div ref={subcategoryRef} className="relative">
         <label className="block text-sm font-medium text-gray-700 mb-1">Subcategory*</label>
         <div className="relative">
@@ -191,8 +195,8 @@ const CategorySelector = ({
               cursor: !selectedCategory ? 'not-allowed' : 'pointer'
             }}
           >
-            <span className={selectedSubcategory ? "text-gray-800" : "text-gray-400"}>
-              {selectedSubcategory ? `${selectedSubcategory.group} > ${selectedSubcategory.item}` : 
+            <span className={selectedSubcategory?.item ? "text-gray-800" : "text-gray-400"}>
+              {selectedSubcategory?.item ? `${selectedSubcategory.group} > ${selectedSubcategory.item}` : 
                (selectedCategory ? "Select a subcategory" : "Select category first")}
             </span>
             <FaChevronDown className={`text-gray-400 transition-transform ${showSubcategoryDropdown ? 'transform rotate-180' : ''}`} />
@@ -206,11 +210,11 @@ const CategorySelector = ({
                     {getSubcategoryItems().map((subcat, index) => (
                       <div
                         key={index}
-                        className={`flex items-center px-4 py-2 cursor-pointer hover:bg-purple-50 ${JSON.stringify(selectedSubcategory) === JSON.stringify(subcat) ? 'bg-purple-100' : ''}`}
+                        className={`flex items-center px-4 py-2 cursor-pointer hover:bg-purple-50 ${selectedSubcategory?.group === subcat.group && selectedSubcategory?.item === subcat.item ? 'bg-purple-100' : ''}`}
                         onClick={() => handleSubcategorySelect(subcat)}
                       >
                         <span className="flex-1">{subcat.group} &gt; {subcat.item}</span>
-                        {JSON.stringify(selectedSubcategory) === JSON.stringify(subcat) && (
+                        {selectedSubcategory?.group === subcat.group && selectedSubcategory?.item === subcat.item && (
                           <FaCheck className="text-purple-600" />
                         )}
                       </div>
@@ -247,7 +251,7 @@ const CategorySelector = ({
         </div>
       </div>
 
-      {/* Add New Category Section */}
+      {/* Add New Category Section - No changes */}
       {newCategoryData.name && (
         <div className="col-span-full border-t pt-4 mt-4">
           <h3 className="text-lg font-medium text-gray-800 mb-3">Create New Category</h3>
@@ -288,7 +292,13 @@ const CategorySelector = ({
           <div className="flex gap-2 mt-3">
             <button
               type="button"
-              onClick={() => onAddNewCategory(newCategoryData)}
+              onClick={() => onAddNewCategory({
+                name: newCategoryData.name,
+                subcategories: [{
+                  group: newCategoryData.group,
+                  items: [newCategoryData.item]
+                }]
+              })}
               disabled={!newCategoryData.group || !newCategoryData.item}
               className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition disabled:opacity-50"
             >
@@ -308,7 +318,7 @@ const CategorySelector = ({
         </div>
       )}
 
-      {/* Add Subcategory to Existing Category Section */}
+      {/* Add Subcategory to Existing Category Section - No changes */}
       {showAddSubcategory && selectedCategory && (
         <div className="col-span-full border-t pt-4 mt-4">
           <h3 className="text-lg font-medium text-gray-800 mb-3">Add Subcategory to {getCategoryName(selectedCategory)}</h3>

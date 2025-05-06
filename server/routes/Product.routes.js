@@ -10,7 +10,7 @@ router.get("/reference/:reference", productController.getProductByReference);
 // Product listing with filters
 router.get("/", productController.getAllProducts);
 router.get('/by-category', productController.getProductsByCategory);
-router.get('/category-stats', productController.getCategoryStats);
+
 
 // Product CRUD operations
 router.post("/", 

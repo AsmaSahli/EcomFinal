@@ -16,6 +16,7 @@ import SellerDashboard from "./Pages/SellerDashboard";
 import DeliveryDashboard from "./Pages/DeliveryDashboard";
 import AdminDashboard from "./Pages/AdminDashboard";
 import PrivateRoute from "./components/PrivateRoute";
+import ProductCategoryPage from "./Pages/ProductCategoryPage";
 
 
 function App() {
@@ -26,6 +27,10 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Navigate to="/homePage" />} />
         <Route path="/homePage" element={<Home/>} />
+        <Route 
+              path="/products" 
+              element={<ProductCategoryPage/>} 
+            />
         
         {/* Authentication routes (only for non-logged in users) */}
         <Route element={<AuthentificationRoute />}>

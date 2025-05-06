@@ -285,11 +285,15 @@ const DashProducts = () => {
                           {product.reference}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-500 bg-blue-100 px-2 py-1 rounded-md">
-                          {product.category?.name || 'Uncategorized'}
-                        </span>
-                      </td>
+                                                <td className="px-6 py-4 whitespace-nowrap">
+                            {product.categoryDetails?.category?.name ? (
+                              <span className="text-sm text-gray-500 bg-blue-100 px-2 py-1 rounded-md">
+                                {product.categoryDetails.category.name}
+                              </span>
+                            ) : (
+                              <span className="text-sm text-gray-500 italic">Uncategorized</span>
+                            )}
+                          </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         ${sellerInfo?.price?.toFixed(2)}
                       </td>

@@ -6,7 +6,7 @@ import TagSelector from './TagSelector';
 import ImageUploader from './ImageUploader';
 import { useSelector } from "react-redux";
 
-const API_BASE_URL =  'http://localhost:8000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 const DashAddInventory = () => {
     const currentUser = useSelector(state => state.user.currentUser);
@@ -16,8 +16,13 @@ const DashAddInventory = () => {
       name: '',
       description: '',
       images: [],
-      category: null,
-      subcategory: null,
+      categoryDetails: {
+        category: null,
+        subcategory: {
+          group: '',
+          item: ''
+        }
+      },
       tags: [],
       price: '',
       stock: ''
@@ -99,8 +104,10 @@ const DashAddInventory = () => {
         reference: product.reference,
         name: product.name,
         description: product.description,
-        category: product.category?._id || product.category,
-        subcategory: product.subcategory || null,
+        categoryDetails: product.categoryDetails || {
+          category: product.category?._id || product.category,
+          subcategory: product.subcategory || { group: '', item: '' }
+        },
         images: product.images || [],
         price: '',
         stock: '',
@@ -196,14 +203,66 @@ const DashAddInventory = () => {
         name: '',
         description: '',
         images: [],
-        category: null,
-        subcategory: null,
+        categoryDetails: {
+          category: null,
+          subcategory: {
+            group: '',
+            item: ''
+          }
+        },
         tags: [],
         price: '',
         stock: ''
       });
       setError(null);
       setSuccess(null);
+    };
+
+    const handleAddNewCategory = async (newCategoryData) => {
+      try {
+        setLoading(prev => ({ ...prev, form: true }));
+        const response = await axios.post(`${API_BASE_URL}/categories`, {
+          name: newCategoryData.name,
+          subcategories: [{
+            group: newCategoryData.group,
+            items: [newCategoryData.item]
+          }]
+        });
+        
+        setCategories(prev => [...prev, response.data]);
+        setFormData(prev => ({
+          ...prev,
+          categoryDetails: {
+            category: response.data._id,
+            subcategory: {
+              group: newCategoryData.group,
+              item: newCategoryData.item
+            }
+          }
+        }));
+      } catch (err) {
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(prev => ({ ...prev, form: false }));
+      }
+    };
+
+    const handleAddSubcategoryToExisting = async (categoryId, subcategoryData) => {
+      try {
+        setLoading(prev => ({ ...prev, form: true }));
+        await axios.patch(`${API_BASE_URL}/categories/${categoryId}/subcategories`, {
+          group: subcategoryData.group,
+          items: [subcategoryData.item]
+        });
+        
+        // Refresh categories
+        const response = await axios.get(`${API_BASE_URL}/categories`);
+        setCategories(response.data || []);
+      } catch (err) {
+        setError(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(prev => ({ ...prev, form: false }));
+      }
     };
 
     const handleSubmit = async (e) => {
@@ -246,6 +305,12 @@ const DashAddInventory = () => {
             return setError("Name and description are required for new products");
           }
 
+          if (!formData.categoryDetails.category || 
+              !formData.categoryDetails.subcategory.group || 
+              !formData.categoryDetails.subcategory.item) {
+            return setError("Complete category details are required");
+          }
+
           const formDataToSend = new FormData();
           formDataToSend.append('reference', formData.reference);
           formDataToSend.append('name', formData.name);
@@ -253,23 +318,16 @@ const DashAddInventory = () => {
           formDataToSend.append('price', formData.price);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sellerId', currentUser.id);
+          
+          // Append category details
+          formDataToSend.append('categoryDetails[category]', formData.categoryDetails.category);
+          formDataToSend.append('categoryDetails[subcategory][group]', formData.categoryDetails.subcategory.group);
+          formDataToSend.append('categoryDetails[subcategory][item]', formData.categoryDetails.subcategory.item);
 
-          if (formData.category) {
-            formDataToSend.append('category', formData.category);
-          }
-
-          if (formData.subcategory) {
-            formDataToSend.append('subcategory', JSON.stringify(formData.subcategory));
-          }
-
-          formData.tags.forEach(tag => {
-            formDataToSend.append('tags', tag);
-          });
-
-          formData.images.forEach((image) => {
-            if (image.file) {
-              formDataToSend.append('images', image.file);
-            }
+          // Append tags and images
+          formData.tags.forEach(tag => formDataToSend.append('tags', tag));
+          formData.images.forEach(image => {
+            if (image.file) formDataToSend.append('images', image.file);
           });
 
           await axios.post(`${API_BASE_URL}/products`, formDataToSend, {
@@ -280,18 +338,23 @@ const DashAddInventory = () => {
           setSuccess('Product created successfully!');
         }
 
-        // Reset form after successful submission
+        // Reset form after success
         setTimeout(() => {
           setFormData({
             reference: '',
             name: '',
             description: '',
-            price: '',
-            stock: '',
             images: [],
-            category: null,
-            subcategory: null,
-            tags: []
+            categoryDetails: {
+              category: null,
+              subcategory: {
+                group: '',
+                item: ''
+              }
+            },
+            tags: [],
+            price: '',
+            stock: ''
           });
           setIsExistingProduct(false);
           setSelectedExistingProduct(null);
@@ -389,105 +452,105 @@ const DashAddInventory = () => {
               </div>
             )}
             
-{isExistingProduct && selectedExistingProduct && (
-  <div className="mt-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-    <div className="flex flex-col sm:flex-row gap-5">
-      {/* Product Image */}
-      {selectedExistingProduct.images?.length > 0 && (
-        <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
-          <img
-            src={selectedExistingProduct.images[0].url}
-            alt={selectedExistingProduct.name}
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src = "https://via.placeholder.com/150?text=No+Image";
-            }}
-          />
-        </div>
-      )}
-      
-      {/* Product Details */}
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-800 mb-2">
-              Existing Product
-            </span>
-            <h3 className="text-xl font-bold text-gray-900 truncate">
-              {selectedExistingProduct.name}
-            </h3>
-          </div>
-          <button
-            type="button"
-            onClick={resetForm}
-            className="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium"
-          >
-            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-            </svg>
-            Change
-          </button>
-        </div>
-        
-        {/* Metadata Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-          <div className="bg-gray-50 p-2 rounded">
-            <p className="text-xs font-medium text-gray-500">Reference</p>
-            <p className="text-sm font-semibold text-gray-800">{selectedExistingProduct.reference}</p>
-          </div>
-          
-          {selectedExistingProduct.category && (
-            <div className="bg-gray-50 p-2 rounded">
-              <p className="text-xs font-medium text-gray-500">Category</p>
-              <p className="text-sm font-semibold text-gray-800">
-                {selectedExistingProduct.category.name}
-              </p>
-            </div>
-          )}
-          
-          {selectedExistingProduct.subcategory && (
-            <div className="bg-gray-50 p-2 rounded">
-              <p className="text-xs font-medium text-gray-500">Subcategory</p>
-              <p className="text-sm font-semibold text-gray-800">
-                {selectedExistingProduct.subcategory.name}
-              </p>
-            </div>
-          )}
-        </div>
-        
-        {/* Description with expand/collapse */}
-        {selectedExistingProduct.description && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-medium text-gray-500">Description</p>
-            </div>
-            <p className="text-sm text-gray-700 line-clamp-2 hover:line-clamp-none transition-all">
-              {selectedExistingProduct.description}
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-    
-    {/* Existing Offer Warning */}
-    {selectedExistingProduct.sellers?.some(s => s.sellerId.toString() === currentUser?.id) && (
-      <div className="mt-4 pt-3 border-t border-gray-200">
-        <div className="flex items-center px-3 py-2 bg-yellow-50 rounded-md">
-          <svg className="flex-shrink-0 h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">Existing offer detected</h3>
-            <div className="mt-1 text-sm text-yellow-700">
-              <p>You've already listed this product. Submitting will update your existing offer.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-  </div>
-)}
+            {isExistingProduct && selectedExistingProduct && (
+              <div className="mt-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
+                <div className="flex flex-col sm:flex-row gap-5">
+                  {/* Product Image */}
+                  {selectedExistingProduct.images?.length > 0 && (
+                    <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
+                      <img
+                        src={selectedExistingProduct.images[0].url}
+                        alt={selectedExistingProduct.name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://via.placeholder.com/150?text=No+Image";
+                        }}
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Product Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <span className="inline-block px-2 py-1 text-xs font-semibold rounded-md bg-blue-100 text-blue-800 mb-2">
+                          Existing Product
+                        </span>
+                        <h3 className="text-xl font-bold text-gray-900 truncate">
+                          {selectedExistingProduct.name}
+                        </h3>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={resetForm}
+                        className="flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+                        </svg>
+                        Change
+                      </button>
+                    </div>
+                    
+                    {/* Metadata Grid */}
+                    {selectedExistingProduct.categoryDetails && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                        <div className="bg-gray-50 p-2 rounded">
+                          <p className="text-xs font-medium text-gray-500">Category</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {categories.find(c => c._id === selectedExistingProduct.categoryDetails.category)?.name || 'N/A'}
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-2 rounded">
+                          <p className="text-xs font-medium text-gray-500">Group</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {selectedExistingProduct.categoryDetails.subcategory.group}
+                          </p>
+                        </div>
+                        
+                        <div className="bg-gray-50 p-2 rounded">
+                          <p className="text-xs font-medium text-gray-500">Item</p>
+                          <p className="text-sm font-semibold text-gray-800">
+                            {selectedExistingProduct.categoryDetails.subcategory.item}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Description with expand/collapse */}
+                    {selectedExistingProduct.description && (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-medium text-gray-500">Description</p>
+                        </div>
+                        <p className="text-sm text-gray-700 line-clamp-2 hover:line-clamp-none transition-all">
+                          {selectedExistingProduct.description}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Existing Offer Warning */}
+                {selectedExistingProduct.sellers?.some(s => s.sellerId.toString() === currentUser?.id) && (
+                  <div className="mt-4 pt-3 border-t border-gray-200">
+                    <div className="flex items-center px-3 py-2 bg-yellow-50 rounded-md">
+                      <svg className="flex-shrink-0 h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-yellow-800">Existing offer detected</h3>
+                        <div className="mt-1 text-sm text-yellow-700">
+                          <p>You've already listed this product. Submitting will update your existing offer.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Basic Product Info - Only for new products */}
@@ -522,18 +585,28 @@ const DashAddInventory = () => {
               {/* Category Selection - Only for new products */}
               <CategorySelector 
                 categories={categories}
-                selectedCategory={formData.category}
-                selectedSubcategory={formData.subcategory}
+                selectedCategory={formData.categoryDetails.category}
+                selectedSubcategory={formData.categoryDetails.subcategory}
                 onSelectCategory={(categoryId) => {
                   setFormData(prev => ({ 
                     ...prev, 
-                    category: categoryId,
-                    subcategory: null
+                    categoryDetails: {
+                      category: categoryId,
+                      subcategory: { group: '', item: '' }
+                    }
                   }));
                 }}
                 onSelectSubcategory={(subcategory) => {
-                  setFormData(prev => ({ ...prev, subcategory }));
+                  setFormData(prev => ({ 
+                    ...prev,
+                    categoryDetails: {
+                      ...prev.categoryDetails,
+                      subcategory
+                    }
+                  }));
                 }}
+                onAddNewCategory={handleAddNewCategory}
+                onAddSubcategoryToExisting={handleAddSubcategoryToExisting}
               />
             </>
           )}

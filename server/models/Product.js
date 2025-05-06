@@ -13,6 +13,17 @@ const promotionReferenceSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+const categoryReferenceSchema = new mongoose.Schema({
+  category: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Category',
+    required: true
+  },
+  subcategory: {
+    group: { type: String, required: true },
+    item: { type: String, required: true }
+  }
+}, { _id: false });
 const sellerSpecificSchema = new mongoose.Schema({
   sellerId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -71,10 +82,7 @@ const ProductSchema = new mongoose.Schema({
     required: [true, "Product description is required"]
   },
   images: [imageSchema],
-  category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category'
-  },
+  categoryDetails: categoryReferenceSchema,
   sellers: [sellerSpecificSchema],
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
