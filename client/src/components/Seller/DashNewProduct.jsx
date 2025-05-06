@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { FaBoxOpen, FaSearch, FaSpinner } from 'react-icons/fa';
+import { FaBoxOpen, FaSearch, FaSpinner, FaTimes } from 'react-icons/fa';
 import axios from 'axios';
 import CategorySelector from './CategorySelector';
 import TagSelector from './TagSelector';
@@ -98,22 +99,27 @@ const DashAddInventory = () => {
       setIsExistingProduct(true);
       setSelectedExistingProduct(product);
       setShowSearchResults(false);
-      
+
+      const categoryDetails = product.categoryDetails || {
+        category: product.category?._id || product.category || null,
+        subcategory: {
+          group: product.categoryDetails?.subcategory?.group || '',
+          item: product.categoryDetails?.subcategory?.item || ''
+        }
+      };
+
       setFormData(prev => ({
         ...prev,
         reference: product.reference,
         name: product.name,
         description: product.description,
-        categoryDetails: product.categoryDetails || {
-          category: product.category?._id || product.category,
-          subcategory: product.subcategory || { group: '', item: '' }
-        },
+        categoryDetails,
         images: product.images || [],
         price: '',
         stock: '',
         tags: []
       }));
-      
+
       const existingSeller = product.sellers?.find(s => 
         s.sellerId.toString() === currentUser?.id
       );
@@ -255,7 +261,6 @@ const DashAddInventory = () => {
           items: [subcategoryData.item]
         });
         
-        // Refresh categories
         const response = await axios.get(`${API_BASE_URL}/categories`);
         setCategories(response.data || []);
       } catch (err) {
@@ -319,12 +324,10 @@ const DashAddInventory = () => {
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sellerId', currentUser.id);
           
-          // Append category details
           formDataToSend.append('categoryDetails[category]', formData.categoryDetails.category);
           formDataToSend.append('categoryDetails[subcategory][group]', formData.categoryDetails.subcategory.group);
           formDataToSend.append('categoryDetails[subcategory][item]', formData.categoryDetails.subcategory.item);
 
-          // Append tags and images
           formData.tags.forEach(tag => formDataToSend.append('tags', tag));
           formData.images.forEach(image => {
             if (image.file) formDataToSend.append('images', image.file);
@@ -338,7 +341,6 @@ const DashAddInventory = () => {
           setSuccess('Product created successfully!');
         }
 
-        // Reset form after success
         setTimeout(() => {
           setFormData({
             reference: '',
@@ -403,7 +405,6 @@ const DashAddInventory = () => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Product Reference Search */}
           <div className="relative">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Product Reference*
@@ -425,6 +426,19 @@ const DashAddInventory = () => {
                 placeholder="Enter product reference..."
                 disabled={isExistingProduct}
               />
+              {formData.reference && !isExistingProduct && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData({...formData, reference: ''});
+                    setSearchResults([]);
+                    setShowSearchResults(false);
+                  }}
+                  className="absolute right-8 top-3 text-gray-400 hover:text-gray-600"
+                >
+                  <FaTimes />
+                </button>
+              )}
               <FaSearch className="absolute right-3 top-3 text-gray-400" />
             </div>
             
@@ -438,6 +452,11 @@ const DashAddInventory = () => {
                   >
                     <div className="font-semibold">{product.reference}</div>
                     <div className="text-sm text-gray-600">{product.name}</div>
+                    {product.sellers?.length > 0 && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        {product.sellers.length} offer{product.sellers.length !== 1 ? 's' : ''} available
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -454,9 +473,9 @@ const DashAddInventory = () => {
             
             {isExistingProduct && selectedExistingProduct && (
               <div className="mt-4 p-5 bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow duration-200">
-                <div className="flex flex-col sm:flex-row gap-5">
-                  {/* Product Image */}
-                  {selectedExistingProduct.images?.length > 0 && (
+                <div className="flex flex-colPARAMETER: existing product display modified to remove category, group, item, and current offers
+                sm:flex-row gap-5">
+                  {selectedExistingProduct.images?.length > 0 ? (
                     <div className="flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-100">
                       <img
                         src={selectedExistingProduct.images[0].url}
@@ -468,9 +487,12 @@ const DashAddInventory = () => {
                         }}
                       />
                     </div>
+                  ) : (
+                    <div className="flex-shrink-0 w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 flex items-center justify-center">
+                      <FaBoxOpen className="text-2xl text-gray-400" />
+                    </div>
                   )}
                   
-                  {/* Product Details */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-2">
                       <div>
@@ -480,6 +502,9 @@ const DashAddInventory = () => {
                         <h3 className="text-xl font-bold text-gray-900 truncate">
                           {selectedExistingProduct.name}
                         </h3>
+                        <p className="text-sm text-gray-500 mt-1">
+                          {selectedExistingProduct.reference}
+                        </p>
                       </div>
                       <button
                         type="button"
@@ -493,39 +518,12 @@ const DashAddInventory = () => {
                       </button>
                     </div>
                     
-                    {/* Metadata Grid */}
-                    {selectedExistingProduct.categoryDetails && (
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-                        <div className="bg-gray-50 p-2 rounded">
-                          <p className="text-xs font-medium text-gray-500">Category</p>
-                          <p className="text-sm font-semibold text-gray-800">
-                            {categories.find(c => c._id === selectedExistingProduct.categoryDetails.category)?.name || 'N/A'}
-                          </p>
-                        </div>
-                        
-                        <div className="bg-gray-50 p-2 rounded">
-                          <p className="text-xs font-medium text-gray-500">Group</p>
-                          <p className="text-sm font-semibold text-gray-800">
-                            {selectedExistingProduct.categoryDetails.subcategory.group}
-                          </p>
-                        </div>
-                        
-                        <div className="bg-gray-50 p-2 rounded">
-                          <p className="text-xs font-medium text-gray-500">Item</p>
-                          <p className="text-sm font-semibold text-gray-800">
-                            {selectedExistingProduct.categoryDetails.subcategory.item}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    
-                    {/* Description with expand/collapse */}
                     {selectedExistingProduct.description && (
-                      <div className="mb-3">
+                      <div className="mt-3">
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-medium text-gray-500">Description</p>
                         </div>
-                        <p className="text-sm text-gray-700 line-clamp-2 hover:line-clamp-none transition-all">
+                        <p className="text-sm text-gray-700 line-clamp-2 hover:line-clamp-none transition-all cursor-pointer">
                           {selectedExistingProduct.description}
                         </p>
                       </div>
@@ -533,17 +531,30 @@ const DashAddInventory = () => {
                   </div>
                 </div>
                 
-                {/* Existing Offer Warning */}
                 {selectedExistingProduct.sellers?.some(s => s.sellerId.toString() === currentUser?.id) && (
-                  <div className="mt-4 pt-3 border-t border-gray-200">
-                    <div className="flex items-center px-3 py-2 bg-yellow-50 rounded-md">
-                      <svg className="flex-shrink-0 h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="mt-4 pt-4 border-t border-gray-200">
+                    <div className="flex items-start p-3 bg-yellow-50 rounded-lg">
+                      <svg className="flex-shrink-0 h-5 w-5 text-yellow-500 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                       <div className="ml-3">
-                        <h3 className="text-sm font-medium text-yellow-800">Existing offer detected</h3>
+                        <h3 className="text-sm font-medium text-yellow-800">You already offer this product</h3>
                         <div className="mt-1 text-sm text-yellow-700">
-                          <p>You've already listed this product. Submitting will update your existing offer.</p>
+                          <p>Submitting will update your existing offer. Current details:</p>
+                          <div className="grid grid-cols-2 gap-2 mt-2">
+                            <div>
+                              <span className="text-xs text-yellow-600">Current Price:</span>
+                              <p className="font-medium">
+                                ${selectedExistingProduct.sellers.find(s => s.sellerId.toString() === currentUser?.id).price}
+                              </p>
+                            </div>
+                            <div>
+                              <span className="text-xs text-yellow-600">Current Stock:</span>
+                              <p className="font-medium">
+                                {selectedExistingProduct.sellers.find(s => s.sellerId.toString() === currentUser?.id).stock}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -553,7 +564,6 @@ const DashAddInventory = () => {
             )}
           </div>
 
-          {/* Basic Product Info - Only for new products */}
           {!isExistingProduct && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -582,7 +592,6 @@ const DashAddInventory = () => {
                 </div>
               </div>
 
-              {/* Category Selection - Only for new products */}
               <CategorySelector 
                 categories={categories}
                 selectedCategory={formData.categoryDetails.category}
@@ -611,7 +620,6 @@ const DashAddInventory = () => {
             </>
           )}
 
-          {/* Seller-Specific Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Your Price*</label>
@@ -650,7 +658,6 @@ const DashAddInventory = () => {
             </div>
           </div>
 
-          {/* Tags Section */}
           <TagSelector
             tags={tags}
             selectedTags={formData.tags}
@@ -660,7 +667,6 @@ const DashAddInventory = () => {
             loading={loading.form}
           />
 
-          {/* Image Upload - Only for new products */}
           {!isExistingProduct && (
             <ImageUploader
               images={formData.images}
@@ -670,7 +676,6 @@ const DashAddInventory = () => {
             />
           )}
 
-          {/* Submit Button */}
           <div className="pt-4">
             <button
               type="submit"

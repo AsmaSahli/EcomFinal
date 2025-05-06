@@ -84,26 +84,55 @@ exports.getProductById = async (req, res) => {
 };
 
 // Get product by reference
+
 exports.getProductByReference = async (req, res) => {
   try {
-    const product = await Product.findOne({ reference: req.params.reference })
-      .populate("sellers.sellerId")
-      .populate("sellers.tags")
-      .populate({
-        path: "categoryDetails.category",
-        select: "name"
-      })
-      .populate("sellers.reviews")
-      .populate("createdBy");
+    const { reference } = req.params;
 
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    // Validate reference
+    if (!reference || typeof reference !== 'string') {
+      return res.status(400).json({ message: 'Invalid product reference' });
+    }
+
+    const product = await Product.findOne({ reference })
+      .populate({
+        path: 'sellers.sellerId',
+        select: 'name email' // Adjust fields as needed
+      })
+      .populate({
+        path: 'sellers.tags',
+        select: 'name' // Adjust fields as needed
+      })
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name' // Only fetch category name
+      })
+      .populate({
+        path: 'sellers.reviews',
+        select: 'rating comment' // Adjust fields as needed
+      })
+      .populate({
+        path: 'createdBy',
+        select: 'name email' // Adjust fields as needed
+      });
+
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    // Ensure categoryDetails.subcategory is present (fallback for legacy data)
+    if (!product.categoryDetails?.subcategory) {
+      product.categoryDetails.subcategory = { group: '', item: '' };
+    }
 
     const transformedProduct = transformProductData(product);
     res.status(200).json(transformedProduct);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in getProductByReference:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // Create new product (unchanged as it handles data storage)
 exports.createProduct = async (req, res) => {
@@ -514,28 +543,53 @@ exports.deleteProductImage = async (req, res) => {
 };
 
 // Search products by reference or name
+
 exports.searchProducts = async (req, res) => {
   try {
     const { query, reference } = req.query;
-    
+
+    // Validate inputs
+    if (!query && !reference) {
+      return res.status(400).json({ message: 'Query or reference parameter is required' });
+    }
+
     if (reference) {
+      // Validate reference
+      if (typeof reference !== 'string' || reference.trim() === '') {
+        return res.status(400).json({ message: 'Invalid product reference' });
+      }
+
       const product = await Product.findOne({ reference })
-        .select('reference name description images')
-        .populate('sellers.sellerId')
-        .populate('sellers.tags')
-        .populate('sellers.reviews')
+        .select('reference name description images categoryDetails')
+        .populate({
+          path: 'sellers.sellerId',
+          select: 'name email' // Adjust fields as needed
+        })
+        .populate({
+          path: 'sellers.tags',
+          select: 'name' // Adjust fields as needed
+        })
+        .populate({
+          path: 'sellers.reviews',
+          select: 'rating comment' // Adjust fields as needed
+        })
         .populate({
           path: 'categoryDetails.category',
           select: 'name'
         })
         .lean();
-      
+
+      if (product && !product.categoryDetails?.subcategory) {
+        product.categoryDetails.subcategory = { group: '', item: '' };
+      }
+
       return res.status(200).json(product ? [transformProductData(product)] : []);
     }
 
-    if (!query || query.length < 3) {
+    // Validate query
+    if (typeof query !== 'string' || query.length < 3) {
       return res.status(400).json({ 
-        error: "Search query must be at least 3 characters long" 
+        message: 'Search query must be at least 3 characters long' 
       });
     }
 
@@ -546,22 +600,40 @@ exports.searchProducts = async (req, res) => {
       ]
     })
       .limit(10)
-      .select('reference name description images')
-      .populate('sellers.sellerId')
-      .populate('sellers.tags')
-      .populate('sellers.reviews')
+      .select('reference name description images categoryDetails')
+      .populate({
+        path: 'sellers.sellerId',
+        select: 'name email' // Adjust fields as needed
+      })
+      .populate({
+        path: 'sellers.tags',
+        select: 'name' // Adjust fields as needed
+      })
+      .populate({
+        path: 'sellers.reviews',
+        select: 'rating comment' // Adjust fields as needed
+      })
       .populate({
         path: 'categoryDetails.category',
         select: 'name'
       })
       .lean();
 
+    // Ensure subcategory is present for all products
+    products.forEach(product => {
+      if (!product.categoryDetails?.subcategory) {
+        product.categoryDetails.subcategory = { group: '', item: '' };
+      }
+    });
+
     const transformedProducts = products.map(transformProductData);
     res.status(200).json(transformedProducts);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Error in searchProducts:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
 
 // Get products by seller ID
 exports.getProductsBySeller = async (req, res) => {
