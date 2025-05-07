@@ -10,6 +10,7 @@ router.get("/reference/:reference", productController.getProductByReference);
 // Product listing with filters
 router.get("/", productController.getAllProducts);
 router.get('/by-category', productController.getProductsByCategory);
+router.get('/sellers/:sellerId/products', productController.getProductsBySeller);
 
 
 // Product CRUD operations
@@ -41,6 +42,6 @@ router.post("/:id/images",
 router.delete("/:id/images/:publicId", productController.deleteProductImage);
 
 // Seller products
-router.get('/seller/:id', productController.getProductsBySeller);
+router.get('/seller/:id', productController.getProductsBySellers);
 
 module.exports = router;

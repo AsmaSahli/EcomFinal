@@ -1,122 +1,196 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaStar, FaRegStar, FaShoppingCart } from 'react-icons/fa';
-import { FiHeart } from 'react-icons/fi';
+import { IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
 
-const ProductCard = ({ product, sellerOffer }) => {
-  const price = sellerOffer.price?.toFixed(2) || '0.00';
-  const stock = sellerOffer.stock || 0;
+const ProductCard = ({ product, sellerOffer, onWishlistToggle }) => {
+  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Extract product details
+  const price = sellerOffer?.price?.toFixed(2) || '0.00';
+  const stock = sellerOffer?.stock || 0;
   const status = stock > 0 ? 'In Stock' : 'Out of Stock';
-  const warranty = sellerOffer.warranty || 'No warranty';
-  
-  // Calculate average rating for this seller's offer
-  const averageRating = sellerOffer.reviews?.length > 0 
-    ? (sellerOffer.reviews.reduce((sum, review) => sum + review.rating, 0)) / sellerOffer.reviews.length
+  const sellerId = sellerOffer?.sellerId?._id;
+  const shopName = sellerOffer?.sellerId?.shopName || 'Seller';
+
+  // Rating calculation
+  const averageRating = sellerOffer?.reviews?.length > 0 
+    ? (sellerOffer.reviews.reduce((sum, review) => sum + review.rating, 0) / sellerOffer.reviews.length).toFixed(1)
     : 0;
-  
-  // Check if there's an active promotion
-  const hasPromotion = sellerOffer.promotions?.some(p => p.isActive) || sellerOffer.activePromotion;
-  
-  const renderStars = () => {
-    const stars = [];
-    const fullStars = Math.floor(averageRating);
-    const hasHalfStar = averageRating % 1 >= 0.5;
-    
-    for (let i = 1; i <= 5; i++) {
-      if (i <= fullStars) {
-        stars.push(<FaStar key={i} className="text-yellow-400" />);
-      } else if (i === fullStars + 1 && hasHalfStar) {
-        stars.push(<FaStar key={i} className="text-yellow-400" />);
-      } else {
-        stars.push(<FaRegStar key={i} className="text-yellow-400" />);
-      }
+
+  // Promotions
+  const activePromotion = sellerOffer?.promotions?.find(p => p.isActive) || sellerOffer?.activePromotion;
+  const discountPercentage = activePromotion?.discountPercentage || 0;
+  const originalPrice = activePromotion ? (price / (1 - discountPercentage/100)).toFixed(2) : null;
+
+  const handleWishlistToggle = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsWishlisted(!isWishlisted);
+    if (onWishlistToggle) {
+      onWishlistToggle(product._id, !isWishlisted);
     }
-    
-    return stars;
   };
 
+  const renderStars = () => {
+    return Array(5).fill(0).map((_, i) => (
+      i < Math.floor(averageRating) ? (
+        <FaStar key={i} className="text-yellow-400 w-3 h-3" />
+      ) : (
+        <FaRegStar key={i} className="text-gray-300 w-3 h-3" />
+      )
+    ));
+  };
+
+  const primaryImage = product.images?.[0]?.url;
+  const hoverImage = product.images?.[1]?.url;
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow duration-300 border border-gray-100">
-      {/* Product Image */}
-      <div className="relative pb-[75%] overflow-hidden">
-        <Link to={`/products/${product._id}?seller=${sellerOffer.sellerId}`}>
-          {product.images?.[0] ? (
-            <img 
-              src={product.images[0].url} 
+    <div 
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 relative group overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Product Image Container */}
+      <div className="relative pb-[100%] overflow-hidden">
+        {/* Image with hover effect */}
+        <Link 
+          to={`/products/${product._id}${sellerId ? `?seller=${sellerId}` : ''}`}
+          className="absolute inset-0"
+        >
+          {/* Primary image */}
+          {primaryImage && (
+            <img
+              src={primaryImage}
               alt={product.name}
-              className="absolute top-0 left-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
+                hoverImage && isHovered ? 'opacity-0' : 'opacity-100'
+              }`}
+              loading="lazy"
             />
-          ) : (
-            <div className="absolute top-0 left-0 w-full h-full bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-400">No Image</span>
+          )}
+          
+          {/* Hover image */}
+          {hoverImage && (
+            <img
+              src={hoverImage}
+              alt={product.name}
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
+                isHovered ? 'opacity-100' : 'opacity-0'
+              }`}
+              loading="lazy"
+            />
+          )}
+          
+          {/* Fallback image */}
+          {!primaryImage && (
+            <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+              <span className="text-gray-400 text-sm">No Image</span>
             </div>
           )}
         </Link>
-        
-        {/* Quick actions and badges */}
-        <div className="absolute top-3 right-3 flex flex-col space-y-2">
-          <button className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100 transition-colors">
-            <FiHeart className="text-gray-600 hover:text-red-500" />
+
+        {/* Top badges */}
+        <div className="absolute top-2 left-2 right-2 flex justify-between items-start">
+          {/* Improved stock status badge */}
+          <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
+            stock > 0 
+              ? 'text-green-800 bg-green-100/90 backdrop-blur-[1px]' 
+              : 'text-gray-600 bg-gray-100/90 backdrop-blur-[1px]'
+          }`}>
+            {status}
+          </span>
+          
+          {/* Elegant wishlist button */}
+          <button 
+            onClick={handleWishlistToggle}
+            className={`p-1.5 rounded-full transition-all duration-300 ${
+              isWishlisted 
+                ? 'text-red-500 bg-white/80 shadow-sm' 
+                : 'text-gray-400 hover:text-red-500 bg-white/80 hover:bg-white/90'
+            }`}
+            aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          >
+            {isWishlisted ? (
+              <IoMdHeart className="w-4 h-4 fill-current animate-pulse" />
+            ) : (
+              <IoMdHeartEmpty className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            )}
           </button>
         </div>
-        
-        {/* Status badge */}
-        <div className={`absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium ${stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-          {status}
-        </div>
-        
-        {/* Promotion badge */}
-        {hasPromotion && (
-          <div className="absolute bottom-3 left-3 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">
-            Special Offer
+
+        {/* Discount badge */}
+        {activePromotion && (
+          <div className="absolute bottom-2 left-2">
+            <span className="text-xs px-2 py-1 bg-red-500 text-white rounded-full font-medium">
+              {discountPercentage}% OFF
+            </span>
           </div>
         )}
       </div>
-      
+
       {/* Product Info */}
-      <div className="p-4">
-        <Link to={`/products/${product._id}?seller=${sellerOffer.sellerId}`} className="block">
-          <h3 className="font-semibold text-lg mb-1 line-clamp-2 hover:text-blue-600 transition-colors">
+      <div className="p-3">
+        {/* Product name */}
+        <Link 
+          to={`/products/${product._id}${sellerId ? `?seller=${sellerId}` : ''}`}
+          className="block mb-1"
+        >
+          <h3 className="font-medium text-gray-900 line-clamp-2 hover:text-[#4C0ADA] transition-colors text-sm">
             {product.name}
           </h3>
         </Link>
         
-        {/* Seller info would go here - you might want to display seller name/rating */}
-        <p className="text-sm text-gray-500 mb-2">Sold by: {sellerOffer.sellerId.shopName || 'Seller'}</p>
+        {/* Seller info */}
+        {sellerId && (
+          <p className="text-xs text-gray-500 mb-1">
+            Sold by: <Link 
+              to={`/sellers/${sellerId}/products`} 
+              className="text-[#4C0ADA] hover:underline"
+            >
+              {shopName}
+            </Link>
+          </p>
+        )}
         
-        {/* Rating */}
-        <div className="flex items-center mb-2">
-          <div className="flex mr-2">
+        {/* Rating and reviews */}
+        <div className="flex items-center mb-1.5">
+          <div className="flex mr-1">
             {renderStars()}
           </div>
-          <span className="text-sm text-gray-500">
-            ({sellerOffer.reviews?.length || 0} reviews)
+          <span className="text-xs text-gray-500 ml-1">
+            {averageRating} ({sellerOffer?.reviews?.length || 0})
           </span>
         </div>
         
-        {/* Warranty */}
-        {warranty && warranty !== '' && (
-          <p className="text-sm text-blue-600 mb-2">Warranty: {warranty}</p>
-        )}
-        
-        {/* Price */}
-        <div className="flex items-center justify-between mt-3">
+        {/* Price section */}
+        <div className="flex items-center justify-between mt-2">
           <div>
-            <span className="text-xl font-bold text-gray-900">${price}</span>
-            {hasPromotion && (
-              <span className="ml-2 text-sm text-gray-500 line-through">${(price * 1.2).toFixed(2)}</span>
+            {/* Current price */}
+            <div className="text-base font-bold text-gray-900">
+              ${price}
+            </div>
+            
+            {/* Original price */}
+            {originalPrice && (
+              <div className="text-xs text-gray-400 line-through">
+                ${originalPrice}
+              </div>
             )}
           </div>
           
-          {/* Add to cart button */}
+          {/* Enhanced Add to cart button */}
           <button 
-            className={`px-3 py-2 rounded-full flex items-center ${stock > 0 
-              ? 'bg-blue-600 text-white hover:bg-blue-700' 
-              : 'bg-gray-300 text-gray-600 cursor-not-allowed'}`}
+            className={`px-3 py-2 rounded-md text-xs flex items-center gap-1.5 transition-all duration-200 ${
+              stock > 0 
+                ? 'bg-[#4C0ADA] text-white hover:bg-[#3A0AA5] shadow-md hover:shadow-lg active:scale-95' 
+                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+            }`}
             disabled={stock <= 0}
           >
-            <FaShoppingCart className="mr-1" />
-            <span className="text-sm">Add</span>
+            <FaShoppingCart className="w-3 h-3" />
+            <span>{stock > 0 ? 'Add' : 'Sold'}</span>
           </button>
         </div>
       </div>
@@ -124,4 +198,4 @@ const ProductCard = ({ product, sellerOffer }) => {
   );
 };
 
-export default ProductCard;
+export default React.memo(ProductCard);

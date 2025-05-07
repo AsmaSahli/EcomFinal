@@ -1,5 +1,6 @@
 const Product = require("../models/Product");
 const Category = require("../models/Category");
+const { User } = require("../models/User");
 const { uploadToCloudinary, cloudinary } = require('../utils/uploadsImages');
 const mongoose = require('mongoose');
 
@@ -636,7 +637,7 @@ exports.searchProducts = async (req, res) => {
 
 
 // Get products by seller ID
-exports.getProductsBySeller = async (req, res) => {
+exports.getProductsBySellers = async (req, res) => {
   try {
     const { id: sellerId } = req.params;
     const { page = 1, limit = 10, search = '' } = req.query;
@@ -747,6 +748,46 @@ exports.getProductsByCategory = async (req, res) => {
 
     // Transform and return the products
     const transformedProducts = products.map(transformProductData);
+    res.json(transformedProducts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+exports.getProductsBySeller = async (req, res) => {
+  try {
+    const { sellerId } = req.params;
+
+    // Validate sellerId
+    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+      return res.status(400).json({ message: 'Invalid seller ID' });
+    }
+
+    // Check if seller exists and is a Seller
+    const seller = await User.findOne({ _id: sellerId, role: 'seller' });
+    if (!seller) {
+      return res.status(404).json({ message: 'Seller not found' });
+    }
+
+    // Find products where sellerId is in the sellers array
+    const products = await Product.find({ 'sellers.sellerId': sellerId })
+      .populate({
+        path: 'categoryDetails.category',
+        select: 'name',
+      })
+      .populate({
+        path: 'sellers.sellerId',
+        select: 'shopName',
+      })
+      .lean(); // Use lean() to get plain JavaScript objects for easier manipulation
+
+    // Filter the sellers array to include only the specified seller
+    const filteredProducts = products.map(product => ({
+      ...product,
+      sellers: product.sellers.filter(seller => seller.sellerId._id.toString() === sellerId)
+    }));
+
+    // Transform and return the products
+    const transformedProducts = filteredProducts.map(transformProductData);
     res.json(transformedProducts);
   } catch (err) {
     res.status(500).json({ message: err.message });

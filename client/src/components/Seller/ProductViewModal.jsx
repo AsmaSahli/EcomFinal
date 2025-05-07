@@ -291,7 +291,7 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Category</p>
                         <p className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm border border-blue-200">
-                          {product.category?.name || 'N/A'}
+                          {product.categoryDetails?.category?.name  || 'N/A'}
                         </p>
                       </div>
                       <div>
