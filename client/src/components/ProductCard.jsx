@@ -1,11 +1,40 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link} from 'react-router-dom';
 import { FaStar, FaRegStar, FaShoppingCart } from 'react-icons/fa';
 import { IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
+import axios from 'axios';
+import { addWishlistItem, removeWishlistItem } from '../redux/user/wishlistSlice';
+import { useSelector ,useDispatch } from 'react-redux';
 
 const ProductCard = ({ product, sellerOffer, onWishlistToggle }) => {
+  const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  // API base URL
+  const API_URL = 'http://localhost:8000/api/wishlist';
+
+  // Check wishlist status on mount if user is logged in
+  useEffect(() => {
+    if (currentUser) {
+      const checkWishlistStatus = async () => {
+        try {
+          const response = await axios.get(`${API_URL}?userId=${currentUser.id}`);
+          const wishlist = response.data;
+          const isInWishlist = wishlist.items.some(
+            item =>
+              item.productId._id === product._id &&
+              (item.sellerId?._id === sellerOffer?.sellerId?._id || (!item.sellerId && !sellerOffer?.sellerId))
+          );
+          setIsWishlisted(isInWishlist);
+        } catch (err) {
+          console.error('Failed to check wishlist status:', err);
+        }
+      };
+      checkWishlistStatus();
+    }
+  }, [currentUser, product._id, sellerOffer?.sellerId]);
 
   // Extract product details
   const price = sellerOffer?.price?.toFixed(2) || '0.00';
@@ -24,12 +53,50 @@ const ProductCard = ({ product, sellerOffer, onWishlistToggle }) => {
   const discountPercentage = activePromotion?.discountPercentage || 0;
   const originalPrice = activePromotion ? (price / (1 - discountPercentage/100)).toFixed(2) : null;
 
-  const handleWishlistToggle = (e) => {
+  const handleWishlistToggle = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-    if (onWishlistToggle) {
-      onWishlistToggle(product._id, !isWishlisted);
+
+    if (!currentUser) {
+      alert('You must log in to manage your wishlist.');
+      return;
+    }
+
+    try {
+      if (isWishlisted) {
+        // Remove from wishlist
+        const response = await axios.get(`${API_URL}?userId=${currentUser.id}`);
+        const wishlist = response.data;
+        const item = wishlist.items.find(
+          item =>
+            item.productId._id === product._id &&
+            (item.sellerId?._id === sellerId || (!item.sellerId && !sellerId))
+        );
+        if (item) {
+          await axios.delete(`${API_URL}/item`, {
+            data: { userId: currentUser.id, itemId: item._id }
+          });
+          dispatch(removeWishlistItem(item._id));
+          setIsWishlisted(false);
+          if (onWishlistToggle) {
+            onWishlistToggle(product._id, false, sellerId);
+          }
+        }
+      } else {
+        // Add to wishlist
+        const response = await axios.post(`${API_URL}/add`, {
+          userId: currentUser.id,
+          productId: product._id,
+          sellerId
+        });
+        dispatch(addWishlistItem(response.data.wishlist.items[response.data.wishlist.items.length - 1]));
+        setIsWishlisted(true);
+        if (onWishlistToggle) {
+          onWishlistToggle(product._id, true, sellerId);
+        }
+      }
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update wishlist');
     }
   };
 

@@ -18,6 +18,8 @@ import AdminDashboard from "./Pages/AdminDashboard";
 import PrivateRoute from "./components/PrivateRoute";
 import ProductCategoryPage from "./Pages/ProductCategoryPage";
 import SellerProductsPage from "./Pages/SellerProductsPage";
+import WishlistPage from "./Pages/WishlistPage";
+
 
 
 function App() {
@@ -29,6 +31,7 @@ function App() {
         <Route path="/" element={<Navigate to="/homePage" />} />
         <Route path="/homePage" element={<Home/>} />
         <Route path="/products" element={<ProductCategoryPage/>} />
+        <Route path="/wishlist" element={<WishlistPage/>} />
         <Route path="/sellers/:sellerId/products" element={<SellerProductsPage/>} />
         
         {/* Authentication routes (only for non-logged in users) */}

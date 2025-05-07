@@ -1,16 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { FaSearch, FaHeart, FaUserPlus, FaStore, FaTruck } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/ecomLogo.png";
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
 import { signoutSuccess } from '../redux/user/userSlice';
+import { toast } from 'react-toastify';
 import AllCategories from "./AllCategories";
 
 const Header = () => {
   const navigate = useNavigate();
   const currentUser = useSelector(state => state.user.currentUser);
+  const wishlist = useSelector(state => state.wishlist.items);
   const dispatch = useDispatch();
+  const [wishlistCount, setWishlistCount] = useState(0);
+
+  // Update wishlist count from Redux state
+  useEffect(() => {
+    setWishlistCount(wishlist?.length || 0);
+  }, [wishlist]);
+
+  // Fetch initial wishlist on user login (optional, for initial sync)
+  useEffect(() => {
+    if (currentUser?._id) {
+      const fetchWishlist = async () => {
+        try {
+          const response = await axios.get(`http://localhost:8000/api/wishlist?userId=${currentUser.id}`);
+          const wishlistItems = response.data.items || [];
+          dispatch({ type: 'wishlist/setWishlist', payload: wishlistItems });
+        } catch (err) {
+          toast.error(err.response?.data?.message || 'Failed to fetch wishlist');
+        }
+      };
+      fetchWishlist();
+    } else {
+      setWishlistCount(0);
+      dispatch({ type: 'wishlist/setWishlist', payload: [] });
+    }
+  }, [currentUser, dispatch]);
 
   const signOut = async () => {
     try {
@@ -18,13 +45,13 @@ const Header = () => {
       dispatch(signoutSuccess());
       navigate("/");
     } catch (error) {
-      console.error('Error signing out:', error);
+      toast.error('Failed to sign out');
     }
   };
 
-  // If the role is "seller" or "delivery", return null to not render the header
-  if (currentUser && (currentUser.role === "seller" || currentUser.role === "delivery"|| currentUser.role=== "admin")) {
-    return null; // Don't render the header for these roles
+  // If the role is "seller", "delivery", or "admin", return null to not render the header
+  if (currentUser && (currentUser.role === "seller" || currentUser.role === "delivery" || currentUser.role === "admin")) {
+    return null;
   }
 
   // Header for Normal Users
@@ -51,136 +78,136 @@ const Header = () => {
         </div>
       </div>
       <div className="flex-1 flex items-center justify-end gap-4">
-      {/* Liked Items Button */}
-      <div className="group relative flex flex-col items-center">
-        <button 
-          className="btn btn-ghost btn-circle hover:bg-primary/10 transition-colors duration-200 relative"
-          aria-label="Wishlist"
-        >
-          <FaHeart className="h-6 w-6 text-secondary group-hover:text-primary transition-colors" />
-          {/* Small transparent badge */}
-          <span className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 text-xs rounded-full bg-white/90 backdrop-blur-sm border border-secondary/20 text-secondary group-hover:text-primary group-hover:border-primary/20">
-            12
-          </span>
-        </button>
-      </div>
-
-
-
-
-            <div className="dropdown dropdown-end">
-      <div tabIndex={0} role="button" className="btn btn-ghost btn-circle hover:bg-purple-50">
-        <div className="indicator">
-          <svg 
-            xmlns="http://www.w3.org/2000/svg" 
-            className="h-10 w-8 text-purple-600" 
-            fill="none" 
-            viewBox="0 0 24 24" 
-            stroke="currentColor"
+        {/* Liked Items Button */}
+        <div className="group relative flex flex-col items-center">
+          <button 
+            className="btn btn-ghost btn-circle hover:bg-primary/10 transition-colors duration-200 relative"
+            aria-label="Wishlist"
+            onClick={() => navigate("/wishlist")}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-            />
-          </svg>
-          <span className="absolute -top-1 -right-1">
-          <span className="flex items-center justify-center px-1.5 py-0.5 text-[0.65rem] font-medium rounded-full bg-white/90 backdrop-blur-sm border border-purple-200 text-purple-800 shadow-sm">
-            $0
-          </span>
-        </span>
-
+            <FaHeart className="h-6 w-6 text-secondary group-hover:text-primary transition-colors" />
+            {/* Wishlist count badge */}
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1">
+                <span className="flex items-center justify-center px-1.5 py-0.5 text-[0.65rem] font-medium rounded-full bg-white/90 backdrop-blur-sm border border-purple-200 text-purple-800 shadow-sm">
+                  {wishlistCount}
+                </span>
+              </span>
+            )}
+          </button>
         </div>
-      </div>
-      
-      <div 
-        tabIndex={0} 
-        className="dropdown-content z-[1] mt-3 card card-compact w-72 bg-white shadow-xl border border-gray-100"
-      >
-        <div className="card-body">
-          <span className="font-bold text-lg">Your Cart</span>
-          <span className="text-gray-500">3 items</span>
-          
-          <div className="mt-4 space-y-4 max-h-60 overflow-y-auto">
-            {/* Cart Items */}
-            <div className="flex items-center gap-4">
-              <div className="avatar">
-                <div className="w-12 rounded">
-                  <img src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg" alt="Product" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium">Wireless Headphones</h3>
-                <p className="text-sm text-gray-500">1 × $129.99</p>
-              </div>
-              <button className="btn btn-sm btn-ghost text-red-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="avatar">
-                <div className="w-12 rounded">
-                  <img src="https://daisyui.com/images/stock/photo-1635805737707-575885ab0820.jpg" alt="Product" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium">Smart Watch</h3>
-                <p className="text-sm text-gray-500">1 × $89.99</p>
-              </div>
-              <button className="btn btn-sm btn-ghost text-red-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="flex items-center gap-4">
-              <div className="avatar">
-                <div className="w-12 rounded">
-                  <img src="https://daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.jpg" alt="Product" />
-                </div>
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium">Bluetooth Speaker</h3>
-                <p className="text-sm text-gray-500">1 × $59.99</p>
-              </div>
-              <button className="btn btn-sm btn-ghost text-red-500">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+
+        {/* Cart Dropdown */}
+        <div className="dropdown dropdown-end">
+          <div tabIndex={0} role="button" className="btn btn-ghost btn-circle hover:bg-purple-50">
+            <div className="indicator">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                className="h-10 w-8 text-purple-600" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                />
+              </svg>
+              <span className="absolute -top-1 -right-1">
+                <span className="flex items-center justify-center px-1.5 py-0.5 text-[0.65rem] font-medium rounded-full bg-white/90 backdrop-blur-sm border border-purple-200 text-purple-800 shadow-sm">
+                  $0
+                </span>
+              </span>
             </div>
           </div>
           
-          <div className="mt-4 border-t pt-4">
-            <div className="flex justify-between mb-2">
-              <span>Subtotal</span>
-              <span className="font-medium">$279.97</span>
+          <div 
+            tabIndex={0} 
+            className="dropdown-content z-[1] mt-3 card card-compact w-72 bg-white shadow-xl border border-gray-100"
+          >
+            <div className="card-body">
+              <span className="font-bold text-lg">Your Cart</span>
+              <span className="text-gray-500">3 items</span>
+              
+              <div className="mt-4 space-y-4 max-h-60 overflow-y-auto">
+                {/* Cart Items */}
+                <div className="flex items-center gap-4">
+                  <div className="avatar">
+                    <div className="w-12 rounded">
+                      <img src="https://daisyui.com/images/stock/photo-1534528741775-53994a69daeb.jpg" alt="Product" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">Wireless Headphones</h3>
+                    <p className="text-sm text-gray-500">1 × $129.99</p>
+                  </div>
+                  <button className="btn btn-sm btn-ghost text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="avatar">
+                    <div className="w-12 rounded">
+                      <img src="https://daisyui.com/images/stock/photo-1635805737707-575885ab0820.jpg" alt="Product" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">Smart Watch</h3>
+                    <p className="text-sm text-gray-500">1 × $89.99</p>
+                  </div>
+                  <button className="btn btn-sm btn-ghost text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="avatar">
+                    <div className="w-12 rounded">
+                      <img src="https://daisyui.com/images/stock/photo-1606107557195-0e29a4b5b4aa.jpg" alt="Product" />
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-medium">Bluetooth Speaker</h3>
+                    <p className="text-sm text-gray-500">1 × $59.99</p>
+                  </div>
+                  <button className="btn btn-sm btn-ghost text-red-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <div className="mt-4 border-t pt-4">
+                <div className="flex justify-between mb-2">
+                  <span>Subtotal</span>
+                  <span className="font-medium">$279.97</span>
+                </div>
+                <div className="flex justify-between mb-4">
+                  <span>Shipping</span>
+                  <span className="font-medium">$5.99</span>
+                </div>
+                <div className="flex justify-between text-lg font-bold">
+                  <span>Total</span>
+                  <span className="text-[#3F0AAD]">$285.96</span>
+                </div>
+              </div>
+              
+              <div className="card-actions mt-4">
+                <button className="btn btn-block bg-[#3F0AAD] hover:bg-[#2D077A] text-white">
+                  Checkout
+                </button>
+              </div>
             </div>
-            <div className="flex justify-between mb-4">
-              <span>Shipping</span>
-              <span className="font-medium">$5.99</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold">
-              <span>Total</span>
-              <span className="text-[#3F0AAD]">$285.96</span>
-            </div>
-          </div>
-          
-          <div className="card-actions mt-4">
-            <button className="btn btn-block bg-[#3F0AAD] hover:bg-[#2D077A] text-white">
-              Checkout
-            </button>
           </div>
         </div>
-      </div>
-    </div>
-
-
 
         {currentUser ? (
           <div className="dropdown dropdown-end">

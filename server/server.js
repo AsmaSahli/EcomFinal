@@ -26,14 +26,20 @@ require("./routes/Seller.routes")(app);
 require("./routes/Category.routes")(app);
 require("./routes/Delivery.routes")(app);
 require("./routes/Admin.routes")(app);
+
 const promotionRoutes = require('./routes/Promotion.routes');
-app.use('/api/promotions', promotionRoutes);
 const reviewRoutes = require('./routes/Review.routes');
-app.use('/api/reviews', reviewRoutes);
 const productRoutes = require("./routes/Product.routes");
-app.use("/api/products", productRoutes);
 const productTagRoutes = require("./routes/productTag.routes");
+const cartRoutes = require('./routes/Cart.routes');
+const wishlistRoutes = require('./routes/Wishlist.routes');
+
+app.use('/api/promotions', promotionRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use("/api/products", productRoutes);
 app.use("/api/product-tags", productTagRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 
 // Middleware de gestion des erreurs
