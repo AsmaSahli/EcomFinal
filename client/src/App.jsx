@@ -19,6 +19,7 @@ import PrivateRoute from "./components/PrivateRoute";
 import ProductCategoryPage from "./Pages/ProductCategoryPage";
 import SellerProductsPage from "./Pages/SellerProductsPage";
 import WishlistPage from "./Pages/WishlistPage";
+import CartPage from "./Pages/CartPage";
 
 
 
@@ -32,6 +33,7 @@ function App() {
         <Route path="/homePage" element={<Home/>} />
         <Route path="/products" element={<ProductCategoryPage/>} />
         <Route path="/wishlist" element={<WishlistPage/>} />
+        <Route path="/cart" element={<CartPage/>} />
         <Route path="/sellers/:sellerId/products" element={<SellerProductsPage/>} />
         
         {/* Authentication routes (only for non-logged in users) */}
