@@ -2,11 +2,11 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { FaHome, FaChevronRight } from 'react-icons/fa';
 
-const BreadcrumbNav = () => {
+const BreadcrumbNav = ({ product }) => {
   const location = useLocation();
+  const query = new URLSearchParams(location.search);
 
   const generateBreadcrumbPath = () => {
-    const query = new URLSearchParams(location.search);
     const pathSegments = [
       { 
         name: 'Home', 
@@ -15,17 +15,25 @@ const BreadcrumbNav = () => {
       },
       {
         name: query.get('category'),
-        link: `?category=${encodeURIComponent(query.get('category') || '')}`
+        link: `/products?category=${encodeURIComponent(query.get('category') || '')}`
       },
       {
         name: query.get('group'),
-        link: `?category=${encodeURIComponent(query.get('category') || '')}&group=${encodeURIComponent(query.get('group') || '')}`
+        link: `/products?category=${encodeURIComponent(query.get('category') || '')}&group=${encodeURIComponent(query.get('group') || '')}`
       },
       {
         name: query.get('item'),
-        link: `?category=${encodeURIComponent(query.get('category') || '')}&group=${encodeURIComponent(query.get('group') || '')}&item=${encodeURIComponent(query.get('item') || '')}`
+        link: `/products?category=${encodeURIComponent(query.get('category') || '')}&group=${encodeURIComponent(query.get('group') || '')}&item=${encodeURIComponent(query.get('item') || '')}`
       }
     ].filter(segment => segment.name);
+
+    // Add product name if on product details page and product exists
+    if (product && location.pathname.startsWith('/products/')) {
+      pathSegments.push({
+        name: product.name,
+        link: location.pathname + location.search
+      });
+    }
 
     return (
       <nav className="flex items-center mb-6">
