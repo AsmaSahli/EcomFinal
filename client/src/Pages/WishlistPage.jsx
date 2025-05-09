@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-toastify';
+import { setWishlist, removeItem, clearWishlist } from '../redux/user/wishlistSlice';
 
 const WishlistPage = () => {
   const { currentUser } = useSelector((state) => state.user);
@@ -25,28 +26,27 @@ const WishlistPage = () => {
         try {
           setLoading(true);
           const response = await axios.get(`${API_URL}?userId=${currentUser.id}`);
-          dispatch({ 
-            type: 'wishlist/setWishlist', 
-            payload: response.data.items.map(item => {
-              const sellers = item.productId?.sellers || [];
-              const selectedSeller = sellers.length > 0
-                ? (item.sellerId
-                    ? sellers.find(s => s.sellerId._id.toString() === item.sellerId._id.toString())
-                    : sellers[0])
-                : null;
-              return {
-                ...item,
-                price: selectedSeller?.price || item.productId?.price || 0,
-                stock: selectedSeller?.stock || item.productId?.stock || 0,
-                productId: {
-                  ...item.productId,
-                  reviews: item.productId.reviews || [],
-                  promotions: item.productId.promotions || []
-                },
-                sellerId: selectedSeller?.sellerId || item.sellerId
-              };
-            })
+          
+          const transformedItems = response.data.items.map(item => {
+            const product = item.productId;
+            const sellers = product?.sellers || [];
+            const selectedSeller = sellers.length > 0
+              ? (item.sellerId
+                  ? sellers.find(s => s.sellerId._id.toString() === item.sellerId._id.toString())
+                  : sellers[0])
+              : null;
+              
+            return {
+              ...item,
+              _id: item._id,
+              productId: product,
+              price: selectedSeller?.price || product?.price || 0,
+              stock: selectedSeller?.stock || product?.stock || 0,
+              sellerId: selectedSeller?.sellerId || item.sellerId
+            };
           });
+          
+          dispatch(setWishlist(transformedItems));
         } catch (err) {
           setError(err.response?.data?.message || 'Failed to fetch wishlist');
           toast.error('Failed to load wishlist');
@@ -64,7 +64,7 @@ const WishlistPage = () => {
       await axios.delete(`${API_URL}/item`, {
         data: { userId: currentUser.id, itemId }
       });
-      dispatch({ type: 'wishlist/removeItem', payload: itemId });
+      dispatch(removeItem(itemId));
       toast.success('Item removed from wishlist');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to remove item');
@@ -82,7 +82,7 @@ const WishlistPage = () => {
       await axios.delete(API_URL, {
         data: { userId: currentUser.id }
       });
-      dispatch({ type: 'wishlist/clearWishlist' });
+      dispatch(clearWishlist());
       toast.success('Wishlist cleared');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to clear wishlist');
@@ -191,7 +191,7 @@ const WishlistPage = () => {
               <div className="absolute inset-0 bg-purple-100 rounded-full opacity-20"></div>
               <FaHeart className="h-full w-full text-purple-200" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Wishlist Not Found</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Your Wishlist is Empty</h3>
             <p className="text-gray-500 mb-6">
               Add items to your wishlist to see them here
             </p>
@@ -210,6 +210,7 @@ const WishlistPage = () => {
                   console.warn(`Wishlist item ${item._id} has no valid product`);
                   return null;
                 }
+                
                 const sellerOffer = {
                   sellerId: item.sellerId,
                   price: item.price,
@@ -243,8 +244,6 @@ const WishlistPage = () => {
                       <ProductCard 
                         product={item.productId}
                         sellerOffer={sellerOffer}
-                        isWishlisted={true}
-                        onWishlistToggle={() => handleRemoveItem(item._id)}
                       />
                     </div>
                   </motion.div>

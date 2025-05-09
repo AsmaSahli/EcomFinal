@@ -16,12 +16,12 @@ const wishlistSlice = createSlice({
       state.error = null;
     },
     addItem: (state, action) => {
-      const newItem = {
-        ...action.payload,
-        price: action.payload.price || 0,
-        stock: action.payload.stock || 0
-      };
-      if (!state.items.some(item => item._id === newItem._id)) {
+      const newItem = action.payload;
+      const exists = state.items.some(item => 
+        item.productId._id === newItem.productId._id && 
+        (item.sellerId?._id || null) === (newItem.sellerId?._id || null)
+      );
+      if (!exists) {
         state.items.push(newItem);
       }
     },

@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { BrowserRouter } from 'react-router-dom';
-import './App.css'
+import { ToastContainer } from 'react-toastify'; // Import ToastContainer
+import 'react-toastify/dist/ReactToastify.css'; // Import Toastify CSS
+import './App.css';
 import { Home } from "./Pages/Home";
 import Header from "./components/Header";
 import SignIn from "./Pages/SignIn";
@@ -21,30 +23,41 @@ import SellerProductsPage from "./Pages/SellerProductsPage";
 import WishlistPage from "./Pages/WishlistPage";
 import CartPage from "./Pages/CartPage";
 
-
-
 function App() {
   return (
     <BrowserRouter>
-      <Header/>
+      <Header />
+      {/* Add ToastContainer here to make it globally available */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Navigate to="/homePage" />} />
-        <Route path="/homePage" element={<Home/>} />
-        <Route path="/products" element={<ProductCategoryPage/>} />
-        <Route path="/wishlist" element={<WishlistPage/>} />
-        <Route path="/cart" element={<CartPage/>} />
-        <Route path="/sellers/:sellerId/products" element={<SellerProductsPage/>} />
+        <Route path="/homePage" element={<Home />} />
+        <Route path="/products" element={<ProductCategoryPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/sellers/:sellerId/products" element={<SellerProductsPage />} />
         
         {/* Authentication routes (only for non-logged in users) */}
         <Route element={<AuthentificationRoute />}>
-          <Route path="/login" element={<SignIn/>} />
-          <Route path="/signup" element={<SignUp/>} />
+          <Route path="/login" element={<SignIn />} />
+          <Route path="/signup" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/become-seller" element={<BecomeSeller/>} />
-          <Route path="/join-delivery-team" element={<BecomeDelivery/>} />
-          <Route path="/application-status" element={<ApplicationStatus/>} />
+          <Route path="/become-seller" element={<BecomeSeller />} />
+          <Route path="/join-delivery-team" element={<BecomeDelivery />} />
+          <Route path="/application-status" element={<ApplicationStatus />} />
           <Route path="/set-password" element={<SetPassword />} />
         </Route>
         

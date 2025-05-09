@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 // Add item to wishlist
 exports.addToWishlist = async (req, res) => {
   try {
-    const { userId, productId, sellerId } = req.body;
+    const { userId, productId, sellerId, price, stock } = req.body;
 
     // Validate inputs
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -29,24 +29,34 @@ exports.addToWishlist = async (req, res) => {
       return res.status(404).json({ message: 'Seller not found for this product' });
     }
 
-    // Update or create wishlist
-    let wishlist = await Wishlist.findOne({ userId });
-    if (!wishlist) {
-      wishlist = new Wishlist({ userId, items: [{ productId, sellerId }] });
-    } else {
-      // Check for duplicate productId AND sellerId combination
-      const isDuplicate = wishlist.items.some(
-        item =>
-          item.productId.toString() === productId &&
-          (item.sellerId?.toString() === sellerId || (!item.sellerId && !sellerId))
-      );
-      if (isDuplicate) {
-        return res.status(400).json({ message: 'This product from this seller is already in your wishlist' });
-      }
-      wishlist.items.push({ productId, sellerId });
+    // Atomically update or create wishlist
+    const wishlist = await Wishlist.findOneAndUpdate(
+      { userId },
+      {
+        $setOnInsert: { userId },
+        $addToSet: {
+          items: {
+            productId,
+            sellerId: sellerId || null,
+            price: price || product.price,
+            stock: stock || product.stock
+          }
+        }
+      },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    // Check if the item was actually added (not a duplicate)
+    const addedItem = wishlist.items.find(
+      item =>
+        item.productId.toString() === productId &&
+        (item.sellerId?.toString() === sellerId || (!item.sellerId && !sellerId))
+    );
+
+    if (!addedItem) {
+      return res.status(400).json({ message: 'This product from this seller is already in your wishlist' });
     }
 
-    await wishlist.save();
     res.status(200).json({ message: 'Item added to wishlist', wishlist });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -63,7 +73,7 @@ exports.getWishlistByUserId = async (req, res) => {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    const wishlist = await Wishlist.findOne({ userId })
+    let wishlist = await Wishlist.findOne({ userId })
       .populate({
         path: 'items.productId',
         select: 'reference name description images categoryDetails sellers',
@@ -83,8 +93,10 @@ exports.getWishlistByUserId = async (req, res) => {
         select: 'shopName'
       });
 
+    // If no wishlist exists, return an empty wishlist
     if (!wishlist) {
-      return res.status(404).json({ message: 'Wishlist not found' });
+      wishlist = { userId, items: [] };
+      return res.status(200).json(wishlist);
     }
 
     // Filter out items with null productId (e.g., deleted products)

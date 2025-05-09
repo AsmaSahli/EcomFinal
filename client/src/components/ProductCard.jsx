@@ -7,19 +7,23 @@ import { addItem as addWishlistItem, removeItem as removeWishlistItem } from '..
 import { addItem as addCartItem } from '../redux/user/cartSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
+import debounce from 'lodash.debounce';
 
-const ProductCard = ({ product, sellerOffer, isWishlisted: initialWishlisted, onWishlistToggle }) => {
+const ProductCard = ({ product, sellerOffer }) => {
   const { currentUser } = useSelector((state) => state.user);
+  const wishlistItems = useSelector((state) => state.wishlist.items);
   const dispatch = useDispatch();
-  const [isWishlisted, setIsWishlisted] = useState(initialWishlisted || false);
   const [isHovered, setIsHovered] = useState(false);
+  const [isToggling, setIsToggling] = useState(false);
 
   const WISHLIST_API_URL = 'http://localhost:8000/api/wishlist';
   const CART_API_URL = 'http://localhost:8000/api/cart';
 
-  useEffect(() => {
-    setIsWishlisted(initialWishlisted || false);
-  }, [initialWishlisted]);
+  const isWishlisted = wishlistItems.some(
+    (item) =>
+      item.productId._id === product._id &&
+      (item.sellerId?._id === sellerOffer?.sellerId?._id || (!item.sellerId && !sellerOffer?.sellerId))
+  );
 
   const price = (sellerOffer?.price || product?.price || 0).toFixed(2);
   const stock = sellerOffer?.stock ?? product?.stock ?? 0;
@@ -48,11 +52,12 @@ const ProductCard = ({ product, sellerOffer, isWishlisted: initialWishlisted, on
       return;
     }
 
+    if (isToggling) return;
+    
+    setIsToggling(true);
     try {
       if (isWishlisted) {
-        const response = await axios.get(`${WISHLIST_API_URL}?userId=${currentUser.id}`);
-        const wishlist = response.data;
-        const item = wishlist.items.find(
+        const item = wishlistItems.find(
           (item) =>
             item.productId._id === product._id &&
             (item.sellerId?._id === sellerId || (!item.sellerId && !sellerId))
@@ -62,10 +67,6 @@ const ProductCard = ({ product, sellerOffer, isWishlisted: initialWishlisted, on
             data: { userId: currentUser.id, itemId: item._id },
           });
           dispatch(removeWishlistItem(item._id));
-          setIsWishlisted(false);
-          if (onWishlistToggle) {
-            onWishlistToggle(product._id, false, sellerId);
-          }
           toast.success('Removed from wishlist');
         }
       } else {
@@ -76,24 +77,41 @@ const ProductCard = ({ product, sellerOffer, isWishlisted: initialWishlisted, on
           price: parseFloat(price),
           stock,
         });
-        dispatch(
-          addWishlistItem({
-            ...response.data.wishlist.items[response.data.wishlist.items.length - 1],
-            price: parseFloat(price),
-            stock,
-          })
-        );
-        setIsWishlisted(true);
-        if (onWishlistToggle) {
-          onWishlistToggle(product._id, true, sellerId);
+        
+        const newItem = {
+          ...response.data.wishlist.items.find(
+            (item) =>
+              item.productId._id === product._id &&
+              (item.sellerId?._id === sellerId || (!item.sellerId && !sellerId))
+          ),
+          productId: product,
+          sellerId: sellerOffer?.sellerId
+        };
+        
+        if (newItem) {
+          dispatch(addWishlistItem(newItem));
+          toast.success('Added to wishlist');
         }
-        toast.success('Added to wishlist');
       }
     } catch (err) {
       console.error('Wishlist toggle error:', err);
-      toast.error(err.response?.data?.message || 'Failed to update wishlist');
+      const errorMessage =
+        err.response?.status === 400
+          ? err.response.data.message
+          : 'Failed to update wishlist';
+      toast.error(errorMessage);
+    } finally {
+      setIsToggling(false);
     }
   };
+
+  const debouncedWishlistToggle = debounce(handleWishlistToggle, 300, { leading: true, trailing: false });
+
+  useEffect(() => {
+    return () => {
+      debouncedWishlistToggle.cancel();
+    };
+  }, []);
 
   const handleAddToCart = async (e) => {
     e.preventDefault();
@@ -206,16 +224,19 @@ const ProductCard = ({ product, sellerOffer, isWishlisted: initialWishlisted, on
             {status}
           </span>
           <button
-            onClick={handleWishlistToggle}
+            onClick={debouncedWishlistToggle}
+            disabled={isToggling}
             className={`p-1.5 rounded-full transition-all duration-300 ${
               isWishlisted
                 ? 'text-red-500 bg-white/80 shadow-sm'
                 : 'text-gray-400 hover:text-red-500 bg-white/80 hover:bg-white/90'
-            }`}
+            } ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
             aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
           >
-            {isWishlisted ? (
-              <IoMdHeart className="w-4 h-4 fill-current animate-pulse" />
+            {isToggling ? (
+              <span className="loading loading-spinner loading-xs"></span>
+            ) : isWishlisted ? (
+              <IoMdHeart className="w-4 h-4 fill-current" />
             ) : (
               <IoMdHeartEmpty className="w-4 h-4 group-hover:scale-110 transition-transform" />
             )}
@@ -288,4 +309,4 @@ const ProductCard = ({ product, sellerOffer, isWishlisted: initialWishlisted, on
   );
 };
 
-export default React.memo(ProductCard);
+export default ProductCard;

@@ -244,7 +244,7 @@ const CartPage = () => {
                         <div className="flex justify-between items-start">
                           <div>
                             <Link
-                              to={`/products/${item.productId._id}?seller=${item.sellerId._id}`}
+                              
                               className="text-sm font-medium text-gray-800 hover:text-purple-600 line-clamp-2"
                             >
                               {item.productId.name}

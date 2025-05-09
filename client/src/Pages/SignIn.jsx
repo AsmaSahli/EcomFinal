@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { signInStart, signInSuccess, signInFailure } from "../redux/user/userSlice";
-import { useNavigate, Link } from "react-router-dom";
-import axios from "axios";
-import logo from "../assets/ecomLogo.png";
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import OAuth from "../components/OAuth";
+import React, { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { signInStart, signInSuccess, signInFailure } from '../redux/user/userSlice';
+import { useNavigate, Link } from 'react-router-dom';
+import axios from 'axios';
+import logo from '../assets/ecomLogo.png';
+import { toast } from 'react-toastify';
+import OAuth from '../components/OAuth';
 
 const SignIn = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -25,31 +24,26 @@ const SignIn = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/signin",
+        'http://localhost:8000/signin',
         { email, password },
         { withCredentials: true }
       );
-      
+
       dispatch(signInSuccess(response.data.user));
-      toast.success("Login successful!");
-    // Check the user object
-    console.log("User role:", response.data.user.role);
-    console.log("User isActive:", response.data.user.isActive);
-    
-    if (response.data.user.role === "seller") {
-      navigate("/seller-dashboard");
-    } else if (response.data.user.role === "delivery") {
-      navigate("/delivery-dashboard");
-    } else {
-      navigate("/");
-    }
+      toast.success('Login successful!');
+
+      if (response.data.user.role === 'seller') {
+        navigate('/seller-dashboard');
+      } else if (response.data.user.role === 'delivery') {
+        navigate('/delivery-dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
-      dispatch(signInFailure(err.response?.data?.message || "Something went wrong!"));
-      toast.error(err.response?.data?.message || "Something went wrong!");
+      dispatch(signInFailure(err.response?.data?.message || 'Something went wrong!'));
+      toast.error(err.response?.data?.message || 'Something went wrong!');
     }
   };
-
-  // Remove the useEffect for navigation as we're doing it immediately after sign-in
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-purple-50">
@@ -83,7 +77,7 @@ const SignIn = () => {
             </label>
             <div className="relative">
               <input
-                type={showPassword ? "text" : "password"}
+                type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter your password"
@@ -95,7 +89,7 @@ const SignIn = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-3 text-gray-500"
               >
-                {showPassword ? "🔓" : "🔒"}
+                {showPassword ? '🔓' : '🔒'}
               </button>
             </div>
 
@@ -114,7 +108,7 @@ const SignIn = () => {
             className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
             disabled={loading}
           >
-            {loading ? "Signing In..." : "Sign In"}
+            {loading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
@@ -136,8 +130,6 @@ const SignIn = () => {
           </Link>
         </div>
       </div>
-
-      <ToastContainer />
     </div>
   );
 };
