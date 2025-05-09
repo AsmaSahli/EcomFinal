@@ -1,0 +1,512 @@
+import React, { useState, useEffect } from 'react';
+import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
+import {
+  FaStar, FaRegStar, FaShoppingCart, FaHome, FaCheck
+} from 'react-icons/fa';
+import { IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
+import {
+  RiTruckLine, RiShieldCheckLine, RiExchangeLine, RiLeafLine
+} from 'react-icons/ri';
+import { BsShieldCheck, BsBoxSeam, BsCheckCircleFill } from 'react-icons/bs';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+import { useSelector, useDispatch } from 'react-redux';
+import { addItem as addWishlistItem, removeItem as removeWishlistItem } from '../redux/user/wishlistSlice';
+import { addItem as addCartItem } from '../redux/user/cartSlice';
+import ProductImageGallery from '../components/ProductImageGallery';
+import SimilarProducts from '../components/SimilarProducts';
+import ProductReviews from '../components/ProductReviews';
+import BreadcrumbNav from '../components/BreadcrumbNav'; // Import BreadcrumbNav
+
+const ProductDetailsPage = () => {
+  const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.user);
+  const wishlistItems = useSelector((state) => state.wishlist.items || []);
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [quantity, setQuantity] = useState(1);
+  const [activeTab, setActiveTab] = useState('description');
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  const API_URL = 'http://localhost:8000/api';
+  const queryParams = new URLSearchParams(location.search);
+  const sellerId = queryParams.get('seller');
+  const currentSeller = product?.sellers?.find(s => s.sellerId._id === sellerId) || product?.sellers?.[0];
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        setLoading(true);
+        const url = sellerId ? `${API_URL}/products/${id}?seller=${sellerId}` : `${API_URL}/products/${id}`;
+        const response = await axios.get(url);
+        setProduct(response.data.product);
+        if (response.data.product.variants?.length > 0) {
+          setSelectedVariant(response.data.product.variants[0]);
+        }
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to load product');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id, sellerId]);
+
+  useEffect(() => {
+    if (product && currentUser) {
+      const wishlisted = wishlistItems.some(
+        item =>
+          item.productId?._id === product._id &&
+          (item.sellerId?._id === currentSeller?.sellerId._id || (!item.sellerId && !currentSeller?.sellerId))
+      );
+      setIsWishlisted(wishlisted);
+    }
+  }, [product, wishlistItems, currentUser, currentSeller]);
+
+  const getKeyFeatures = () => {
+    if (!product?.description) return [];
+    return product.description.split('\r\n')
+      .filter(line => line.trim() && !line.toLowerCase().includes('points forts'))
+      .slice(0, 5);
+  };
+
+  const handleAddToCart = async () => {
+    if (!currentUser) {
+      toast.error('You must log in to add items to your cart.');
+      return;
+    }
+
+    if (!currentSeller?.stock || currentSeller.stock < quantity) {
+      toast.error('This item is out of stock or insufficient quantity.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/cart/add`, {
+        userId: currentUser.id,
+        productId: product._id,
+        sellerId: currentSeller?.sellerId._id,
+        quantity,
+        variantId: selectedVariant?._id,
+      });
+
+      const newItem = response.data.cart.items[response.data.cart.items.length - 1];
+      dispatch(addCartItem({
+        ...newItem,
+        productId: {
+          ...product,
+          price: currentSeller?.price || product.price,
+          stock: currentSeller?.stock || product.stock,
+        },
+        sellerId: currentSeller?.sellerId,
+        price: currentSeller?.price || product.price,
+        stock: currentSeller?.stock || product.stock,
+        variantId: selectedVariant?._id,
+      }));
+
+      toast.success('Added to cart successfully!', {
+        position: "bottom-right",
+        className: "!bg-green-50 !text-green-700",
+        icon: <BsCheckCircleFill className="text-green-500" />,
+      });
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to add item to cart');
+    }
+  };
+
+  const toggleWishlist = async () => {
+    if (!currentUser) {
+      toast.error('You must log in to manage your wishlist.');
+      return;
+    }
+
+    if (isTogglingWishlist) return;
+
+    setIsTogglingWishlist(true);
+    try {
+      if (isWishlisted) {
+        const item = wishlistItems.find(
+          item =>
+            item.productId?._id === product._id &&
+            (item.sellerId?._id === currentSeller?.sellerId._id || (!item.sellerId && !currentSeller?.sellerId))
+        );
+        if (item) {
+          await axios.delete(`${API_URL}/wishlist/item`, {
+            data: { userId: currentUser.id, itemId: item._id },
+          });
+          dispatch(removeWishlistItem(item._id));
+          toast.success('Removed from wishlist', {
+            position: "bottom-right",
+            className: "!bg-red-50 !text-red-700",
+            icon: <IoMdHeartEmpty className="text-red-500" />,
+          });
+        }
+      } else {
+        const response = await axios.post(`${API_URL}/wishlist/add`, {
+          userId: currentUser.id,
+          productId: product._id,
+          sellerId: currentSeller?.sellerId._id,
+          price: currentSeller?.price || product.price || 0,
+          stock: currentSeller?.stock || product.stock || 0,
+          variantId: selectedVariant?._id,
+        });
+
+        const newItem = response.data.wishlist.items.find(
+          item =>
+            item.productId?._id === product._id &&
+            (item.sellerId?._id === currentSeller?.sellerId._id || (!item.sellerId && !currentSeller?.sellerId))
+        );
+
+        if (newItem) {
+          dispatch(addWishlistItem({
+            ...newItem,
+            productId: product,
+            sellerId: currentSeller?.sellerId,
+            price: currentSeller?.price || product.price || 0,
+            stock: currentSeller?.stock || product.stock || 0,
+            variantId: selectedVariant?._id,
+          }));
+          toast.success('Added to wishlist', {
+            position: "bottom-right",
+            className: "!bg-pink-50 !text-pink-700",
+            icon: <IoMdHeart className="text-pink-500" />,
+          });
+        }
+      }
+      setIsWishlisted(!isWishlisted);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update wishlist');
+    } finally {
+      setIsTogglingWishlist(false);
+    }
+  };
+
+  const renderStars = (rating) => {
+    return Array(5).fill(0).map((_, i) => (
+      i < Math.floor(rating) ?
+        <FaStar key={i} className="text-yellow-400" /> :
+        <FaRegStar key={i} className="text-gray-300" />
+    ));
+  };
+
+  if (loading) return (
+    <div className="bg-white py-3 px-6 border-b border-gray-100">
+      <div className="max-w-7xl mx-auto">
+        <nav className="flex items-center text-sm text-gray-600">
+          <span className="text-gray-500">Loading...</span>
+        </nav>
+      </div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="bg-white p-8 rounded-xl shadow-sm max-w-md text-center">
+        <div className="text-red-400 text-5xl mb-4">⚠️</div>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">Product Not Found</h2>
+        <p className="text-gray-500 mb-5">{error}</p>
+        <div className="flex space-x-3 justify-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
+          >
+            Go back
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
+          >
+            Home
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!product) return null;
+
+  const keyFeatures = getKeyFeatures();
+  const hasDiscount = currentSeller?.promotions?.length > 0;
+  const originalPrice = hasDiscount ?
+    (currentSeller.price / (1 - currentSeller.promotions[0].discountPercentage / 100)).toFixed(2) :
+    null;
+
+  return (
+    <div className="bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Add BreadcrumbNav here */}
+        <BreadcrumbNav product={product} />
+
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="md:flex">
+            <ProductImageGallery
+              images={product.images || []}
+              productName={product.name}
+              currentSeller={currentSeller}
+              hasDiscount={hasDiscount}
+            />
+
+            <div className="md:w-1/2 p-6">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <span className="inline-block bg-purple-100 text-purple-600 text-xs px-2 py-1 rounded-full mb-2">
+                    {product.categoryDetails?.category?.name}
+                  </span>
+                  <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
+                    {product.name}
+                  </h1>
+                  <p className="text-gray-500 text-sm mt-1">{product.shortDescription}</p>
+                </div>
+                <button
+                  onClick={toggleWishlist}
+                  disabled={isTogglingWishlist}
+                  className={`p-2 rounded-full transition-colors ${
+                    isWishlisted ? 'text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
+                  } ${isTogglingWishlist ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  {isTogglingWishlist ? (
+                    <span className="loading loading-spinner loading-xs"></span>
+                  ) : isWishlisted ? (
+                    <IoMdHeart size={24} />
+                  ) : (
+                    <IoMdHeartEmpty size={24} />
+                  )}
+                </button>
+              </div>
+
+              <div className="flex items-center mb-5">
+                <div className="flex mr-2">
+                  {renderStars(4.5)}
+                </div>
+                <span className="text-sm text-gray-500">
+                  4.5 (24 reviews) • <span className="text-green-600">In Stock</span>
+                </span>
+              </div>
+
+              {product.variants?.length > 0 && (
+                <div className="mb-5">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Select Option:</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {product.variants.map((variant, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedVariant(variant)}
+                        className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
+                          selectedVariant?._id === variant._id
+                            ? 'border-purple-600 bg-purple-50 text-purple-700'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        {variant.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-end">
+                  <span className="text-3xl font-bold text-gray-900">
+                    ${currentSeller?.price?.toFixed(2)}
+                  </span>
+                  {hasDiscount && (
+                    <div className="ml-3">
+                      <span className="text-sm text-gray-500 line-through">
+                        ${originalPrice}
+                      </span>
+                      <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                        Save ${(originalPrice - currentSeller.price).toFixed(2)}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-2 flex items-center text-sm text-gray-600">
+                  <RiLeafLine className="text-green-500 mr-1" />
+                  Eco-friendly packaging
+                </div>
+              </div>
+
+              {keyFeatures.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="font-medium text-lg text-gray-900 mb-3">Key Features</h3>
+                  <ul className="space-y-3">
+                    {keyFeatures.map((feature, index) => (
+                      <li key={index} className="flex items-start">
+                        <FaCheck className="text-purple-500 mt-0.5 mr-2 flex-shrink-0 text-sm" />
+                        <span className="text-gray-700">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {currentSeller?.sellerId && (
+                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="flex items-center mb-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-medium mr-3">
+                      {currentSeller.sellerId.shopName?.charAt(0) || 'S'}
+                    </div>
+                    <div>
+                      <Link
+                        to={`/sellers/${currentSeller.sellerId._id}/products`}
+                        className="font-medium text-gray-900 hover:text-purple-600"
+                      >
+                        {currentSeller.sellerId.shopName || 'Unknown Seller'}
+                      </Link>
+                      <div className="flex items-center text-xs text-gray-500 mt-1">
+                        <div className="flex items-center mr-3">
+                          {renderStars(currentSeller.sellerId.rating || 4.8)}
+                          <span className="ml-1">{currentSeller.sellerId.rating?.toFixed(1) || '4.8'}</span>
+                        </div>
+                        <span>•</span>
+                        <span className="ml-2">
+                          {currentSeller.sellerId.positiveFeedbackPercentage?.toFixed(0) || '90'}% Positive
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center text-gray-600 p-2 bg-white rounded-lg border border-gray-200">
+                      <RiTruckLine className="text-purple-500 mr-2" />
+                      Free shipping
+                    </div>
+                    <div className="flex items-center text-gray-600 p-2 bg-white rounded-lg border border-gray-200">
+                      <RiShieldCheckLine className="text-purple-500 mr-2" />
+                      1-year warranty
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="mb-6">
+                <div className="flex items-center mb-4">
+                  <span className="mr-3 font-medium">Quantity:</span>
+                  <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
+                    <button
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      -
+                    </button>
+                    <span className="px-4 py-2 border-x border-gray-300 font-medium">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={() => setQuantity(q => Math.min(currentSeller?.stock || 10, q + 1))}
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    onClick={handleAddToCart}
+                    className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg"
+                  >
+                    <FaShoppingCart className="mr-3" />
+                    Add to Cart
+                  </button>
+                  <button className="w-full py-3 px-4 bg-white border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg">
+                    Buy Now
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500 border-t border-gray-200 pt-4">
+                <div className="flex items-center">
+                  <BsShieldCheck className="text-green-500 mr-1" />
+                  Secure Payment
+                </div>
+                <div className="flex items-center">
+                  <BsBoxSeam className="text-blue-500 mr-1" />
+                  Free Returns
+                </div>
+                <div className="flex items-center">
+                  <RiExchangeLine className="text-purple-500 mr-1" />
+                  30-Day Returns
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200">
+            <div className="flex border-b border-gray-200 overflow-x-auto">
+              {['description', 'specifications', 'reviews'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-6 py-4 font-medium whitespace-nowrap transition-colors ${
+                    activeTab === tab
+                      ? 'text-purple-600 border-b-2 border-purple-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </div>
+            <div className="p-6 md:p-8">
+              {activeTab === 'description' && (
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Product Description</h3>
+                  <div className="text-gray-700 space-y-4">
+                    {product.description.split('\n\n').map((p, i) => (
+                      <p key={i}>{p}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {activeTab === 'specifications' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-3">General</h4>
+                    <div className="space-y-3">
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Brand</span>
+                        <span className="font-medium">BrandName</span>
+                      </div>
+                      <div className="flex justify-between py-2 border-b border-gray-100">
+                        <span className="text-gray-600">Model</span>
+                        <span className="font-medium">{product.reference}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-gray-900 mb-3">Technical</h4>
+                    <div className="space-y-3">
+                      {product.tags?.slice(0, 4).map((tag, i) => (
+                        <div key={i} className="flex justify-between py-2 border-b border-gray-100">
+                          <span className="text-gray-600">{tag.name}</span>
+                          <span className="font-medium text-purple-600">Yes</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+              {activeTab === 'reviews' && <ProductReviews productId={product._id} />}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">You May Also Like</h2>
+          <SimilarProducts
+            categoryId={product.categoryDetails?.category?._id}
+            currentProductId={product._id}
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ProductDetailsPage;

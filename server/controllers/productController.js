@@ -63,29 +63,59 @@ exports.getAllProducts = async (req, res) => {
 // Get product by ID
 exports.getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
-      .populate("sellers.sellerId")
-      .populate("sellers.tags")
+    const { id } = req.params;
+    const { seller } = req.query; // Extract sellerId from query parameter
+
+    // Validate product ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid product ID" });
+    }
+
+    // Validate seller ID if provided
+    if (seller && !mongoose.Types.ObjectId.isValid(seller)) {
+      return res.status(400).json({ message: "Invalid seller ID" });
+    }
+
+    // Find the product
+    let product = await Product.findById(id)
+      .populate("sellers.sellerId", "shopName name email")
+      .populate("sellers.tags", "name")
       .populate({
         path: "categoryDetails.category",
         select: "name"
       })
-      .populate("sellers.reviews")
-      .populate("createdBy")
+      .populate("sellers.reviews", "rating comment createdAt userName")
+      .populate("createdBy", "name email")
       .populate('sellers.promotions.promotionId')
-      .populate('sellers.activePromotion');
+      .populate('sellers.activePromotion')
+      .lean(); // Use lean for performance since we'll modify the document
 
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
 
+    // Filter sellers array if sellerId is provided
+    if (seller) {
+      product.sellers = product.sellers.filter(
+        (s) => s.sellerId && s.sellerId._id.toString() === seller
+      );
+      if (product.sellers.length === 0) {
+        return res.status(404).json({ message: "Seller not found for this product" });
+      }
+    }
+
+    // Transform the product data
     const transformedProduct = transformProductData(product);
-    res.status(200).json(transformedProduct);
+
+    // Wrap the response in { product: {...} } to match frontend expectations
+    res.status(200).json({ product: transformedProduct });
   } catch (error) {
+    console.error('Error fetching product by ID:', error);
     res.status(500).json({ error: error.message });
   }
 };
 
 // Get product by reference
-
 exports.getProductByReference = async (req, res) => {
   try {
     const { reference } = req.params;
@@ -98,23 +128,23 @@ exports.getProductByReference = async (req, res) => {
     const product = await Product.findOne({ reference })
       .populate({
         path: 'sellers.sellerId',
-        select: 'name email' // Adjust fields as needed
+        select: 'name email'
       })
       .populate({
         path: 'sellers.tags',
-        select: 'name' // Adjust fields as needed
+        select: 'name'
       })
       .populate({
         path: 'categoryDetails.category',
-        select: 'name' // Only fetch category name
+        select: 'name'
       })
       .populate({
         path: 'sellers.reviews',
-        select: 'rating comment' // Adjust fields as needed
+        select: 'rating comment'
       })
       .populate({
         path: 'createdBy',
-        select: 'name email' // Adjust fields as needed
+        select: 'name email'
       });
 
     if (!product) {
@@ -134,8 +164,7 @@ exports.getProductByReference = async (req, res) => {
   }
 };
 
-
-// Create new product (unchanged as it handles data storage)
+// Create new product
 exports.createProduct = async (req, res) => {
   try {
     // Validate required fields
@@ -544,7 +573,6 @@ exports.deleteProductImage = async (req, res) => {
 };
 
 // Search products by reference or name
-
 exports.searchProducts = async (req, res) => {
   try {
     const { query, reference } = req.query;
@@ -564,15 +592,15 @@ exports.searchProducts = async (req, res) => {
         .select('reference name description images categoryDetails')
         .populate({
           path: 'sellers.sellerId',
-          select: 'name email' // Adjust fields as needed
+          select: 'name email'
         })
         .populate({
           path: 'sellers.tags',
-          select: 'name' // Adjust fields as needed
+          select: 'name'
         })
         .populate({
           path: 'sellers.reviews',
-          select: 'rating comment' // Adjust fields as needed
+          select: 'rating comment'
         })
         .populate({
           path: 'categoryDetails.category',
@@ -604,15 +632,15 @@ exports.searchProducts = async (req, res) => {
       .select('reference name description images categoryDetails')
       .populate({
         path: 'sellers.sellerId',
-        select: 'name email' // Adjust fields as needed
+        select: 'name email'
       })
       .populate({
         path: 'sellers.tags',
-        select: 'name' // Adjust fields as needed
+        select: 'name'
       })
       .populate({
         path: 'sellers.reviews',
-        select: 'rating comment' // Adjust fields as needed
+        select: 'rating comment'
       })
       .populate({
         path: 'categoryDetails.category',
@@ -634,7 +662,6 @@ exports.searchProducts = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
-
 
 // Get products by seller ID
 exports.getProductsBySellers = async (req, res) => {
@@ -728,7 +755,7 @@ exports.getProductsByCategory = async (req, res) => {
       if (!category) {
         return res.status(404).json({ message: `Category '${categoryDetails}' not found` });
       }
-      query["categoryDetails.category"] = category._id; // Use the category's ObjectId
+      query["categoryDetails.category"] = category._id;
     }
 
     // Add group and item to the query if provided
@@ -753,6 +780,8 @@ exports.getProductsByCategory = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Get products by seller
 exports.getProductsBySeller = async (req, res) => {
   try {
     const { sellerId } = req.params;
@@ -778,7 +807,7 @@ exports.getProductsBySeller = async (req, res) => {
         path: 'sellers.sellerId',
         select: 'shopName',
       })
-      .lean(); // Use lean() to get plain JavaScript objects for easier manipulation
+      .lean();
 
     // Filter the sellers array to include only the specified seller
     const filteredProducts = products.map(product => ({

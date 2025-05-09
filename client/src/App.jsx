@@ -22,6 +22,7 @@ import ProductCategoryPage from "./Pages/ProductCategoryPage";
 import SellerProductsPage from "./Pages/SellerProductsPage";
 import WishlistPage from "./Pages/WishlistPage";
 import CartPage from "./Pages/CartPage";
+import ProductDetailsPage from "./Pages/ProductDetailsPage";
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/sellers/:sellerId/products" element={<SellerProductsPage />} />
+        <Route path="/products/:id" element={<ProductDetailsPage />} />
         
         {/* Authentication routes (only for non-logged in users) */}
         <Route element={<AuthentificationRoute />}>
