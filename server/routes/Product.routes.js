@@ -11,6 +11,7 @@ router.get("/reference/:reference", productController.getProductByReference);
 router.get("/", productController.getAllProducts);
 router.get('/by-category', productController.getProductsByCategory);
 router.get('/sellers/:sellerId/products', productController.getProductsBySeller);
+router.get('/:productId/related', productController.getRelatedProducts);
 
 
 // Product CRUD operations

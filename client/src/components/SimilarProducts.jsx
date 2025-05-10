@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { FaStar, FaRegStar } from 'react-icons/fa';
-import { RiTruckLine } from 'react-icons/ri';
+import { motion } from 'framer-motion';
+import ProductCard from './ProductCard'; // Import your ProductCard component
 
 const SimilarProducts = ({ categoryId, currentProductId }) => {
   const [products, setProducts] = useState([]);
@@ -10,16 +10,17 @@ const SimilarProducts = ({ categoryId, currentProductId }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!categoryId) return;
-
     const fetchSimilarProducts = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/products/related/${categoryId}`);
-        // Filter out the current product
-        const filteredProducts = response.data.products.filter(
-          product => product._id !== currentProductId
-        ).slice(0, 4);
+        const response = await axios.get(
+          `http://localhost:8000/api/products/${currentProductId}/related?limit=4`
+        );
+        
+        const filteredProducts = Array.isArray(response.data)
+          ? response.data.filter(product => product._id !== currentProductId).slice(0, 4)
+          : [];
+          
         setProducts(filteredProducts);
         setError(null);
       } catch (err) {
@@ -31,104 +32,75 @@ const SimilarProducts = ({ categoryId, currentProductId }) => {
     };
 
     fetchSimilarProducts();
-  }, [categoryId, currentProductId]);
-
-  const renderStars = (rating) => {
-    return Array(5)
-      .fill(0)
-      .map((_, i) =>
-        i < Math.floor(rating) ? (
-          <FaStar key={i} className="text-yellow-400 w-4 h-4" />
-        ) : (
-          <FaRegStar key={i} className="text-gray-300 w-4 h-4" />
-        )
-      );
-  };
+  }, [currentProductId]);
 
   if (loading) {
     return (
-      <div className="mt-12">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">You may also like</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Similar Products</h2>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
           {[1, 2, 3, 4].map((item) => (
-            <div key={item} className="bg-gray-100 rounded-lg h-64 animate-pulse"></div>
+            <div 
+              key={item} 
+              className="bg-gray-100 rounded-xl h-80 animate-pulse"
+            ></div>
           ))}
         </div>
-      </div>
+      </section>
     );
   }
 
   if (error) {
     return (
-      <div className="mt-12">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">You may also like</h2>
-        <div className="text-gray-500 text-center py-8">{error}</div>
-      </div>
+      <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Similar Products</h2>
+        <div className="text-gray-500 text-center py-12 bg-gray-50 rounded-xl">
+          {error}
+        </div>
+      </section>
     );
   }
 
-  if (products.length === 0) return null;
+  if (products.length === 0) {
+    return (
+      <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Similar Products</h2>
+        <div className="text-gray-500 text-center py-12 bg-gray-50 rounded-xl">
+          No similar products found.
+        </div>
+      </section>
+    );
+  }
 
   return (
-    <div className="mt-12">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gray-900">You may also like</h2>
-        <Link 
-          to={`/categories/${categoryId}`} 
-          className="text-purple-600 hover:text-purple-800 text-sm font-medium"
-        >
-          View all in category →
-        </Link>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        {products.map((product) => (
+    <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900">Similar Products</h2>
+        {categoryId && (
           <Link 
-            key={product._id} 
-            to={`/products/${product._id}`}
-            className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-300 border border-gray-100 overflow-hidden group"
+            to={`/categories/${categoryId}`} 
+            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium flex items-center transition-colors"
           >
-            <div className="relative pb-[100%] overflow-hidden">
-              <img
-                src={product.images?.[0]?.url}
-                alt={product.name}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              {product.promotions?.some(p => p.isActive) && (
-                <div className="absolute top-2 left-2">
-                  <span className="text-xs px-2 py-1 bg-red-500 text-white rounded-full font-medium">
-                    {product.promotions.find(p => p.isActive).discountPercentage}% OFF
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="p-3">
-              <h3 className="font-medium text-gray-900 line-clamp-2 text-sm mb-1 group-hover:text-purple-600 transition-colors">
-                {product.name}
-              </h3>
-              <div className="flex items-center mb-1">
-                <div className="flex mr-1">
-                  {renderStars(product.averageRating || 0)}
-                </div>
-                <span className="text-xs text-gray-500 ml-1">
-                  {product.averageRating?.toFixed(1) || 0} ({product.reviews?.length || 0})
-                </span>
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <div>
-                  <div className="text-base font-bold text-gray-900">
-                    ${product.sellers?.[0]?.price?.toFixed(2) || product.price?.toFixed(2)}
-                  </div>
-                </div>
-                <div className="flex items-center text-xs text-gray-500">
-                  <RiTruckLine className="mr-1" />
-                  <span>Free</span>
-                </div>
-              </div>
-            </div>
+            View all in category <span className="ml-1">→</span>
           </Link>
+        )}
+      </div>
+      
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {products.map((product) => (
+          <motion.div
+            key={product._id}
+            whileHover={{ y: -5 }}
+            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          >
+            <ProductCard 
+              product={product} 
+              sellerOffer={product.sellers?.[0]} // Pass the first seller offer if available
+            />
+          </motion.div>
         ))}
       </div>
-    </div>
+    </section>
   );
 };
 

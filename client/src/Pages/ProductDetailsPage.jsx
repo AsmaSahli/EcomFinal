@@ -498,7 +498,6 @@ const ProductDetailsPage = () => {
         </div>
 
         <div className="mt-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">You May Also Like</h2>
           <SimilarProducts
             categoryId={product.categoryDetails?.category?._id}
             currentProductId={product._id}

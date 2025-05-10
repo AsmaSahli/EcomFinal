@@ -822,3 +822,181 @@ exports.getProductsBySeller = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Get related products
+exports.getRelatedProducts = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const limit = parseInt(req.query.limit) || 4;
+
+    // Validate product ID
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid product ID" });
+    }
+
+    // Find the current product
+    const currentProduct = await Product.findById(productId)
+      .populate('sellers.tags')
+      .lean();
+
+    if (!currentProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Track all selected product IDs to prevent duplicates
+    const existingIds = new Set([productId]); // Start with current product ID
+    let relatedProducts = [];
+
+    // Extract tags from all sellers
+    const currentTags = new Set();
+    currentProduct.sellers.forEach(seller => {
+      if (seller.tags && seller.tags.length > 0) {
+        seller.tags.forEach(tag => currentTags.add(tag._id.toString()));
+      }
+    });
+
+    // Get category details
+    const { categoryDetails } = currentProduct;
+    const categoryId = categoryDetails?.category?._id || categoryDetails?.category;
+    const subcategoryGroup = categoryDetails?.subcategory?.group || '';
+    const subcategoryItem = categoryDetails?.subcategory?.item || '';
+
+    // Split product name into keywords
+    const commonWords = new Set(['and', 'the', 'of', 'for', 'with', 'to', 'a', 'an', 'in', 'on', 'at']);
+    const nameKeywords = currentProduct.name
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !commonWords.has(word));
+
+    // Strategy 1: Find products with matching tags (minimum 2 tags in common)
+    if (currentTags.size >= 2) {
+      const tagMatches = await Product.aggregate([
+        {
+          $match: {
+            _id: { $ne: new mongoose.Types.ObjectId(productId) },
+            'sellers.tags': { $in: Array.from(currentTags) }
+          }
+        },
+        {
+          $addFields: {
+            commonTagsCount: {
+              $size: {
+                $setIntersection: [
+                  Array.from(currentTags),
+                  {
+                    $reduce: {
+                      input: "$sellers.tags",
+                      initialValue: [],
+                      in: { $concatArrays: ["$$value", "$$this"] }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          $match: { commonTagsCount: { $gte: 2 } }
+        },
+        { $sample: { size: limit } },
+        { $limit: limit }
+      ]);
+
+      tagMatches.forEach(product => {
+        if (!existingIds.has(product._id.toString())) {
+          relatedProducts.push(product);
+          existingIds.add(product._id.toString());
+        }
+      });
+    }
+
+    // Strategy 2: Category/subcategory matching
+    if (relatedProducts.length < limit && categoryId) {
+      const additionalNeeded = limit - relatedProducts.length;
+      const categoryMatches = await Product.aggregate([
+        {
+          $match: {
+            _id: { $ne: new mongoose.Types.ObjectId(productId) },
+            'categoryDetails.category': categoryId,
+            'categoryDetails.subcategory.group': subcategoryGroup,
+            'categoryDetails.subcategory.item': subcategoryItem
+          }
+        },
+        { $sample: { size: additionalNeeded } },
+        { $limit: additionalNeeded }
+      ]);
+
+      categoryMatches.forEach(product => {
+        if (!existingIds.has(product._id.toString())) {
+          relatedProducts.push(product);
+          existingIds.add(product._id.toString());
+        }
+      });
+    }
+
+    // Strategy 3: Name similarity
+    if (relatedProducts.length < limit && nameKeywords.length > 0) {
+      const additionalNeeded = limit - relatedProducts.length;
+      const allProducts = await Product.find({
+        _id: { $ne: new mongoose.Types.ObjectId(productId) }
+      }).lean();
+
+      const scoredProducts = allProducts
+        .map(product => {
+          if (existingIds.has(product._id.toString())) {
+            return null; // Skip already selected products
+          }
+          const productName = product.name.toLowerCase();
+          let score = 0;
+          nameKeywords.forEach(keyword => {
+            if (productName.includes(keyword)) {
+              score += 1;
+            }
+          });
+          return score > 0 ? { ...product, score } : null;
+        })
+        .filter(p => p !== null)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, additionalNeeded);
+
+      scoredProducts.forEach(product => {
+        if (!existingIds.has(product._id.toString())) {
+          relatedProducts.push(product);
+          existingIds.add(product._id.toString());
+        }
+      });
+    }
+
+    // Strategy 4: Random fallback
+    if (relatedProducts.length < limit) {
+      const additionalNeeded = limit - relatedProducts.length;
+      const randomProducts = await Product.aggregate([
+        { $match: { _id: { $nin: Array.from(existingIds).map(id => new mongoose.Types.ObjectId(id)) } } },
+        { $sample: { size: additionalNeeded } },
+        { $limit: additionalNeeded }
+      ]);
+
+      randomProducts.forEach(product => {
+        if (!existingIds.has(product._id.toString())) {
+          relatedProducts.push(product);
+          existingIds.add(product._id.toString());
+        }
+      });
+    }
+
+    // Populate necessary fields
+    const populatedProducts = await Product.populate(relatedProducts, [
+      { path: 'categoryDetails.category', select: 'name' },
+      { path: 'sellers.sellerId', select: 'shopName' },
+      { path: 'images', select: 'url' }
+    ]);
+
+    // Transform products
+    const transformedProducts = populatedProducts.map(transformProductData);
+
+    res.status(200).json(transformedProducts.slice(0, limit)); // Ensure exact limit
+  } catch (error) {
+    console.error('Error getting related products:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
