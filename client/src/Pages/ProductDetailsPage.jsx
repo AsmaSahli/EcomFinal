@@ -16,7 +16,7 @@ import { addItem as addCartItem } from '../redux/user/cartSlice';
 import ProductImageGallery from '../components/ProductImageGallery';
 import SimilarProducts from '../components/SimilarProducts';
 import ProductReviews from '../components/ProductReviews';
-import BreadcrumbNav from '../components/BreadcrumbNav'; // Import BreadcrumbNav
+import BreadcrumbNav from '../components/BreadcrumbNav';
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -33,6 +33,8 @@ const ProductDetailsPage = () => {
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
 
   const API_URL = 'http://localhost:8000/api';
   const queryParams = new URLSearchParams(location.search);
@@ -58,6 +60,27 @@ const ProductDetailsPage = () => {
 
     fetchProduct();
   }, [id, sellerId]);
+
+  useEffect(() => {
+    if (product && currentSeller?.sellerId._id) {
+      const fetchReviews = async () => {
+        try {
+          const response = await axios.get(`${API_URL}/reviews/${product._id}/${currentSeller.sellerId._id}`);
+          const reviews = response.data;
+          const avgRating = reviews.length > 0
+            ? (reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length).toFixed(1)
+            : 0;
+          setAverageRating(parseFloat(avgRating));
+          setReviewCount(reviews.length);
+        } catch (err) {
+          console.error('Error fetching reviews:', err);
+          setAverageRating(0);
+          setReviewCount(0);
+        }
+      };
+      fetchReviews();
+    }
+  }, [product, currentSeller]);
 
   useEffect(() => {
     if (product && currentUser) {
@@ -241,7 +264,6 @@ const ProductDetailsPage = () => {
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Add BreadcrumbNav here */}
         <BreadcrumbNav product={product} />
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -283,10 +305,11 @@ const ProductDetailsPage = () => {
 
               <div className="flex items-center mb-5">
                 <div className="flex mr-2">
-                  {renderStars(4.5)}
+                  {renderStars(averageRating)}
                 </div>
                 <span className="text-sm text-gray-500">
-                  4.5 (24 reviews) • <span className="text-green-600">In Stock</span>
+                  {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}) •{' '}
+                  <span className="text-green-600">{currentSeller?.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
                 </span>
               </div>
 
@@ -492,7 +515,12 @@ const ProductDetailsPage = () => {
                   </div>
                 </div>
               )}
-              {activeTab === 'reviews' && <ProductReviews productId={product._id} />}
+              {activeTab === 'reviews' && (
+                <ProductReviews
+                  productId={product._id}
+                  sellerId={currentSeller?.sellerId._id}
+                />
+              )}
             </div>
           </div>
         </div>

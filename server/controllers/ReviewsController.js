@@ -1,179 +1,173 @@
 const mongoose = require('mongoose');
-const Review = require('../models/Review');
-const Product = require('../models/Product');
+const Review = require('../models/Review'); // Adjust path to your Review model
+const Product = require('../models/Product'); // Adjust path to your Product model
 
-// Create a new review
-exports.createReview = async (req, res) => {
+// Add a new review for a product by a specific seller
+exports.addReview = async (req, res) => {
   try {
-    const { productId, sellerId, rating, comment } = req.body;
-    const userId = req.user._id; // Assuming user ID from auth middleware
+    const { productId, sellerId, userId, rating, comment } = req.body;
 
-    // Validate required fields
-    if (!productId || !sellerId || !rating) {
-      return res.status(400).json({ error: 'Product ID, seller ID, and rating are required' });
+    // Validate input
+    if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(sellerId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid product, seller, or user ID' });
+    }
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+    if (comment && comment.length > 500) {
+      return res.status(400).json({ message: 'Comment cannot exceed 500 characters' });
     }
 
-    // Validate ObjectIds
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ error: 'Invalid product ID' });
-    }
-    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
-      return res.status(400).json({ error: 'Invalid seller ID' });
-    }
-
-    // Validate rating
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
-    }
-
-    // Check if product exists and has the seller
-    const product = await Product.findById(productId);
+    // Check if product and seller exist
+    const product = await Product.findOne({
+      _id: productId,
+      'sellers.sellerId': sellerId
+    });
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    const sellerIndex = product.sellers.findIndex(s => s.sellerId.toString() === sellerId);
-    if (sellerIndex === -1) {
-      return res.status(404).json({ message: 'Seller not found for this product' });
+      return res.status(404).json({ message: 'Product or seller not found' });
     }
 
-    // Check if user already reviewed this product-seller pair
-    const existingReview = await Review.findOne({ product: productId, seller: sellerId, user: userId });
+    // Check if user already reviewed this product-seller combination
+    const existingReview = await Review.findOne({
+      product: productId,
+      seller: sellerId,
+      user: userId
+    });
     if (existingReview) {
-      return res.status(400).json({ error: 'You have already reviewed this seller for this product' });
+      return res.status(400).json({ message: 'You have already reviewed this product from this seller' });
     }
 
-    const reviewData = {
+    // Create new review
+    const review = new Review({
       product: productId,
       seller: sellerId,
       user: userId,
       rating,
       comment
-    };
+    });
 
-    const review = await Review.create(reviewData);
+    // Save review
+    await review.save();
 
-    // Add review to the seller's reviews array in the product
-    product.sellers[sellerIndex].reviews.push(review._id);
-    await product.save();
+    // Add review to product's seller-specific reviews array
+    await Product.updateOne(
+      { _id: productId, 'sellers.sellerId': sellerId },
+      { $push: { 'sellers.$.reviews': review._id } }
+    );
 
-    const populatedReview = await Review.findById(review._id)
-      .populate('user', 'name email')
-      .populate('seller', 'name email')
-      .populate('product', 'reference name');
-
-    res.status(201).json(populatedReview);
+    res.status(201).json({ message: 'Review added successfully', review });
   } catch (error) {
-    res.status(400).json({ error: error.message, details: error.errors });
+    console.error('Error adding review:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// Get all reviews for a product and seller
+// Get all reviews for a product by a specific seller
 exports.getReviewsByProductAndSeller = async (req, res) => {
   try {
     const { productId, sellerId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(productId)) {
-      return res.status(400).json({ error: 'Invalid product ID' });
-    }
-    if (!mongoose.Types.ObjectId.isValid(sellerId)) {
-      return res.status(400).json({ error: 'Invalid seller ID' });
+    // Validate input
+    if (!mongoose.Types.ObjectId.isValid(productId) || !mongoose.Types.ObjectId.isValid(sellerId)) {
+      return res.status(400).json({ message: 'Invalid product or seller ID' });
     }
 
-    const product = await Product.findById(productId);
+    // Check if product and seller exist
+    const product = await Product.findOne({
+      _id: productId,
+      'sellers.sellerId': sellerId
+    });
     if (!product) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    if (!product.sellers.some(s => s.sellerId.toString() === sellerId)) {
-      return res.status(404).json({ message: 'Seller not found for this product' });
+      return res.status(404).json({ message: 'Product or seller not found' });
     }
 
-    const reviews = await Review.find({ product: productId, seller: sellerId })
-      .populate('user', 'name email')
-      .populate('seller', 'name email')
-      .populate('product', 'reference name')
+    // Find reviews
+    const reviews = await Review.find({
+      product: productId,
+      seller: sellerId
+    })
+      .populate('user', 'name email') // Populate user details (adjust fields as needed)
       .lean();
 
     res.status(200).json(reviews);
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+    console.error('Error fetching reviews:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// Update a review
+// Update a review for a product by a specific seller
 exports.updateReview = async (req, res) => {
   try {
     const { reviewId } = req.params;
-    const { rating, comment } = req.body;
-    const userId = req.user._id;
+    const { userId, rating, comment } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
-      return res.status(400).json({ error: 'Invalid review ID' });
+    // Validate input
+    if (!mongoose.Types.ObjectId.isValid(reviewId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid review or user ID' });
+    }
+    if (rating && (rating < 1 || rating > 5)) {
+      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    }
+    if (comment && comment.length > 500) {
+      return res.status(400).json({ message: 'Comment cannot exceed 500 characters' });
     }
 
-    // Validate rating if provided
-    if (rating !== undefined && (rating < 1 || rating > 5)) {
-      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
-    }
-
-    const review = await Review.findById(reviewId);
+    // Find review
+    const review = await Review.findOne({
+      _id: reviewId,
+      user: userId
+    });
     if (!review) {
-      return res.status(404).json({ message: 'Review not found' });
+      return res.status(404).json({ message: 'Review not found or you are not authorized to update it' });
     }
 
-    // Check if user owns the review
-    if (review.user.toString() !== userId.toString()) {
-      return res.status(403).json({ error: 'Not authorized to update this review' });
-    }
+    // Update fields
+    if (rating) review.rating = rating;
+    if (comment !== undefined) review.comment = comment; // Allow empty comment
+    review.updatedAt = Date.now();
 
-    const updateData = {};
-    if (rating !== undefined) updateData.rating = rating;
-    if (comment !== undefined) updateData.comment = comment;
+    // Save updated review
+    await review.save();
 
-    const updatedReview = await Review.findByIdAndUpdate(
-      reviewId,
-      { $set: updateData },
-      { new: true, runValidators: true }
-    )
-      .populate('user', 'name email')
-      .populate('seller', 'name email')
-      .populate('product', 'reference name');
-
-    res.status(200).json(updatedReview);
+    res.status(200).json({ message: 'Review updated successfully', review });
   } catch (error) {
-    res.status(400).json({ error: error.message, details: error.errors });
+    console.error('Error updating review:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
 
-// Delete a review
+// Delete a review for a product by a specific seller
 exports.deleteReview = async (req, res) => {
   try {
-    const { reviewId } = req.params;
-    const userId = req.user._id;
+    const { reviewId, userId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(reviewId)) {
-      return res.status(400).json({ error: 'Invalid review ID' });
+    // Validate input
+    if (!mongoose.Types.ObjectId.isValid(reviewId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: 'Invalid review or user ID' });
     }
 
-    const review = await Review.findById(reviewId);
+    // Find review
+    const review = await Review.findOne({
+      _id: reviewId,
+      user: userId
+    });
     if (!review) {
-      return res.status(404).json({ message: 'Review not found' });
+      return res.status(404).json({ message: 'Review not found or you are not authorized to delete it' });
     }
 
-    // Check if user owns the review
-    if (review.user.toString() !== userId.toString()) {
-      return res.status(403).json({ error: 'Not authorized to delete this review' });
-    }
-
-    // Remove review from the seller's reviews array in the product
+    // Remove review from product's seller-specific reviews array
     await Product.updateOne(
       { _id: review.product, 'sellers.sellerId': review.seller },
       { $pull: { 'sellers.$.reviews': reviewId } }
     );
 
-    await review.remove();
+    // Delete review
+    await Review.deleteOne({ _id: reviewId });
 
     res.status(200).json({ message: 'Review deleted successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error', details: error.message });
+    console.error('Error deleting review:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

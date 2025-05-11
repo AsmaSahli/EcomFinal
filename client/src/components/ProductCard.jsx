@@ -11,13 +11,16 @@ import debounce from 'lodash.debounce';
 
 const ProductCard = ({ product, sellerOffer }) => {
   const { currentUser } = useSelector((state) => state.user);
-  const wishlistItems = useSelector((state) => state.wishlist.items);
+  const wishlistItems = useSelector((state) => state.wishlist.items || []);
   const dispatch = useDispatch();
   const [isHovered, setIsHovered] = useState(false);
   const [isToggling, setIsToggling] = useState(false);
+  const [averageRating, setAverageRating] = useState(0);
+  const [reviewCount, setReviewCount] = useState(0);
 
   const WISHLIST_API_URL = 'http://localhost:8000/api/wishlist';
   const CART_API_URL = 'http://localhost:8000/api/cart';
+  const API_URL = 'http://localhost:8000/api';
 
   const isWishlisted = wishlistItems.some(
     (item) =>
@@ -31,12 +34,27 @@ const ProductCard = ({ product, sellerOffer }) => {
   const sellerId = sellerOffer?.sellerId?._id || product?.sellerId?._id;
   const shopName = sellerOffer?.sellerId?.shopName || product?.sellerId?.shopName || 'Seller';
 
-  const reviews = sellerOffer?.reviews || product?.reviews || [];
-  const averageRating = reviews.length > 0
-    ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
-    : 0;
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!product?._id || !sellerId) return;
+      try {
+        const response = await axios.get(`${API_URL}/reviews/${product._id}/${sellerId}`);
+        const reviews = response.data;
+        const avgRating = reviews.length > 0
+          ? (reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length).toFixed(1)
+          : 0;
+        setAverageRating(parseFloat(avgRating));
+        setReviewCount(reviews.length);
+      } catch (err) {
+        console.error('Error fetching reviews:', err);
+        setAverageRating(0);
+        setReviewCount(0);
+      }
+    };
+    fetchReviews();
+  }, [product?._id, sellerId]);
 
-  const promotions = sellerOffer?.promotions || product?.promotions || [];
+  const promotions = sellerOffer?.promotions || [];
   const activePromotion = promotions.find((p) => p.isActive) || sellerOffer?.activePromotion;
   const discountPercentage = activePromotion?.discountPercentage || 0;
   const originalPrice = activePromotion
@@ -53,7 +71,7 @@ const ProductCard = ({ product, sellerOffer }) => {
     }
 
     if (isToggling) return;
-    
+
     setIsToggling(true);
     try {
       if (isWishlisted) {
@@ -77,7 +95,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           price: parseFloat(price),
           stock,
         });
-        
+
         const newItem = {
           ...response.data.wishlist.items.find(
             (item) =>
@@ -87,7 +105,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           productId: product,
           sellerId: sellerOffer?.sellerId
         };
-        
+
         if (newItem) {
           dispatch(addWishlistItem(newItem));
           toast.success('Added to wishlist');
@@ -277,7 +295,7 @@ const ProductCard = ({ product, sellerOffer }) => {
         <div className="flex items-center mb-1.5">
           <div className="flex mr-1">{renderStars()}</div>
           <span className="text-xs text-gray-500 ml-1">
-            {averageRating} ({reviews.length})
+            {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
           </span>
         </div>
 
