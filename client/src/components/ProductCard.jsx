@@ -56,7 +56,7 @@ const ProductCard = ({ product, sellerOffer }) => {
 
   const promotions = sellerOffer?.promotions || [];
   const activePromotion = promotions.find((p) => p.isActive) || sellerOffer?.activePromotion;
-  const discountPercentage = activePromotion?.discountPercentage || 0;
+  const discountPercentage = activePromotion?.discountRate || 0;
   const originalPrice = activePromotion
     ? (price / (1 - discountPercentage / 100)).toFixed(2)
     : null;

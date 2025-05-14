@@ -15,7 +15,7 @@ const ProductReviews = ({ productId, sellerId }) => {
   const [editForm, setEditForm] = useState({ rating: 5, comment: '' });
   const [averageRating, setAverageRating] = useState(0);
   const [userHasReviewed, setUserHasReviewed] = useState(false);
-
+  const [ratingDistribution, setRatingDistribution] = useState([0, 0, 0, 0, 0]);
   const API_URL = 'http://localhost:8000/api';
 
   useEffect(() => {
@@ -25,10 +25,17 @@ const ProductReviews = ({ productId, sellerId }) => {
         const response = await axios.get(`${API_URL}/reviews/${productId}/${sellerId}`);
         setReviews(response.data);
         
-        // Calculate average rating
         if (response.data.length > 0) {
+          // Calculate average rating
           const avg = response.data.reduce((sum, review) => sum + review.rating, 0) / response.data.length;
           setAverageRating(avg.toFixed(1));
+          
+          // Calculate rating distribution
+          const distribution = [0, 0, 0, 0, 0];
+          response.data.forEach(review => {
+            distribution[5 - review.rating]++;
+          });
+          setRatingDistribution(distribution);
           
           // Check if current user has reviewed
           if (currentUser) {
@@ -160,10 +167,10 @@ const ProductReviews = ({ productId, sellerId }) => {
 
   const renderStars = (rating, size = 'md') => {
     const sizes = {
-      sm: 'w-4 h-4',
-      md: 'w-5 h-5',
-      lg: 'w-6 h-6',
-      xl: 'w-8 h-8'
+      sm: 'w-3 h-3',
+      md: 'w-4 h-4',
+      lg: 'w-5 h-5',
+      xl: 'w-6 h-6'
     };
     
     return Array(5)
@@ -177,32 +184,50 @@ const ProductReviews = ({ productId, sellerId }) => {
       );
   };
 
-  const renderRatingInput = (rating, setRating, size = 'xl') => {
+  const renderRatingInput = (rating, setRating) => {
     return (
-      <div className="flex items-center">
+      <div className="flex items-center space-x-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"
             onClick={() => setRating(star)}
-            className="mr-1 focus:outline-none transition-transform hover:scale-110"
+            className="focus:outline-none transition-transform hover:scale-110"
             aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
           >
             {star <= rating ? (
-              <FaStar className={`text-yellow-400 ${size === 'xl' ? 'w-8 h-8' : 'w-6 h-6'}`} />
+              <FaStar className="text-yellow-400 w-8 h-8" />
             ) : (
-              <FaRegStar className={`text-gray-300 hover:text-yellow-400 ${size === 'xl' ? 'w-8 h-8' : 'w-6 h-6'}`} />
+              <FaRegStar className="text-gray-300 hover:text-yellow-400 w-8 h-8" />
             )}
           </button>
         ))}
-        <span className="ml-2 text-gray-600 font-medium">{rating}.0</span>
+        <span className="ml-2 text-lg font-semibold text-gray-700">{rating}.0</span>
+      </div>
+    );
+  };
+
+  const renderRatingBar = (starCount, index) => {
+    const percentage = reviews.length > 0 ? (starCount / reviews.length) * 100 : 0;
+    return (
+      <div key={index} className="flex items-center mb-2">
+        <span className="w-10 text-sm font-medium text-gray-600">{5 - index} star</span>
+        <div className="flex-1 mx-2 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-yellow-400" 
+            style={{ width: `${percentage}%` }}
+          ></div>
+        </div>
+        <span className="w-10 text-right text-sm text-gray-500">
+          {Math.round(percentage)}%
+        </span>
       </div>
     );
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-16">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-600"></div>
       </div>
     );
@@ -210,8 +235,8 @@ const ProductReviews = ({ productId, sellerId }) => {
 
   if (error) {
     return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-8 rounded-lg shadow-sm">
-        <div className="flex">
+      <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-8">
+        <div className="flex items-start">
           <div className="flex-shrink-0">
             <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
@@ -235,36 +260,47 @@ const ProductReviews = ({ productId, sellerId }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
       {/* Reviews Summary Section */}
-      <div className="bg-white rounded-xl shadow-sm p-6 mb-8 border border-gray-100">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-          <div className="mb-4 md:mb-0">
-            <h2 className="text-2xl font-bold text-gray-900">Customer Reviews</h2>
-            <div className="flex items-center mt-2">
-              <div className="flex mr-2">
-                {renderStars(averageRating, 'lg')}
-              </div>
-              <span className="text-gray-600">
-                {averageRating} out of 5 ({reviews.length} review{reviews.length !== 1 ? 's' : ''})
-              </span>
+      <div className="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-gray-100">
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Average Rating */}
+          <div className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl">
+            <div className="text-4xl font-bold text-gray-900 mb-1">{averageRating}</div>
+            <div className="flex mb-2">
+              {renderStars(averageRating, 'lg')}
+            </div>
+            <div className="text-sm text-gray-500">
+              Based on {reviews.length} review{reviews.length !== 1 ? 's' : ''}
             </div>
           </div>
           
-          {currentUser && !userHasReviewed && (
+          {/* Rating Distribution */}
+          <div className="col-span-2">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Rating Breakdown</h3>
+            <div className="space-y-2">
+              {ratingDistribution.map((count, index) => renderRatingBar(count, index))}
+            </div>
+          </div>
+        </div>
+        
+        {currentUser && !userHasReviewed && (
+          <div className="mt-6 flex justify-end">
             <button
               className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
               onClick={() => document.getElementById('review-form').scrollIntoView({ behavior: 'smooth' })}
             >
               Write a Review
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Reviews List */}
       {reviews.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="text-center py-12 bg-white rounded-2xl shadow-sm border border-gray-100">
           <div className="max-w-md mx-auto">
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -278,11 +314,19 @@ const ProductReviews = ({ productId, sellerId }) => {
       ) : (
         <div className="space-y-6">
           {reviews.map((review) => (
-            <div key={review._id} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+            <div key={review._id} className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
               <div className="flex items-start">
                 <div className="flex-shrink-0 mr-4">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 flex items-center justify-center">
-                    <FaUserCircle className="w-10 h-10 text-purple-500" />
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-r from-purple-100 to-indigo-100 flex items-center justify-center overflow-hidden">
+                    {review.user?.avatar ? (
+                      <img 
+                        src={review.user.avatar} 
+                        alt={review.user.name} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <FaUserCircle className="w-10 h-10 text-purple-500" />
+                    )}
                   </div>
                 </div>
                 
@@ -292,7 +336,7 @@ const ProductReviews = ({ productId, sellerId }) => {
                       <h4 className="font-semibold text-gray-900">{review.user?.name || 'Anonymous'}</h4>
                       <div className="flex items-center mt-1">
                         <div className="flex mr-2">
-                          {renderStars(review.rating, 'sm')}
+                          {renderStars(review.rating, 'md')}
                         </div>
                         <span className="text-sm text-gray-500">
                           {new Date(review.createdAt).toLocaleDateString('en-US', {
@@ -378,7 +422,7 @@ const ProductReviews = ({ productId, sellerId }) => {
       {/* Review Form - Only show if user hasn't reviewed yet */}
       {currentUser && !userHasReviewed && (
         <div id="review-form" className="mt-12 pt-8 border-t border-gray-200">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+          <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
             <h3 className="text-xl font-bold text-gray-900 mb-6">Write a Review</h3>
             <form onSubmit={handleSubmitReview} className="space-y-6">
               <div>
@@ -394,7 +438,7 @@ const ProductReviews = ({ productId, sellerId }) => {
                   id="comment"
                   rows="5"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="Share your thoughts about this product..."
+                  placeholder="Share your detailed experience with this product..."
                   value={newReview.comment}
                   onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                   required
@@ -415,7 +459,7 @@ const ProductReviews = ({ productId, sellerId }) => {
 
       {/* Message if user has already reviewed */}
       {currentUser && userHasReviewed && (
-        <div className="mt-8 p-4 bg-indigo-50 rounded-lg border border-indigo-100">
+        <div className="mt-8 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
           <div className="flex items-start">
             <FaCheckCircle className="flex-shrink-0 h-5 w-5 text-indigo-500 mt-0.5" />
             <div className="ml-3">

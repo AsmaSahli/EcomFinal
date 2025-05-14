@@ -807,13 +807,42 @@ exports.getProductsBySeller = async (req, res) => {
         path: 'sellers.sellerId',
         select: 'shopName',
       })
+      .populate({
+        path: 'sellers.promotions.promotionId',
+        select: 'discountRate isActive startDate endDate name',
+      })
       .lean();
 
-    // Filter the sellers array to include only the specified seller
-    const filteredProducts = products.map(product => ({
-      ...product,
-      sellers: product.sellers.filter(seller => seller.sellerId._id.toString() === sellerId)
-    }));
+    // Filter the sellers array and transform promotion data
+    const filteredProducts = products.map(product => {
+      const filteredSellers = product.sellers.filter(
+        seller => seller.sellerId._id.toString() === sellerId
+      ).map(seller => {
+        // Process promotions to include only relevant fields
+        const activePromotion = seller.promotions.find(
+          promo => promo.promotionId?.isActive
+        );
+
+        return {
+          ...seller,
+          promotions: activePromotion ? [{
+            promotionId: activePromotion.promotionId._id,
+            name: activePromotion.promotionId.name,
+            discountRate: activePromotion.promotionId.discountRate,
+            isActive: activePromotion.promotionId.isActive,
+            startDate: activePromotion.promotionId.startDate,
+            endDate: activePromotion.promotionId.endDate
+          }] : [],
+          hasActivePromotion: !!activePromotion,
+          activeDiscountRate: activePromotion?.promotionId.discountRate || 0
+        };
+      });
+
+      return {
+        ...product,
+        sellers: filteredSellers
+      };
+    });
 
     // Transform and return the products
     const transformedProducts = filteredProducts.map(transformProductData);

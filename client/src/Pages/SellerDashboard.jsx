@@ -13,8 +13,9 @@ import {
   FaShoppingBag,
   FaDollarSign,
   FaUsers,
-  FaPlus ,
-  FaBoxes
+  FaPlus,
+  FaBoxes,
+  FaGift
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
@@ -27,6 +28,7 @@ import DashSales from "../components/Seller/DashSales";
 import DashAnalytics from "../components/Seller/DashAnalytics";
 import DashSettings from "../components/Seller/DashSettings";
 import DashNewProduct from "../components/Seller/DashNewProduct";
+import DashPromotion from "../components/Seller/DashPromotion";
 
 const SellerDashboard = () => {
   const currentUser = useSelector(state => state.user.currentUser);
@@ -93,8 +95,8 @@ const SellerDashboard = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-[#3F0AAD] to-[#2D077A] text-white flex flex-col p-0 shadow-xl">
+      {/* Sidebar - Fixed */}
+      <div className="fixed top-0 left-0 w-64 h-full bg-gradient-to-b from-[#3F0AAD] to-[#2D077A] text-white flex flex-col p-0 shadow-xl z-10">
         {/* Sidebar Header */}
         <div className="p-6 pb-4 border-b border-[#4A12C4]">
           <div className="flex items-center space-x-3">
@@ -137,6 +139,15 @@ const SellerDashboard = () => {
               >
                 <FaBoxes className="mr-3 text-purple-200" />
                 Add Inventory
+              </Link>
+            </li>
+            <li>
+              <Link 
+                to="/seller-dashboard?tab=promotions" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'promotions' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+              >
+                <FaGift className="mr-3 text-purple-200" />
+                Promotions
               </Link>
             </li>
             <li>
@@ -202,10 +213,10 @@ const SellerDashboard = () => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navigation */}
-        <header className="bg-white shadow-sm">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col ml-64">
+        {/* Navbar - Fixed */}
+        <header className="fixed top-0 left-64 right-0 bg-white shadow-sm z-10">
           <div className="flex items-center justify-between px-6 py-4">
             {/* Search Bar */}
             <div className="relative w-64">
@@ -237,8 +248,8 @@ const SellerDashboard = () => {
           </div>
         </header>
 
-        {/* Dashboard Content */}
-        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+        {/* Scrollable Content */}
+        <main className="flex-1 mt-16 p-6 bg-gray-50 overflow-y-auto">
           {activeTab === 'dashboard' && (
             <DashOverview 
               stats={stats} 
@@ -249,6 +260,7 @@ const SellerDashboard = () => {
           )}
           {activeTab === 'products' && <DashProducts />}
           {activeTab === 'add-inventory' && <DashNewProduct />}
+          {activeTab === 'promotions' && <DashPromotion />}
           {activeTab === 'orders' && <DashOrders />}
           {activeTab === 'customers' && <DashCustomers />}
           {activeTab === 'sales' && <DashSales />}

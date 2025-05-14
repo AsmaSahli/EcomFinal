@@ -258,7 +258,7 @@ const ProductDetailsPage = () => {
   const keyFeatures = getKeyFeatures();
   const hasDiscount = currentSeller?.promotions?.length > 0;
   const originalPrice = hasDiscount ?
-    (currentSeller.price / (1 - currentSeller.promotions[0].discountPercentage / 100)).toFixed(2) :
+    (currentSeller.price / (1 - currentSeller.promotions[0].discountRate / 100)).toFixed(2) :
     null;
 
   return (

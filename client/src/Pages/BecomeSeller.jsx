@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/ecomLogo.png";
@@ -12,13 +12,22 @@ const BecomeSeller = () => {
     tradeRegister: null,
   });
   const [loading, setLoading] = useState(false);
-  const [alert, setAlert] = useState({ show: false, type: "", message: "" }); // State for alerts
+  const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const navigate = useNavigate();
+
+  // Auto-dismiss alert after 5 seconds
+  useEffect(() => {
+    if (alert.show) {
+      const timer = setTimeout(() => {
+        setAlert({ ...alert, show: false });
+      }, 5000); // 5 seconds
+      return () => clearTimeout(timer); // Cleanup on unmount or alert change
+    }
+  }, [alert]);
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     if (files) {
-      // Validate file type and size
       if (files[0].type !== "application/pdf") {
         setAlert({ show: true, type: "error", message: "Please upload a PDF file." });
         return;
@@ -50,7 +59,7 @@ const BecomeSeller = () => {
         withCredentials: true,
       });
 
-      // Show success alert
+      // Show success toast
       setAlert({
         show: true,
         type: "success",
@@ -66,9 +75,13 @@ const BecomeSeller = () => {
         fiscalIdentificationCard: null,
         tradeRegister: null,
       });
-      navigate("/application-status");
+
+      // Navigate after a delay to allow toast visibility
+      setTimeout(() => {
+        navigate("/application-status");
+      }, 3000); // Navigate after 3 seconds
     } catch (err) {
-      // Show error alert
+      // Show error toast
       setAlert({
         show: true,
         type: "error",
@@ -81,11 +94,15 @@ const BecomeSeller = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-purple-50 p-6">
-      {/* DaisyUI Alert */}
+      {/* DaisyUI Toast */}
       {alert.show && (
-        <div className={`alert alert-${alert.type} fixed top-4 right-4 w-96 z-50`}>
+        <div
+          className={`alert alert-${alert.type} fixed top-4 right-4 w-96 z-50 shadow-lg rounded-lg transition-all duration-300 transform ${
+            alert.show ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
+          }`}
+        >
           <div className="flex-1">
-            <label>{alert.message}</label>
+            <label className="text-sm">{alert.message}</label>
           </div>
           <button
             className="btn btn-sm btn-ghost"
@@ -167,6 +184,7 @@ const BecomeSeller = () => {
                   name="fiscalIdentificationCard"
                   onChange={handleChange}
                   className="file-input file-input-bordered w-full bg-white border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  accept="application/pdf"
                   required
                 />
               </div>
@@ -179,6 +197,7 @@ const BecomeSeller = () => {
                   name="tradeRegister"
                   onChange={handleChange}
                   className="file-input file-input-bordered w-full bg-white border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm"
+                  accept="application/pdf"
                   required
                 />
               </div>
@@ -211,15 +230,12 @@ const BecomeSeller = () => {
               Sign In
             </button>
             <div className="mt-4">
-                <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600">
                 Want to check your application status?{" "}
-                <a
-                    href="/application-status"
-                    className="text-blue-500 hover:underline"
-                >
-                    Click here
+                <a href="/application-status" className="text-blue-500 hover:underline">
+                  Click here
                 </a>
-                </p>
+              </p>
             </div>
           </div>
         </div>
@@ -227,31 +243,24 @@ const BecomeSeller = () => {
         {/* Right Side - Vertical Steps */}
         <div className="w-1/2 bg-gradient-to-r from-blue-100 to-purple-100 p-6 flex flex-col justify-center items-center">
           <ul className="steps steps-vertical">
-            {/* Step 1 */}
             <li className="step step-primary">
               <div className="text-left">
                 <h3 className="text-lg font-bold text-gray-800">Step 1: Fill out your registration request</h3>
                 <p className="text-gray-600 text-sm">Complete the initial registration form to begin the process.</p>
               </div>
             </li>
-
-            {/* Step 2 */}
             <li className="step step-primary">
               <div className="text-left">
                 <h3 className="text-lg font-bold text-gray-800">Step 2: Complete the registration form</h3>
                 <p className="text-gray-600 text-sm">You will receive an email with further instructions and required documents.</p>
               </div>
             </li>
-
-            {/* Step 3 */}
             <li className="step">
               <div className="text-left">
                 <h3 className="text-lg font-bold text-gray-800">Step 3: Application Review</h3>
                 <p className="text-gray-600 text-sm">Our team will carefully review your application and documents.</p>
               </div>
             </li>
-
-            {/* Step 4 */}
             <li className="step">
               <div className="text-left">
                 <h3 className="text-lg font-bold text-gray-800">Step 4: Start Selling</h3>
@@ -261,7 +270,6 @@ const BecomeSeller = () => {
           </ul>
         </div>
       </div>
-
     </div>
   );
 };

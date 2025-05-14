@@ -28,22 +28,21 @@ const ProductPromotions = ({ productId, onUpdate }) => {
   const currentUser = useSelector(state => state.user.currentUser);
   const sellerId = currentUser.id;
 
-  // Fetch promotions on component mount
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
         setLoading(true);
         setError(null);
         const response = await axios.get(
-          `${API_BASE_URL}/promotions/?productId=${productId}&sellerId=${sellerId}`,
+          `${API_BASE_URL}/promotions/seller/${sellerId}`,
           {
             headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
           }
         );
-        setPromotions(response.data);
-        setFilteredPromotions(response.data);
+        setPromotions(response.data.promotions);
+        setFilteredPromotions(response.data.promotions);
       } catch (err) {
-        setError(err.response?.data?.error?.message || 'Failed to fetch promotions');
+        setError(err.response?.data?.message || 'Failed to fetch promotions');
       } finally {
         setLoading(false);
       }
@@ -51,7 +50,6 @@ const ProductPromotions = ({ productId, onUpdate }) => {
     fetchPromotions();
   }, [productId, sellerId]);
 
-  // Apply filters when search term or status changes
   useEffect(() => {
     let filtered = promotions;
 
@@ -62,13 +60,13 @@ const ProductPromotions = ({ productId, onUpdate }) => {
     }
 
     if (filterStatus === 'active') {
-      filtered = filtered.filter((p) => p.isActive);
-    } else if (filterStatus === 'non-active') {
-      filtered = filtered.filter((p) => !p.isActive);
+      filtered = filtered.filter((p) => p.isActive && p.applicableProducts.includes(productId));
+    } else if (filterStatus === 'inactive') {
+      filtered = filtered.filter((p) => !p.isActive || !p.applicableProducts.includes(productId));
     }
 
     setFilteredPromotions(filtered);
-  }, [searchTerm, filterStatus, promotions]);
+  }, [searchTerm, filterStatus, promotions, productId]);
 
   const validateForm = () => {
     const errors = {};
@@ -92,46 +90,6 @@ const ProductPromotions = ({ productId, onUpdate }) => {
     return errors;
   };
 
-  const handleSetActivePromotion = async (promotionId) => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const response = await axios.put(
-        `${API_BASE_URL}/promotions/${productId}/sellers/${sellerId}/promotions/${promotionId}/active`,
-        {}, // empty body since we're just activating
-        {
-          headers: { 
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-        }
-      );
-  
-      // Update local state to reflect the change
-      setPromotions(prev => 
-        prev.map(p => ({
-          ...p,
-          isActive: p._id === promotionId, // only the selected promotion should be active
-        }))
-      );
-  
-      // Call the parent component's update handler if provided
-      if (onUpdate) {
-        onUpdate(response.data);
-      }
-  
-    } catch (err) {
-      setError(
-        err.response?.data?.error?.message || 
-        err.response?.data?.message || 
-        'Failed to activate promotion'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCreateOrUpdatePromotion = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -140,7 +98,7 @@ const ProductPromotions = ({ productId, onUpdate }) => {
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       setError('Please fix the form errors');
-      setIsSubmitting(false );
+      setIsSubmitting(false);
       return;
     }
 
@@ -150,11 +108,9 @@ const ProductPromotions = ({ productId, onUpdate }) => {
 
       const requestData = {
         name: promotionForm.name.trim(),
-        description: `Discount of ${parseFloat(promotionForm.discountRate)}%`,
         discountRate: parseFloat(promotionForm.discountRate),
-        startDate: new Date(promotionForm.startDate).toISOString(),
-        endDate: new Date(promotionForm.endDate).toISOString(),
-        applicableProducts: [productId],
+        startDate: promotionForm.startDate,
+        endDate: promotionForm.endDate,
         createdBy: sellerId,
       };
 
@@ -174,24 +130,18 @@ const ProductPromotions = ({ productId, onUpdate }) => {
         });
       }
 
-      // Reset form
       setPromotionForm({ name: '', discountRate: '', startDate: '', endDate: '' });
       setShowForm(false);
       setFormMode('create');
       setEditingPromotionId(null);
 
-      // Refresh promotions
       const response = await axios.get(
-        `${API_BASE_URL}/promotions/?productId=${productId}&sellerId=${sellerId}`,
-        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }
+        `${API_BASE_URL}/promotions/seller/${sellerId}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }}
       );
-      setPromotions(response.data);
+      setPromotions(response.data.promotions);
     } catch (err) {
-      setError(
-        err.response?.data?.error?.message ||
-        err.response?.data?.message ||
-        'Failed to save promotion. Please try again.'
-      );
+      setError(err.response?.data?.message || 'Failed to save promotion. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -207,7 +157,37 @@ const ProductPromotions = ({ productId, onUpdate }) => {
       });
       setPromotions(prev => prev.filter(p => p._id !== promotionId));
     } catch (err) {
-      setError(err.response?.data?.error?.message || 'Failed to delete promotion');
+      setError(err.response?.data?.message || 'Failed to delete promotion');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleActivatePromotion = async (promotionId) => {
+    if (!window.confirm('Are you sure you want to activate this promotion for this product?')) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      await axios.put(
+        `${API_BASE_URL}/promotions/activate/${promotionId}/${productId}/${sellerId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      const response = await axios.get(
+        `${API_BASE_URL}/promotions/seller/${sellerId}`,
+        { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }}
+      );
+      setPromotions(response.data.promotions);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to activate promotion');
     } finally {
       setLoading(false);
     }
@@ -219,8 +199,8 @@ const ProductPromotions = ({ productId, onUpdate }) => {
     setPromotionForm({
       name: promotion.name,
       discountRate: promotion.discountRate.toString(),
-      startDate: new Date(promotion.startDate).toISOString().split('T')[0],
-      endDate: new Date(promotion.endDate).toISOString().split('T')[0],
+      startDate: promotion.startDate.split('T')[0],
+      endDate: promotion.endDate.split('T')[0],
     });
     setShowForm(true);
     setError(null);
@@ -249,7 +229,6 @@ const ProductPromotions = ({ productId, onUpdate }) => {
 
   return (
     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm max-w-4xl mx-auto">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div className="flex items-center">
           <div className="p-2 bg-gradient-to-br from-indigo-100 to-purple-100 rounded-lg text-indigo-600 mr-3">
@@ -263,7 +242,7 @@ const ProductPromotions = ({ productId, onUpdate }) => {
         <button
           onClick={toggleForm}
           className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 text-sm font-medium shadow-sm hover:shadow-md ${
-            showForm 
+            showForm
               ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               : 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white hover:from-indigo-700 hover:to-purple-700'
           }`}
@@ -282,7 +261,6 @@ const ProductPromotions = ({ productId, onUpdate }) => {
         </button>
       </div>
 
-      {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
         <div className="md:col-span-2">
           <div className="relative">
@@ -314,12 +292,11 @@ const ProductPromotions = ({ productId, onUpdate }) => {
           >
             <option value="all">All Promotions</option>
             <option value="active">Active Only</option>
-            <option value="non-active">Inactive Only</option>
+            <option value="inactive">Inactive Only</option>
           </select>
         </div>
       </div>
 
-      {/* Form */}
       {showForm && (
         <div className="mb-6 p-5 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
           <h4 className="text-lg font-medium text-gray-800 mb-4 flex items-center gap-2">
@@ -409,7 +386,6 @@ const ProductPromotions = ({ productId, onUpdate }) => {
         </div>
       )}
 
-      {/* Error Message */}
       {error && (
         <div className="mb-4 p-3 bg-red-50 text-red-700 rounded-md text-sm flex justify-between items-center border border-red-100">
           <span>{error}</span>
@@ -419,7 +395,6 @@ const ProductPromotions = ({ productId, onUpdate }) => {
         </div>
       )}
 
-      {/* Promotions List */}
       {loading ? (
         <div className="flex justify-center items-center py-12">
           <FaSpinner className="animate-spin h-8 w-8 text-indigo-500" />
@@ -430,7 +405,7 @@ const ProductPromotions = ({ productId, onUpdate }) => {
             <div
               key={promotion._id}
               className={`group p-4 rounded-xl border transition-all duration-200 ${
-                promotion.isActive
+                promotion.isActive && promotion.applicableProducts.includes(productId)
                   ? 'border-green-200 bg-gradient-to-br from-green-50 to-white shadow-xs'
                   : 'border-gray-200 hover:border-indigo-200 bg-white hover:shadow-xs'
               }`}
@@ -438,38 +413,47 @@ const ProductPromotions = ({ productId, onUpdate }) => {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex-1">
                   <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${
-                      promotion.isActive
-                        ? 'bg-gradient-to-br from-green-100 to-green-50 text-green-600'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}>
+                    <div
+                      className={`p-2 rounded-lg ${
+                        promotion.isActive && promotion.applicableProducts.includes(productId)
+                          ? 'bg-gradient-to-br from-green-100 to-green-50 text-green-600'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
                       <FaGift className="h-5 w-5" />
                     </div>
                     <div>
                       <h4 className="font-medium text-gray-900">{promotion.name}</h4>
                       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-gray-600">
-                        <span className={`font-medium ${
-                          promotion.isActive ? 'text-green-600' : 'text-indigo-600'
-                        }`}>
+                        <span
+                          className={`font-medium ${
+                            promotion.isActive && promotion.applicableProducts.includes(productId)
+                              ? 'text-green-600'
+                              : 'text-indigo-600'
+                          }`}
+                        >
                           {promotion.discountRate}% off
                         </span>
-                        <span>{formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}</span>
+                        <span>
+                          {formatDate(promotion.startDate)} - {formatDate(promotion.endDate)}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {promotion.isActive ? (
+                  {promotion.isActive && promotion.applicableProducts.includes(productId) ? (
                     <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 flex items-center gap-1">
                       <FaCheckCircle className="h-3 w-3" />
                       Active
                     </span>
                   ) : (
                     <button
-                      onClick={() => handleSetActivePromotion(promotion._id)}
+                      onClick={() => handleActivatePromotion(promotion._id)}
                       disabled={loading}
                       className="px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md shadow-xs disabled:bg-indigo-400 flex items-center gap-1"
                     >
+                      {loading && <FaSpinner className="animate-spin h-3 w-3" />}
                       Activate
                     </button>
                   )}

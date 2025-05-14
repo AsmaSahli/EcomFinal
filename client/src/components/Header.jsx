@@ -256,7 +256,7 @@ const Header = () => {
                 <li>
                   <button 
                     className="hover:bg-gray-50 rounded-md"
-                    onClick={() => navigate('/join-delivery')}
+                    onClick={() => navigate('/join-delivery-team')}
                   >
                     <FaTruck className="mr-2 text-blue-600" /> Delivery Team
                   </button>

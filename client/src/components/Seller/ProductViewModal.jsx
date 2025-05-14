@@ -5,6 +5,7 @@ import axios from 'axios';
 import ProductEditForm from './ProductEditForm';
 import ProductPromotions from './ProductPromotions';
 import ProductReviews from './ProductReviews';
+import ProductDetailsTab from './ProductDetailsTab';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
@@ -38,11 +39,6 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
   if (!product) return null;
 
   const sellerInfo = product.sellers?.length > 0 ? product.sellers[0] : null;
-  const price = isEditing ? editedProduct.price : sellerInfo?.price?.toFixed(2) || '0.00';
-  const stock = isEditing ? editedProduct.stock : sellerInfo?.stock || 0;
-  const warranty = isEditing ? editedProduct.warranty : sellerInfo?.warranty || 'N/A';
-  const status = stock > 0 ? 'In Stock' : 'Out of Stock';
-  const statusClass = stock > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200';
 
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (product.images?.length || 1));
@@ -88,7 +84,6 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
         }
       );
   
-      // Call onUpdate with the full updated product data
       onUpdate({
         ...product,
         sellers: product.sellers.map(seller => 
@@ -108,7 +103,6 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
   };
 
   const currentImage = product.images?.[currentImageIndex];
-  const displayTags = isEditing ? editedProduct.tags : sellerInfo?.tags?.map((tag) => tag.name || tag) || [];
 
   return (
     <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
@@ -184,7 +178,8 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
                     <>
                       <button
                         onClick={handlePrevImage}
-                        className="absolute left-5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
+                        className="absolute left-5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all duration-200 hover:sc
+ale-110"
                       >
                         <FaChevronLeft className="h-5 w-5 text-gray-700" />
                       </button>
@@ -272,117 +267,16 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
 
             {/* Tab Content */}
             {activeTab === 'details' && (
-              <div className="space-y-6">
-                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                  <div className="flex items-center mb-5">
-                    <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600 mr-3">
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                      </svg>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-900">Product Information</h3>
-                  </div>
-                  <div className="space-y-4 pl-14">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Reference</p>
-                        <p className="font-mono bg-gray-50 px-3 py-2 rounded-lg text-sm border border-gray-200">{product.reference || 'N/A'}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Category</p>
-                        <p className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-sm border border-blue-200">
-                          {product.categoryDetails?.category?.name  || 'N/A'}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Status</p>
-                        <p className={`px-3 py-2 rounded-lg text-sm font-medium border ${statusClass}`}>
-                          {status}
-                        </p>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Description</p>
-                      <p className="text-gray-700 text-sm leading-relaxed">
-                        {product.description || 'No description available'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {isEditing ? (
-                  <ProductEditForm
-                    product={product}
-                    sellerInfo={sellerInfo}
-                    editedProduct={editedProduct}
-                    onSave={handleSave}
-                    onCancel={handleEditToggle}
-                    onChange={handleChange}
-                    loading={loading}
-                  />
-                ) : (
-                  <>
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                      <div className="flex items-center mb-5">
-                        <div className="p-2.5 bg-purple-50 rounded-xl text-purple-600 mr-3">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                          </svg>
-                        </div>
-                        <h3 className="text-xl font-semibold text-gray-900">Pricing & Inventory</h3>
-                      </div>
-                      <div className="space-y-4 pl-14">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Price</p>
-                            <p className="font-bold text-2xl text-indigo-600">${price}</p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Stock</p>
-                            <div className="flex items-center space-x-4">
-                              <p className="font-medium text-2xl">{stock}</p>
-                              <span className={`px-3 py-1.5 text-xs font-medium rounded-lg border ${statusClass}`}>
-                                {status}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Warranty</p>
-                          <p className={`px-3 py-2 rounded-lg text-sm font-medium border inline-block ${warranty ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-gray-50 text-gray-800 border-gray-200'}`}>
-                            {warranty || 'No warranty'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-                      <div className="flex items-center mb-5">
-                        <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-600 mr-3">
-                          <FaTag className="w-5 h-5" />
-                        </div>
-                        <h3 className="text-xl font-semibold text-gray-900">Product Tags</h3>
-                      </div>
-                      <div className="pl-14">
-                        <div className="flex flex-wrap gap-2">
-                          {displayTags.length > 0 ? (
-                            displayTags.map((tag, index) => (
-                              <span
-                                key={index}
-                                className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium border border-indigo-100 flex items-center"
-                              >
-                                <FaTag className="mr-2 h-3 w-3 text-indigo-500" />
-                                {tag}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-gray-400 italic">No tags added to this product</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
+              <ProductDetailsTab
+                product={product}
+                sellerInfo={sellerInfo}
+                isEditing={isEditing}
+                editedProduct={editedProduct}
+                onSave={handleSave}
+                onCancel={handleEditToggle}
+                onChange={handleChange}
+                loading={loading}
+              />
             )}
             {activeTab === 'promotions' && (
               <ProductPromotions

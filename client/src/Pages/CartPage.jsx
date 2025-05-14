@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaTrash, FaChevronRight, FaPlus, FaMinus } from 'react-icons/fa';
-import { IoMdCart, IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
+import { IoMdCart } from 'react-icons/io';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -16,6 +16,7 @@ const CartPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [removingItem, setRemovingItem] = useState(null);
+  const [updatingQuantity, setUpdatingQuantity] = useState(null);
 
   const API_URL = 'http://localhost:8000/api/cart';
 
@@ -63,14 +64,27 @@ const CartPage = () => {
     }
   };
 
-  const handleUpdateQuantity = async (itemId, quantity) => {
-    if (quantity < 1) return;
-    
+  const handleUpdateQuantity = async (itemId, quantity, stock) => {
+    if (quantity < 1) {
+      toast.error('Quantity cannot be less than 1');
+      return;
+    }
+    if (quantity > stock) {
+      toast.error(`Quantity cannot exceed available stock (${stock})`);
+      return;
+    }
+
+    setUpdatingQuantity(itemId);
     try {
-      await axios.put(`${API_URL}/item`, { userId: currentUser.id, itemId, quantity });
+      const response = await axios.put(`${API_URL}/item/quantity`, { userId: currentUser.id, itemId, quantity });
       dispatch(updateItemQuantity({ itemId, quantity }));
+      toast.success('Quantity updated');
+      return response.data.cart;
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update quantity');
+      throw err;
+    } finally {
+      setUpdatingQuantity(null);
     }
   };
 
@@ -244,12 +258,12 @@ const CartPage = () => {
                         <div className="flex justify-between items-start">
                           <div>
                             <Link
-                              
+                              to={`/products/${item.productId._id}?seller=${item.sellerId._id}`}
                               className="text-sm font-medium text-gray-800 hover:text-purple-600 line-clamp-2"
                             >
                               {item.productId.name}
                             </Link>
-                            <p className="text-xs text-gray-500 mt-0.5">
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
                               Sold by: {item.sellerId.shopName}
                             </p>
                           </div>
@@ -274,21 +288,29 @@ const CartPage = () => {
                           <div className="flex items-center gap-2">
                             <div className="flex items-center border rounded-md overflow-hidden bg-gray-50">
                               <button
-                                onClick={() => handleUpdateQuantity(item._id, item.quantity - 1)}
-                                disabled={item.quantity <= 1 || !item.inStock}
+                                onClick={() => handleUpdateQuantity(item._id, item.quantity - 1, item.stock)}
+                                disabled={item.quantity <= 1 || !item.inStock || updatingQuantity === item._id}
                                 className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-xs"
                               >
-                                <FaMinus className="w-2.5 h-2.5" />
+                                {updatingQuantity === item._id ? (
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                  <FaMinus className="w-2.5 h-2.5" />
+                                )}
                               </button>
                               <span className="px-2 py-0.5 text-center min-w-[1.5rem] text-sm">
                                 {item.quantity}
                               </span>
                               <button
-                                onClick={() => handleUpdateQuantity(item._id, item.quantity + 1)}
-                                disabled={!item.inStock}
+                                onClick={() => handleUpdateQuantity(item._id, item.quantity + 1, item.stock)}
+                                disabled={!item.inStock || updatingQuantity === item._id || item.quantity >= item.stock}
                                 className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-xs"
                               >
-                                <FaPlus className="w-2.5 h-2.5" />
+                                {updatingQuantity === item._id ? (
+                                  <span className="loading loading-spinner loading-xs"></span>
+                                ) : (
+                                  <FaPlus className="w-2.5 h-2.5" />
+                                )}
                               </button>
                             </div>
                           </div>
@@ -307,7 +329,6 @@ const CartPage = () => {
               </AnimatePresence>
             </div>
             
-
             {/* Order Summary */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-4">
