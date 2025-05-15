@@ -704,10 +704,12 @@ exports.getProductsBySellers = async (req, res) => {
         path: 'sellers.reviews'
       })
       .populate({
-        path: 'sellers.promotions.promotionId'
+        path: 'sellers.promotions.promotionId',
+        select: 'name discountRate startDate endDate isActive image'
       })
       .populate({
-        path: 'sellers.activePromotion'
+        path: 'sellers.activePromotion',
+        select: 'name discountRate startDate endDate isActive image'
       })
       .skip(skip)
       .limit(parseInt(limit))
@@ -717,7 +719,17 @@ exports.getProductsBySellers = async (req, res) => {
       const sellerInfo = product.sellers.find(s => 
         s.sellerId && s.sellerId._id.toString() === sellerId
       );
-      
+
+      // Ensure oldPrice and newPrice are included in promotions
+      if (sellerInfo && sellerInfo.promotions) {
+        sellerInfo.promotions = sellerInfo.promotions.map(promo => ({
+          ...promo,
+          oldPrice: promo.oldPrice || null,
+          newPrice: promo.newPrice || null,
+          promotionId: promo.promotionId // Populated promotion details
+        }));
+      }
+
       const transformed = transformProductData(product);
       return {
         ...transformed,

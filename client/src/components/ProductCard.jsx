@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FaStar, FaRegStar, FaShoppingCart } from 'react-icons/fa';
+import { FaStar, FaRegStar, FaShoppingCart, FaFireAlt } from 'react-icons/fa';
 import { IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
 import axios from 'axios';
 import { addItem as addWishlistItem, removeItem as removeWishlistItem } from '../redux/user/wishlistSlice';
@@ -17,6 +17,7 @@ const ProductCard = ({ product, sellerOffer }) => {
   const [isToggling, setIsToggling] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const [activePromotion, setActivePromotion] = useState(null);
 
   const WISHLIST_API_URL = 'http://localhost:8000/api/wishlist';
   const CART_API_URL = 'http://localhost:8000/api/cart';
@@ -34,15 +35,49 @@ const ProductCard = ({ product, sellerOffer }) => {
   const sellerId = sellerOffer?.sellerId?._id || product?.sellerId?._id;
   const shopName = sellerOffer?.sellerId?.shopName || product?.sellerId?.shopName || 'Seller';
 
+  // Promotion details
+  useEffect(() => {
+    if (sellerOffer?.promotions?.length > 0 && sellerOffer?.activePromotion?._id) {
+      const promotion = sellerOffer.promotions.find(
+        (promo) =>
+          promo.isActive &&
+          promo.promotionId?._id &&
+          promo.promotionId._id.toString() === sellerOffer.activePromotion._id.toString()
+      );
+      setActivePromotion(promotion || null);
+    } else {
+      setActivePromotion(null);
+    }
+  }, [sellerOffer]);
+
+  const hasActivePromotion = !!activePromotion;
+  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name || 'HOT DEAL' : '';
+  const discountRate = hasActivePromotion ? activePromotion.promotionId?.discountRate || 0 : 0;
+  const promotionImage = hasActivePromotion ? activePromotion.promotionId?.image?.url : null;
+  const promotionEndDate = hasActivePromotion
+    ? new Date(activePromotion.promotionId.endDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
+  const discountedPrice = hasActivePromotion
+    ? (price * (1 - discountRate / 100)).toFixed(2)
+    : price;
+
   useEffect(() => {
     const fetchReviews = async () => {
       if (!product?._id || !sellerId) return;
       try {
         const response = await axios.get(`${API_URL}/reviews/${product._id}/${sellerId}`);
         const reviews = response.data;
-        const avgRating = reviews.length > 0
-          ? (reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length).toFixed(1)
-          : 0;
+        const avgRating =
+          reviews.length > 0
+            ? (
+                reviews.reduce((sum, review) => sum + (review.rating || 0), 0) /
+                reviews.length
+              ).toFixed(1)
+            : 0;
         setAverageRating(parseFloat(avgRating));
         setReviewCount(reviews.length);
       } catch (err) {
@@ -53,13 +88,6 @@ const ProductCard = ({ product, sellerOffer }) => {
     };
     fetchReviews();
   }, [product?._id, sellerId]);
-
-  const promotions = sellerOffer?.promotions || [];
-  const activePromotion = promotions.find((p) => p.isActive) || sellerOffer?.activePromotion;
-  const discountPercentage = activePromotion?.discountRate || 0;
-  const originalPrice = activePromotion
-    ? (price / (1 - discountPercentage / 100)).toFixed(2)
-    : null;
 
   const handleWishlistToggle = async (e) => {
     e.preventDefault();
@@ -92,7 +120,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           userId: currentUser.id,
           productId: product._id,
           sellerId,
-          price: parseFloat(price),
+          price: parseFloat(discountedPrice),
           stock,
         });
 
@@ -103,7 +131,7 @@ const ProductCard = ({ product, sellerOffer }) => {
               (item.sellerId?._id === sellerId || (!item.sellerId && !sellerId))
           ),
           productId: product,
-          sellerId: sellerOffer?.sellerId
+          sellerId: sellerOffer?.sellerId,
         };
 
         if (newItem) {
@@ -123,7 +151,10 @@ const ProductCard = ({ product, sellerOffer }) => {
     }
   };
 
-  const debouncedWishlistToggle = debounce(handleWishlistToggle, 300, { leading: true, trailing: false });
+  const debouncedWishlistToggle = debounce(handleWishlistToggle, 300, {
+    leading: true,
+    trailing: false,
+  });
 
   useEffect(() => {
     return () => {
@@ -151,6 +182,7 @@ const ProductCard = ({ product, sellerOffer }) => {
         productId: product._id,
         sellerId,
         quantity: 1,
+        price: parseFloat(discountedPrice),
       });
 
       const newItem = response.data.cart.items[response.data.cart.items.length - 1];
@@ -163,11 +195,11 @@ const ProductCard = ({ product, sellerOffer }) => {
           ...newItem,
           productId: {
             ...product,
-            price: parseFloat(price),
+            price: parseFloat(discountedPrice),
             stock,
           },
           sellerId: sellerOffer?.sellerId,
-          price: parseFloat(price),
+          price: parseFloat(discountedPrice),
           stock,
         })
       );
@@ -231,13 +263,81 @@ const ProductCard = ({ product, sellerOffer }) => {
           )}
         </Link>
 
+        {/* Promotion Tag */}
+        {hasActivePromotion && (
+          <div className="absolute top-2 left-2 z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+            <div className="relative group">
+              <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg shadow-md flex items-stretch overflow-hidden min-w-[120px]">
+                {promotionImage ? (
+                  <div className="flex">
+                    <div className="w-10 h-10 p-1 flex items-center justify-center bg-white/20 border-r border-orange-400">
+                      <img
+                        src={promotionImage}
+                        alt={promotionName}
+                        className="w-full h-full object-cover rounded border border-white"
+                      />
+                    </div>
+                    <div className="px-2 py-1 flex flex-col justify-center">
+                      <span className="font-bold text-xs block leading-tight max-w-[80px] truncate">
+                        {promotionName}
+                      </span>
+                      <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
+                        {discountRate}% OFF
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex">
+                    <div className="w-10 h-10 p-1.5 flex items-center justify-center bg-white/20 border-r border-orange-400">
+                      <div className="w-full h-full rounded bg-orange-400/30 border border-dashed border-white flex items-center justify-center">
+                        <FaFireAlt className="text-white text-sm" />
+                      </div>
+                    </div>
+                    <div className="px-2 py-1 flex flex-col justify-center">
+                      <span className="font-bold text-xs block leading-tight">
+                        {promotionName}
+                      </span>
+                      <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
+                        {discountRate}% OFF
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="absolute -top-1 left-2 w-5 h-2 bg-red-700/80 transform rotate-45 origin-bottom-left rounded-sm"></div>
+              <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 rounded-t-lg"></div>
+              <div className="absolute z-20 left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg min-w-[150px]">
+                <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                <div className="flex items-start space-x-2">
+                  {promotionImage && (
+                    <img
+                      src={promotionImage}
+                      alt={promotionName}
+                      className="w-8 h-8 rounded border border-white object-cover"
+                    />
+                  )}
+                  <div>
+                    <p className="font-bold text-sm">{promotionName}</p>
+                    <p className="text-orange-300 font-medium text-xs">
+                      {discountRate}% discount
+                    </p>
+                    <p className="text-[10px] text-gray-300 mt-0.5">
+                      Ends {promotionEndDate}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="absolute top-2 left-2 right-2 flex justify-between items-start">
           <span
             className={`text-[10px] px-2 py-1 rounded-full font-medium ${
               stock > 0
                 ? 'text-green-800 bg-green-100/90 backdrop-blur-[1px]'
                 : 'text-gray-600 bg-gray-100/90 backdrop-blur-[1px]'
-            }`}
+            } ${hasActivePromotion ? 'ml-20' : ''}`}
           >
             {status}
           </span>
@@ -260,14 +360,6 @@ const ProductCard = ({ product, sellerOffer }) => {
             )}
           </button>
         </div>
-
-        {activePromotion && (
-          <div className="absolute bottom-2 left-2">
-            <span className="text-xs px-2 py-1 bg-red-500 text-white rounded-full font-medium">
-              {discountPercentage}% OFF
-            </span>
-          </div>
-        )}
       </div>
 
       <div className="p-3">
@@ -295,17 +387,18 @@ const ProductCard = ({ product, sellerOffer }) => {
         <div className="flex items-center mb-1.5">
           <div className="flex mr-1">{renderStars()}</div>
           <span className="text-xs text-gray-500 ml-1">
-            {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'})
+            {averageRating.toFixed(1)} ({reviewCount}{' '}
+            {reviewCount === 1 ? 'review' : 'reviews'})
           </span>
         </div>
 
         <div className="flex items-center justify-between mt-2">
-          <div>
-            <div className="text-base font-bold text-gray-900">${price}</div>
-            {originalPrice && (
-              <div className="text-xs text-gray-400 line-through">
-                ${originalPrice}
-              </div>
+          <div className="flex items-baseline gap-1.5">
+            <div className="text-base font-bold text-gray-900">
+              ${discountedPrice}
+            </div>
+            {hasActivePromotion && (
+              <div className="text-xs text-gray-500 line-through">${price}</div>
             )}
           </div>
           <button

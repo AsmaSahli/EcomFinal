@@ -10,6 +10,20 @@ const promotionReferenceSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: false
+  },
+  oldPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  newPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  image: {
+    url: { type: String, required: true },
+    publicId: { type: String, required: true }
   }
 }, { _id: false });
 

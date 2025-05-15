@@ -40,7 +40,7 @@ const createPromotion = async (req, res) => {
         discountRate,
         startDate,
         endDate,
-        applicableProducts,// Expecting a JSON string or single product ID
+        applicableProducts,
         sellerId 
       } = req.body;
 
@@ -67,19 +67,16 @@ const createPromotion = async (req, res) => {
       // Parse and validate applicable products
       let productIds;
       try {
-        // If applicableProducts is a JSON string, parse it
         if (typeof applicableProducts === 'string') {
           productIds = JSON.parse(applicableProducts);
         } else {
           productIds = applicableProducts;
         }
 
-        // Ensure productIds is an array
         productIds = Array.isArray(productIds)
           ? productIds
           : [productIds].filter(Boolean);
 
-        // Validate each product ID
         productIds = productIds.map((id) => id.toString());
         const invalidIds = productIds.filter((id) => !mongoose.isValidObjectId(id));
         if (invalidIds.length > 0) {
@@ -95,11 +92,33 @@ const createPromotion = async (req, res) => {
         return res.status(400).json({ message: 'At least one applicable product is required' });
       }
 
-      // Verify all product IDs exist
-      const products = await Product.find({ _id: { $in: productIds } });
+      // Verify all product IDs exist and get their prices
+      const products = await Product.find({ _id: { $in: productIds } })
+        .select('sellers');
+      
       if (products.length !== productIds.length) {
         return res.status(400).json({ message: 'One or more product IDs are invalid' });
       }
+
+      // Calculate new prices for each product and include promotion image
+      const promotionReferences = products.map(product => {
+        const seller = product.sellers.find(s => s.sellerId.toString() === sellerId);
+        if (!seller) {
+          throw new Error(`Seller ${sellerId} not found for product ${product._id}`);
+        }
+        const oldPrice = seller.price;
+        const newPrice = oldPrice * (1 - discountRate / 100);
+        return {
+          productId: product._id,
+          promotionRef: {
+            promotionId: null, // Will be set after promotion creation
+            isActive: true,
+            oldPrice,
+            newPrice,
+            image: null // Will be set after image upload
+          }
+        };
+      });
 
       // Upload image to Cloudinary
       const result = await new Promise((resolve, reject) => {
@@ -124,30 +143,37 @@ const createPromotion = async (req, res) => {
         startDate: start,
         endDate: end,
         applicableProducts: productIds,
-        createdBy: sellerId, // Placeholder user ID (no auth)
+        createdBy: sellerId,
       });
 
       // Save promotion
       await promotion.save();
 
-      // Update all applicable products with the new promotion
-      const promotionRef = {
-        promotionId: promotion._id,
-        isActive: true
-      };
-
-      // Update each product's sellers to include the promotion
-      await Product.updateMany(
-        { _id: { $in: productIds } },
-        { 
-          $push: { 
-            "sellers.$[].promotions": promotionRef 
+      // Update promotion references with the new promotion ID and image
+      const updatePromises = promotionReferences.map(({ productId, promotionRef }) => {
+        promotionRef.promotionId = promotion._id;
+        promotionRef.image = {
+          url: result.secure_url,
+          publicId: result.public_id
+        };
+        return Product.updateOne(
+          { 
+            _id: productId,
+            "sellers.sellerId": sellerId 
           },
-          $set: {
-            "sellers.$[].activePromotion": promotion._id
+          { 
+            $push: { 
+              "sellers.$.promotions": promotionRef 
+            },
+            $set: {
+              "sellers.$.activePromotion": promotion._id
+            }
           }
-        }
-      );
+        );
+      });
+
+      // Execute all product updates
+      await Promise.all(updatePromises);
 
       res.status(201).json({ message: 'Promotion created successfully', promotion });
     });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaTag } from 'react-icons/fa';
+import { FaTag, FaFireAlt, FaPercentage } from 'react-icons/fa';
 import ProductEditForm from './ProductEditForm';
 
 const ProductDetailsTab = ({
@@ -16,18 +16,29 @@ const ProductDetailsTab = ({
   const stock = isEditing ? editedProduct.stock : sellerInfo?.stock || 0;
   const warranty = isEditing ? editedProduct.warranty : sellerInfo?.warranty || 'N/A';
   const status = stock > 0 ? 'In Stock' : 'Out of Stock';
-  const statusClass = stock > 0 ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-rose-50 text-rose-800 border-rose-200';
+  const statusClass = stock > 0 
+    ? 'bg-emerald-50 text-emerald-800 border-emerald-200' 
+    : 'bg-rose-50 text-rose-800 border-rose-200';
   const displayTags = isEditing ? editedProduct.tags : sellerInfo?.tags?.map((tag) => tag.name || tag) || [];
-  
-  // Calculate discounted price if there's an active promotion
-  const hasActivePromotion = sellerInfo?.hasActivePromotion || false;
-  const discountRate = sellerInfo?.activeDiscountRate || 0;
-  const discountedPrice = hasActivePromotion
-    ? (sellerInfo.price * (1 - discountRate / 100)).toFixed(2)
-    : null;
+
+  // Promotion details
+  const activePromotion = sellerInfo?.promotions?.find(promo => 
+    promo.isActive && promo.promotionId?._id.toString() === sellerInfo?.activePromotion?._id.toString()
+  );
+  const hasActivePromotion = !!activePromotion;
+  const oldPrice = hasActivePromotion ? activePromotion.oldPrice?.toFixed(2) : null;
+  const newPrice = hasActivePromotion ? activePromotion.newPrice?.toFixed(2) : null;
+  const discountRate = hasActivePromotion ? activePromotion.promotionId?.discountRate : 0;
+  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name : '';
+  const promotionEndDate = hasActivePromotion ? new Date( activePromotion.promotionId.endDate).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }) : '';
 
   return (
     <div className="space-y-6">
+      {/* Product Information section remains the same */}
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex items-center mb-5">
           <div className="p-2.5 bg-blue-50 rounded-xl text-blue-600 mr-3">
@@ -87,38 +98,102 @@ const ProductDetailsTab = ({
               <h3 className="text-xl font-semibold text-gray-900">Pricing & Inventory</h3>
             </div>
             <div className="space-y-4 pl-14">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Enhanced Promotion Banner */}
+              {hasActivePromotion && (
+                <div className="bg-gradient-to-r from-red-50 to-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                  <div className="flex items-start">
+                    <div className="bg-orange-100 p-2 rounded-lg mr-3">
+                      <FaFireAlt className="text-orange-500 w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-bold text-orange-800">{promotionName}</h4>
+                          <p className="text-sm text-orange-600">Promotion ends {promotionEndDate}</p>
+                        </div>
+                        <span className="px-2.5 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-bold flex items-center">
+                          <FaPercentage className="mr-1" /> {discountRate}% OFF
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Price</p>
-                  <div className="flex items-center space-x-3">
+                  <div className="space-y-2">
                     {hasActivePromotion ? (
                       <>
-                        <p className="font-bold text-xl text-gray-500 line-through">${price}</p>
-                        <p className="font-bold text-2xl text-red-600">${discountedPrice}</p>
+                        <div className="flex items-baseline space-x-3">
+                          <p className="font-bold text-3xl text-indigo-600">${newPrice}</p>
+                          <p className="font-medium text-lg text-gray-400 line-through">${oldPrice}</p>
+
+                        </div>
+                        <p className="text-sm text-gray-500">
+                          You save <span className="font-medium text-red-600">${(oldPrice - newPrice).toFixed(2)}</span>
+                        </p>
                       </>
                     ) : (
-                      <p className="font-bold text-2xl text-indigo-600">${price}</p>
+                      <p className="font-bold text-3xl text-indigo-600">${price}</p>
                     )}
                   </div>
                 </div>
+                
                 <div>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Stock</p>
-                  <div className="flex items-center space-x-4">
-                    <p className="font-medium text-2xl">{stock}</p>
-                    <span className={`px-3 py-1.5 text-xs font-medium rounded-lg border ${statusClass}`}>
-                      {status}
-                    </span>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Stock & Availability</p>
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-4">
+                      <div className="relative">
+                        <div 
+                          className={`w-16 h-16 rounded-full flex items-center justify-center ${stock > 0 ? 'bg-emerald-100 text-emerald-600' : 'bg-rose-100 text-rose-600'}`}
+                        >
+                          <span className="font-bold text-xl">{stock}</span>
+                          {stock > 0 && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <p className={`px-3 py-1.5 rounded-lg text-sm font-medium border ${statusClass}`}>
+                          {status}
+                        </p>
+                        {stock > 0 && (
+                          <p className="text-xs text-gray-500 mt-1">Available for immediate shipment</p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div>
-                <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Warranty</p>
-                <p className={`px-3 py-2 rounded-lg text-sm font-medium border inline-block ${warranty ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-gray-50 text-gray-800 border-gray-200'}`}>
-                  {warranty || 'No warranty'}
-                </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                <div>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Warranty</p>
+                  <div className="flex items-center space-x-3">
+                    <div className={`p-3 rounded-lg border ${warranty ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-gray-50 text-gray-800 border-gray-200'}`}>
+                      {warranty ? (
+                        <>
+                          <p className="font-medium">{warranty}</p>
+                        </>
+                      ) : (
+                        <p className="text-gray-500">No warranty</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                
+
               </div>
             </div>
           </div>
+
+          {/* Product Tags section remains the same */}
           <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
             <div className="flex items-center mb-5">
               <div className="p-2.5 bg-indigo-50 rounded-xl text-indigo-600 mr-3">

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { FaTimes, FaChevronLeft, FaChevronRight, FaEdit, FaTag } from 'react-icons/fa';
+import { FaTimes, FaChevronLeft, FaChevronRight, FaEdit, FaTag, FaFireAlt, FaPercentage } from 'react-icons/fa';
 import { FiZoomIn, FiZoomOut } from 'react-icons/fi';
 import axios from 'axios';
-import ProductEditForm from './ProductEditForm';
 import ProductPromotions from './ProductPromotions';
 import ProductReviews from './ProductReviews';
 import ProductDetailsTab from './ProductDetailsTab';
@@ -34,11 +33,26 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
         tags: sellerInfo.tags?.map((tag) => tag.name || tag) || [],
       });
     }
+    
   }, [product, isEditing]);
 
   if (!product) return null;
 
   const sellerInfo = product.sellers?.length > 0 ? product.sellers[0] : null;
+
+  // Promotion details
+  const activePromotion = sellerInfo?.promotions?.find(promo => 
+    promo.isActive && promo.promotionId?._id.toString() === sellerInfo?.activePromotion?._id.toString()
+  );
+  const hasActivePromotion = !!activePromotion;
+  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name : '';
+  const discountRate = hasActivePromotion ? activePromotion.promotionId?.discountRate : 0;
+  const promotionImage = hasActivePromotion ? activePromotion.promotionId?.image.url : null;
+  const promotionEndDate = hasActivePromotion ? new Date(activePromotion.promotionId.endDate).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }) : '';
 
   const handleNextImage = () => {
     setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (product.images?.length || 1));
@@ -174,12 +188,79 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
                     className="max-h-[450px] w-auto object-contain transition-transform duration-300 ease-in-out"
                     style={{ transform: `scale(${zoomLevel})` }}
                   />
+                  {/* Promotion Tag */}
+
+              {hasActivePromotion && (
+                <div className="absolute top-6 left-6 z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+                  <div className="relative group">
+                    {/* Ribbon-style promotion tag - Larger version */}
+                    <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-xl shadow-2xl flex items-stretch overflow-hidden min-w-[180px]">
+                      {promotionImage ? (
+                        <div className="flex">
+                          <div className="w-16 h-16 p-1 flex items-center justify-center bg-white/20 border-r border-orange-400">
+                            <img 
+                              src={promotionImage} 
+                              alt={promotionName}
+                              className="w-full h-full object-cover rounded-lg border-2 border-white"
+                            />
+                          </div>
+                          <div className="px-3 py-2 flex flex-col justify-center">
+                            <span className="font-bold text-sm block leading-tight max-w-[100px] truncate">{promotionName}</span>
+                            <span className="text-xs font-bold bg-white text-red-600 px-2 py-0.5 rounded-full mt-1 w-fit">
+                              {discountRate}% OFF
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex">
+                          <div className="w-16 h-16 p-2 flex items-center justify-center bg-white/20 border-r border-orange-400">
+                            <div className="w-full h-full rounded-lg bg-orange-400/30 border-2 border-dashed border-white flex items-center justify-center">
+                              <FaFireAlt className="text-white text-xl" />
+                            </div>
+                          </div>
+                          <div className="px-3 py-2 flex flex-col justify-center">
+                            <span className="font-bold text-sm block leading-tight">HOT DEAL</span>
+                            <span className="text-xs font-bold bg-white text-red-600 px-2 py-0.5 rounded-full mt-1 w-fit">
+                              {discountRate}% OFF
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* Fold effect at the top */}
+                    <div className="absolute -top-2 left-4 w-8 h-4 bg-red-700/80 transform rotate-45 origin-bottom-left rounded-sm"></div>
+                    
+                    {/* Shine effect */}
+                    <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 rounded-t-xl"></div>
+                    
+                    {/* Tooltip */}
+                    <div className="absolute z-20 left-1/2 transform -translate-x-1/2 mt-3 px-4 py-3 bg-gray-800 text-white text-sm rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-xl min-w-[200px]">
+                      <div className="absolute -top-1.5 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-gray-800 rotate-45"></div>
+                      <div className="flex items-start space-x-3">
+                        {promotionImage && (
+                          <img 
+                            src={promotionImage} 
+                            alt={promotionName}
+                            className="w-10 h-10 rounded-full border-2 border-white object-cover"
+                          />
+                        )}
+                        <div>
+                          <p className="font-bold text-base">{promotionName}</p>
+                          <p className="text-orange-300 font-medium text-sm">{discountRate}% discount</p>
+                          <p className="text-xs text-gray-300 mt-1">Ends {promotionEndDate}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
                   {product.images.length > 1 && (
                     <>
                       <button
                         onClick={handlePrevImage}
-                        className="absolute left-5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all duration-200 hover:sc
-ale-110"
+                        className="absolute left-5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-110"
                       >
                         <FaChevronLeft className="h-5 w-5 text-gray-700" />
                       </button>
@@ -233,6 +314,12 @@ ale-110"
                     className={`flex-shrink-0 h-24 w-24 rounded-xl overflow-hidden border-2 transition-all duration-200 transform hover:scale-105 ${currentImageIndex === index ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-transparent hover:border-gray-300'}`}
                   >
                     <img src={image.url} alt={`Thumbnail ${index + 1}`} className="h-full w-full object-cover" />
+                    {/* Promotion indicator on thumbnails */}
+                    {hasActivePromotion && index === 0 && (
+                      <div className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {discountRate}%
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>
