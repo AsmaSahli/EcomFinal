@@ -61,6 +61,7 @@ exports.getAllProducts = async (req, res) => {
 };
 
 // Get product by ID
+
 exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -86,13 +87,57 @@ exports.getProductById = async (req, res) => {
       })
       .populate("sellers.reviews", "rating comment createdAt userName")
       .populate("createdBy", "name email")
-      .populate('sellers.promotions.promotionId')
-      .populate('sellers.activePromotion')
+      .populate({
+        path: "sellers.promotions.promotionId",
+        select: "name discountRate startDate endDate isActive image"
+      })
+      .populate({
+        path: "sellers.activePromotion",
+        select: "name discountRate startDate endDate isActive image"
+      })
       .lean(); // Use lean for performance since we'll modify the document
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
+
+    // Transform sellers array to include processed promotion data
+    product.sellers = product.sellers.map(seller => {
+      // Process promotions to include only relevant fields
+      const promotions = seller.promotions
+        ? seller.promotions
+            .filter(promo => promo.promotionId) // Ensure promotionId exists
+            .map(promo => ({
+              ...promo,
+              oldPrice: promo.oldPrice || seller.price || null,
+              newPrice: promo.newPrice || (promo.promotionId?.discountRate
+                ? seller.price * (1 - promo.promotionId.discountRate / 100)
+                : seller.price) || null,
+              promotionId: {
+                _id: promo.promotionId._id,
+                name: promo.promotionId.name,
+                discountRate: promo.promotionId.discountRate,
+                startDate: promo.promotionId.startDate,
+                endDate: promo.promotionId.endDate,
+                isActive: promo.promotionId.isActive,
+                image: promo.promotionId.image || null
+              }
+            }))
+        : [];
+
+      // Determine active promotion
+      const activePromotion = promotions.find(
+        promo => promo.promotionId.isActive && seller.activePromotion?._id?.toString() === promo.promotionId._id.toString()
+      );
+
+      return {
+        ...seller,
+        promotions,
+        activePromotion: activePromotion ? activePromotion.promotionId : null,
+        hasActivePromotion: !!activePromotion,
+        activeDiscountRate: activePromotion ? activePromotion.promotionId.discountRate : 0
+      };
+    });
 
     // Filter sellers array if sellerId is provided
     if (seller) {

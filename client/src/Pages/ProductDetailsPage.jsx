@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
-  FaStar, FaRegStar, FaShoppingCart, FaHome, FaCheck
+  FaStar, FaRegStar, FaShoppingCart, FaHome, FaCheck, FaFireAlt
 } from 'react-icons/fa';
 import { IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
 import {
@@ -112,11 +112,16 @@ const ProductDetailsPage = () => {
     }
 
     try {
+      const priceToUse = currentSeller.hasActivePromotion
+        ? currentSeller.promotions.find(p => p.promotionId._id === currentSeller.activePromotion._id)?.newPrice
+        : currentSeller.price;
+
       const response = await axios.post(`${API_URL}/cart/add`, {
         userId: currentUser.id,
         productId: product._id,
         sellerId: currentSeller?.sellerId._id,
         quantity,
+        price: priceToUse,
         variantId: selectedVariant?._id,
       });
 
@@ -125,11 +130,11 @@ const ProductDetailsPage = () => {
         ...newItem,
         productId: {
           ...product,
-          price: currentSeller?.price || product.price,
+          price: priceToUse,
           stock: currentSeller?.stock || product.stock,
         },
         sellerId: currentSeller?.sellerId,
-        price: currentSeller?.price || product.price,
+        price: priceToUse,
         stock: currentSeller?.stock || product.stock,
         variantId: selectedVariant?._id,
       }));
@@ -154,6 +159,10 @@ const ProductDetailsPage = () => {
 
     setIsTogglingWishlist(true);
     try {
+      const priceToUse = currentSeller.hasActivePromotion
+        ? currentSeller.promotions.find(p => p.promotionId._id === currentSeller.activePromotion._id)?.newPrice
+        : currentSeller.price;
+
       if (isWishlisted) {
         const item = wishlistItems.find(
           item =>
@@ -176,7 +185,7 @@ const ProductDetailsPage = () => {
           userId: currentUser.id,
           productId: product._id,
           sellerId: currentSeller?.sellerId._id,
-          price: currentSeller?.price || product.price || 0,
+          price: priceToUse,
           stock: currentSeller?.stock || product.stock || 0,
           variantId: selectedVariant?._id,
         });
@@ -192,7 +201,7 @@ const ProductDetailsPage = () => {
             ...newItem,
             productId: product,
             sellerId: currentSeller?.sellerId,
-            price: currentSeller?.price || product.price || 0,
+            price: priceToUse,
             stock: currentSeller?.stock || product.stock || 0,
             variantId: selectedVariant?._id,
           }));
@@ -256,23 +265,106 @@ const ProductDetailsPage = () => {
   if (!product) return null;
 
   const keyFeatures = getKeyFeatures();
-  const hasDiscount = currentSeller?.promotions?.length > 0;
-  const originalPrice = hasDiscount ?
-    (currentSeller.price / (1 - currentSeller.promotions[0].discountRate / 100)).toFixed(2) :
-    null;
+  const hasDiscount = currentSeller?.hasActivePromotion;
+  const activePromotion = currentSeller?.activePromotion;
+  const promotionDetails = hasDiscount
+    ? currentSeller.promotions.find(p => p.promotionId._id === activePromotion._id)
+    : null;
+  const currentPrice = hasDiscount ? promotionDetails?.newPrice?.toFixed(2) : currentSeller?.price?.toFixed(2);
+  const originalPrice = hasDiscount ? promotionDetails?.oldPrice?.toFixed(2) : null;
+  const discountRate = hasDiscount ? activePromotion.discountRate : 0;
+  const promotionName = hasDiscount ? activePromotion.name || 'Special Offer' : '';
+  const promotionEndDate = hasDiscount
+    ? new Date(activePromotion.endDate).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      })
+    : '';
+  const promotionImage = hasDiscount ? activePromotion.image?.url : null;
 
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <BreadcrumbNav product={product} />
 
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden relative">
+          {hasDiscount && (
+            <div className="absolute top-4 left-4 z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+              <div className="relative group">
+                <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg shadow-md flex items-stretch overflow-hidden min-w-[120px]">
+                  {promotionImage ? (
+                    <div className="flex">
+                      <div className="w-10 h-10 p-1 flex items-center justify-center bg-white/20 border-r border-orange-400">
+                        <img
+                          src={promotionImage}
+                          alt={promotionName}
+                          className="w-full h-full object-cover rounded border border-white"
+                        />
+                      </div>
+                      <div className="px-2 py-1 flex flex-col justify-center">
+                        <span className="font-bold text-xs block leading-tight max-w-[80px] truncate">
+                          {promotionName}
+                        </span>
+                        <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
+                          {discountRate}% OFF
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex">
+                      <div className="w-10 h-10 p-1.5 flex items-center justify-center bg-white/20 border-r border-orange-400">
+                        <div className="w-full h-full rounded bg-orange-400/30 border border-dashed border-white flex items-center justify-center">
+                          <FaFireAlt className="text-white text-sm" />
+                        </div>
+                      </div>
+                      <div className="px-2 py-1 flex flex-col justify-center">
+                        <span className="font-bold text-xs block leading-tight">
+                          {promotionName}
+                        </span>
+                        <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
+                          {discountRate}% OFF
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="absolute -top-1 left-2 w-5 h-2 bg-red-700/80 transform rotate-45 origin-bottom-left rounded-sm"></div>
+                <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 rounded-t-lg"></div>
+                <div className="absolute z-20 left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg min-w-[150px]">
+                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                  <div className="flex items-start space-x-2">
+                    {promotionImage && (
+                      <img
+                        src={promotionImage}
+                        alt={promotionName}
+                        className="w-8 h-8 rounded border border-white object-cover"
+                      />
+                    )}
+                    <div>
+                      <p className="font-bold text-sm">{promotionName}</p>
+                      <p className="text-orange-300 font-medium text-xs">
+                        {discountRate}% discount
+                      </p>
+                      <p className="text-[10px] text-gray-300 mt-0.5">
+                        Ends {promotionEndDate}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="md:flex">
             <ProductImageGallery
               images={product.images || []}
               productName={product.name}
               currentSeller={currentSeller}
               hasDiscount={hasDiscount}
+              promotionImage={promotionImage}
+              promotionName={promotionName}
+              discountRate={discountRate}
             />
 
             <div className="md:w-1/2 p-6">
@@ -337,7 +429,7 @@ const ProductDetailsPage = () => {
               <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                 <div className="flex items-end">
                   <span className="text-3xl font-bold text-gray-900">
-                    ${currentSeller?.price?.toFixed(2)}
+                    ${currentPrice}
                   </span>
                   {hasDiscount && (
                     <div className="ml-3">
@@ -345,11 +437,16 @@ const ProductDetailsPage = () => {
                         ${originalPrice}
                       </span>
                       <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                        Save ${(originalPrice - currentSeller.price).toFixed(2)}
+                        Save ${(originalPrice - currentPrice).toFixed(2)} ({discountRate}% OFF)
                       </span>
                     </div>
                   )}
                 </div>
+                {hasDiscount && (
+                  <div className="mt-2 text-sm text-gray-600">
+                    <span className="font-medium">{promotionName}</span> • Ends {promotionEndDate}
+                  </div>
+                )}
                 <div className="mt-2 flex items-center text-sm text-gray-600">
                   <RiLeafLine className="text-green-500 mr-1" />
                   Eco-friendly packaging
@@ -433,11 +530,15 @@ const ProductDetailsPage = () => {
                   <button
                     onClick={handleAddToCart}
                     className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg"
+                    disabled={currentSeller?.stock <= 0}
                   >
                     <FaShoppingCart className="mr-3" />
-                    Add to Cart
+                    {currentSeller?.stock > 0 ? 'Add to Cart' : 'Sold Out'}
                   </button>
-                  <button className="w-full py-3 px-4 bg-white border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg">
+                  <button
+                    className="w-full py-3 px-4 bg-white border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
+                    disabled={currentSeller?.stock <= 0}
+                  >
                     Buy Now
                   </button>
                 </div>
