@@ -819,7 +819,7 @@ exports.getProductsByCategory = async (req, res) => {
     if (group) query["categoryDetails.subcategory.group"] = group;
     if (item) query["categoryDetails.subcategory.item"] = item;
 
-    // Find products matching the query and populate category and seller details
+    // Find products matching the query and populate category, seller, and promotion details
     const products = await Product.find(query)
       .populate({
         path: "categoryDetails.category",
@@ -831,12 +831,32 @@ exports.getProductsByCategory = async (req, res) => {
       })
       .populate({
         path: "sellers.activePromotion",
-        select: "name discountRate startDate endDate isActive image"
+        select: "name discountRate startDate endDate isActive image",
       })
       .lean();
 
-    // Transform and return the products
-    const transformedProducts = products.map(transformProductData);
+    // Transform products to include promotion details with newPrice and oldPrice
+    const transformedProducts = products.map((product) => {
+      const transformed = transformProductData(product);
+      transformed.sellers = product.sellers.map((seller) => {
+        const activePromo = seller.promotions.find(
+          (promo) => promo.promotionId.toString() === (seller.activePromotion?._id?.toString() || "")
+        );
+        return {
+          ...seller,
+          activePromotion: seller.activePromotion
+            ? {
+                ...seller.activePromotion,
+                newPrice: activePromo ? activePromo.newPrice : undefined,
+                oldPrice: activePromo ? activePromo.oldPrice : undefined,
+                promotionImage: activePromo ? activePromo.image : seller.activePromotion.image,
+              }
+            : null,
+        };
+      });
+      return transformed;
+    });
+
     res.json(transformedProducts);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -928,6 +948,7 @@ exports.getRelatedProducts = async (req, res) => {
     // Find the current product
     const currentProduct = await Product.findById(productId)
       .populate('sellers.tags')
+      .populate('sellers.activePromotion', 'name discountRate startDate endDate isActive image')
       .lean();
 
     if (!currentProduct) {
@@ -943,6 +964,16 @@ exports.getRelatedProducts = async (req, res) => {
     currentProduct.sellers.forEach(seller => {
       if (seller.tags && seller.tags.length > 0) {
         seller.tags.forEach(tag => currentTags.add(tag._id.toString()));
+      }
+    });
+
+    // Extract promotion names and discount rates
+    const promotionNames = new Set();
+    const discountRates = new Set();
+    currentProduct.sellers.forEach(seller => {
+      if (seller.activePromotion) {
+        if (seller.activePromotion.name) promotionNames.add(seller.activePromotion.name);
+        if (seller.activePromotion.discountRate) discountRates.add(seller.activePromotion.discountRate);
       }
     });
 
@@ -1001,7 +1032,55 @@ exports.getRelatedProducts = async (req, res) => {
       });
     }
 
-    // Strategy 2: Category/subcategory matching
+    // Strategy 2: Promotion name or discount rate matching
+    if (relatedProducts.length < limit && (promotionNames.size > 0 || discountRates.size > 0)) {
+      const additionalNeeded = limit - relatedProducts.length;
+      const promotionMatches = await Product.aggregate([
+        {
+          $match: {
+            _id: { $ne: new mongoose.Types.ObjectId(productId) },
+            $or: [
+              { 'sellers.activePromotion.name': { $in: Array.from(promotionNames) } },
+              { 'sellers.activePromotion.discountRate': { $in: Array.from(discountRates) } }
+            ]
+          }
+        },
+        {
+          $addFields: {
+            promotionScore: {
+              $sum: [
+                {
+                  $cond: [
+                    { $in: ["$sellers.activePromotion.name", Array.from(promotionNames)] },
+                    2, // Higher weight for matching name
+                    0
+                  ]
+                },
+                {
+                  $cond: [
+                    { $in: ["$sellers.activePromotion.discountRate", Array.from(discountRates)] },
+                    1, // Lower weight for matching discount rate
+                    0
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        { $sort: { promotionScore: -1 } },
+        { $sample: { size: additionalNeeded } },
+        { $limit: additionalNeeded }
+      ]);
+
+      promotionMatches.forEach(product => {
+        if (!existingIds.has(product._id.toString())) {
+          relatedProducts.push(product);
+          existingIds.add(product._id.toString());
+        }
+      });
+    }
+
+    // Strategy 3: Category/subcategory matching
     if (relatedProducts.length < limit && categoryId) {
       const additionalNeeded = limit - relatedProducts.length;
       const categoryMatches = await Product.aggregate([
@@ -1025,7 +1104,7 @@ exports.getRelatedProducts = async (req, res) => {
       });
     }
 
-    // Strategy 3: Name similarity
+    // Strategy 4: Name similarity
     if (relatedProducts.length < limit && nameKeywords.length > 0) {
       const additionalNeeded = limit - relatedProducts.length;
       const allProducts = await Product.find({
@@ -1058,7 +1137,7 @@ exports.getRelatedProducts = async (req, res) => {
       });
     }
 
-    // Strategy 4: Random fallback
+    // Strategy 5: Random fallback
     if (relatedProducts.length < limit) {
       const additionalNeeded = limit - relatedProducts.length;
       const randomProducts = await Product.aggregate([
@@ -1079,15 +1158,179 @@ exports.getRelatedProducts = async (req, res) => {
     const populatedProducts = await Product.populate(relatedProducts, [
       { path: 'categoryDetails.category', select: 'name' },
       { path: 'sellers.sellerId', select: 'shopName' },
+      { path: 'sellers.activePromotion', select: 'name discountRate startDate endDate isActive image' },
       { path: 'images', select: 'url' }
     ]);
 
-    // Transform products
-    const transformedProducts = populatedProducts.map(transformProductData);
+    // Transform products to include promotion details with newPrice and oldPrice
+    const transformedProducts = populatedProducts.map(product => {
+      const transformed = transformProductData(product);
+      transformed.sellers = product.sellers.map(seller => {
+        const activePromo = seller.promotions?.find(
+          promo => promo.promotionId.toString() === (seller.activePromotion?._id?.toString() || "")
+        );
+        return {
+          ...seller,
+          activePromotion: seller.activePromotion
+            ? {
+                ...seller.activePromotion,
+                newPrice: activePromo ? activePromo.newPrice : undefined,
+                oldPrice: activePromo ? activePromo.oldPrice : undefined,
+                promotionImage: activePromo ? activePromo.image : seller.activePromotion.image
+              }
+            : null
+        };
+      });
+      return transformed;
+    });
 
     res.status(200).json(transformedProducts.slice(0, limit)); // Ensure exact limit
   } catch (error) {
     console.error('Error getting related products:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+exports.getSimilarProducts = async (req, res) => {
+  try {
+    const { productId, limit = 5 } = req.query;
+
+    // Validate productId
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({ message: "Invalid product ID" });
+    }
+
+    // Find the reference product
+    const referenceProduct = await Product.findById(productId)
+      .populate("categoryDetails.category", "name")
+      .populate("sellers.sellerId", "shopName")
+      .lean();
+
+    if (!referenceProduct) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Build query to exclude the reference product
+    const query = {
+      _id: { $ne: productId },
+    };
+
+    // Scoring weights
+    const weights = {
+      category: 30,
+      subcategoryGroup: 20,
+      subcategoryItem: 10,
+      tags: 25,
+      seller: 10,
+      promotion: 5,
+    };
+
+    // Find potential similar products
+    const products = await Product.find(query)
+      .populate("categoryDetails.category", "name")
+      .populate("sellers.sellerId", "shopName")
+      .populate({
+        path: "sellers.activePromotion",
+        select: "name discountRate startDate endDate isActive image",
+      })
+      .lean();
+
+    // Calculate similarity scores
+    const scoredProducts = products.map((product) => {
+      let score = 0;
+
+      // Category match
+      if (
+        product.categoryDetails.category._id.toString() ===
+        referenceProduct.categoryDetails.category._id.toString()
+      ) {
+        score += weights.category;
+
+        // Subcategory group match
+        if (
+          product.categoryDetails.subcategory.group ===
+          referenceProduct.categoryDetails.subcategory.group
+        ) {
+          score += weights.subcategoryGroup;
+
+          // Subcategory item match
+          if (
+            product.categoryDetails.subcategory.item ===
+            referenceProduct.categoryDetails.subcategory.item
+          ) {
+            score += weights.subcategoryItem;
+          }
+        }
+      }
+
+      // Tags match
+      const referenceTags = referenceProduct.sellers
+        .flatMap((seller) => seller.tags)
+        .map((tag) => tag.toString());
+      const productTags = product.sellers
+        .flatMap((seller) => seller.tags)
+        .map((tag) => tag.toString());
+      const commonTags = referenceTags.filter((tag) => productTags.includes(tag));
+      score += (commonTags.length / (referenceTags.length || 1)) * weights.tags;
+
+      // Seller match
+      const referenceSellers = referenceProduct.sellers
+        .map((seller) => seller.sellerId._id.toString());
+      const productSellers = product.sellers
+        .map((seller) => seller.sellerId._id.toString());
+      const commonSellers = referenceSellers.filter((seller) =>
+        productSellers.includes(seller)
+      );
+      score +=
+        (commonSellers.length / (referenceSellers.length || 1)) * weights.seller;
+
+      // Promotion match
+      const referencePromotions = referenceProduct.sellers
+        .map((seller) => seller.activePromotion?._id?.toString())
+        .filter(Boolean);
+      const productPromotions = product.sellers
+        .map((seller) => seller.activePromotion?._id?.toString())
+        .filter(Boolean);
+      const commonPromotions = referencePromotions.filter((promo) =>
+        productPromotions.includes(promo)
+      );
+      score +=
+        (commonPromotions.length / (referencePromotions.length || 1)) *
+        weights.promotion;
+
+      return { product, score };
+    });
+
+    // Sort by score and limit results
+    const similarProducts = scoredProducts
+      .sort((a, b) => b.score - a.score)
+      .slice(0, parseInt(limit))
+      .map(({ product }) => {
+        const transformed = transformProductData(product);
+        transformed.sellers = product.sellers.map((seller) => {
+          const activePromo = seller.promotions.find(
+            (promo) =>
+              promo.promotionId.toString() ===
+              (seller.activePromotion?._id?.toString() || "")
+          );
+          return {
+            ...seller,
+            activePromotion: seller.activePromotion
+              ? {
+                  ...seller.activePromotion,
+                  newPrice: activePromo ? activePromo.newPrice : undefined,
+                  oldPrice: activePromo ? activePromo.oldPrice : undefined,
+                  promotionImage: activePromo
+                    ? activePromo.image
+                    : seller.activePromotion.image,
+                }
+              : null,
+          };
+        });
+        return transformed;
+      });
+
+    res.json(similarProducts);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };

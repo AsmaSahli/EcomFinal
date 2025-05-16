@@ -14,9 +14,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addItem as addWishlistItem, removeItem as removeWishlistItem } from '../redux/user/wishlistSlice';
 import { addItem as addCartItem } from '../redux/user/cartSlice';
 import ProductImageGallery from '../components/ProductImageGallery';
-import SimilarProducts from '../components/SimilarProducts';
 import ProductReviews from '../components/ProductReviews';
 import BreadcrumbNav from '../components/BreadcrumbNav';
+import SimilarProducts from '../components/SimilarProducts';
 
 const ProductDetailsPage = () => {
   const { id } = useParams();
@@ -116,8 +116,6 @@ const ProductDetailsPage = () => {
       const priceToUse = currentSeller.hasActivePromotion
         ? currentSeller.promotions.find(p => p.promotionId._id === currentSeller.activePromotion._id)?.newPrice
         : currentSeller.price;
-
-      console.log('Adding to cart with price:', priceToUse); // Debug log for price
 
       const response = await axios.post(`${API_URL}/cart/add`, {
         userId: currentUser.id,
@@ -338,7 +336,7 @@ const ProductDetailsPage = () => {
                 <div className="absolute -top-1 left-2 w-5 h-2 bg-red-700/80 transform rotate-45 origin-bottom-left rounded-sm"></div>
                 <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 rounded-t-lg"></div>
                 <div className="absolute z-20 left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg min-w-[150px]">
-                  <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                  <div className="absolute -top-1 left-1/ two w-2 h-2 bg-gray-800 rotate-45"></div>
                   <div className="flex items-start space-x-2">
                     {promotionImage && (
                       <img
@@ -630,13 +628,8 @@ const ProductDetailsPage = () => {
               )}
             </div>
           </div>
-        </div>
 
-        <div className="mt-12">
-          <SimilarProducts
-            categoryId={product.categoryDetails?.category?._id}
-            currentProductId={product._id}
-          />
+          <SimilarProducts productId={id} sellerId={sellerId} />
         </div>
       </div>
     </div>

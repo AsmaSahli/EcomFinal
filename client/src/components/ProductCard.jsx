@@ -37,32 +37,35 @@ const ProductCard = ({ product, sellerOffer }) => {
 
   // Promotion details
   useEffect(() => {
-    if (sellerOffer?.promotions?.length > 0 && sellerOffer?.activePromotion?._id) {
-      const promotion = sellerOffer.promotions.find(
+    if (sellerOffer?.activePromotion?._id) {
+      const promotion = sellerOffer.promotions?.find(
         (promo) =>
           promo.isActive &&
           promo.promotionId?._id &&
           promo.promotionId._id.toString() === sellerOffer.activePromotion._id.toString()
       );
-      setActivePromotion(promotion || null);
+      setActivePromotion(promotion || sellerOffer.activePromotion);
     } else {
       setActivePromotion(null);
     }
   }, [sellerOffer]);
 
   const hasActivePromotion = !!activePromotion;
-  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name || 'HOT DEAL' : '';
-  const discountRate = hasActivePromotion ? activePromotion.promotionId?.discountRate || 0 : 0;
-  const promotionImage = hasActivePromotion ? activePromotion.promotionId?.image?.url : null;
+  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name || activePromotion.name || 'HOT DEAL' : '';
+  const discountRate = hasActivePromotion ? activePromotion.promotionId?.discountRate || activePromotion.discountRate || 0 : 0;
+  const promotionImage = hasActivePromotion ? activePromotion.promotionId?.image?.url || activePromotion.promotionImage?.url : null;
   const promotionEndDate = hasActivePromotion
-    ? new Date(activePromotion.promotionId.endDate).toLocaleDateString('en-US', {
+    ? new Date(activePromotion.promotionId?.endDate || activePromotion.endDate).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
       })
     : '';
-  const discountedPrice = hasActivePromotion
-    ? (price * (1 - discountRate / 100)).toFixed(2)
+  const newPrice = hasActivePromotion && activePromotion.newPrice
+    ? activePromotion.newPrice.toFixed(2)
+    : (price * (1 - discountRate / 100)).toFixed(2);
+  const oldPrice = hasActivePromotion && activePromotion.oldPrice
+    ? activePromotion.oldPrice.toFixed(2)
     : price;
 
   useEffect(() => {
@@ -120,7 +123,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           userId: currentUser.id,
           productId: product._id,
           sellerId,
-          price: parseFloat(discountedPrice),
+          price: parseFloat(newPrice),
           stock,
         });
 
@@ -182,7 +185,7 @@ const ProductCard = ({ product, sellerOffer }) => {
         productId: product._id,
         sellerId,
         quantity: 1,
-        price: parseFloat(discountedPrice),
+        price: parseFloat(newPrice),
       });
 
       const newItem = response.data.cart.items[response.data.cart.items.length - 1];
@@ -195,11 +198,11 @@ const ProductCard = ({ product, sellerOffer }) => {
           ...newItem,
           productId: {
             ...product,
-            price: parseFloat(discountedPrice),
+            price: parseFloat(newPrice),
             stock,
           },
           sellerId: sellerOffer?.sellerId,
-          price: parseFloat(discountedPrice),
+          price: parseFloat(newPrice),
           stock,
         })
       );
@@ -395,10 +398,10 @@ const ProductCard = ({ product, sellerOffer }) => {
         <div className="flex items-center justify-between mt-2">
           <div className="flex items-baseline gap-1.5">
             <div className="text-base font-bold text-gray-900">
-              ${discountedPrice}
+              ${newPrice}
             </div>
             {hasActivePromotion && (
-              <div className="text-xs text-gray-500 line-through">${price}</div>
+              <div className="text-xs text-gray-500 line-through">${oldPrice}</div>
             )}
           </div>
           <button

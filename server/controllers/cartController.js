@@ -128,18 +128,32 @@ exports.getCartByUserId = async (req, res) => {
     }
 
     const cart = await Cart.findOne({ userId })
-      .populate({
-        path: 'items.productId',
-        select: 'reference name description images categoryDetails',
-        populate: {
+    .populate({
+      path: 'items.productId',
+      select: 'reference name description images categoryDetails sellers',
+      populate: [
+        {
           path: 'categoryDetails.category',
-          select: 'name',
+          select: 'name'
         },
-      })
-      .populate({
-        path: 'items.sellerId',
-        select: 'shopName',
-      });
+        {
+          path: 'sellers.sellerId',
+          select: 'shopName'
+        },
+        {
+          path: 'sellers.promotions.promotionId',
+          select: 'name discountRate image endDate'
+        },
+        {
+          path: 'sellers.activePromotion',
+          select: 'name discountRate image endDate'
+        }
+      ]
+    })
+    .populate({
+      path: 'items.sellerId',
+      select: 'shopName'
+    });
 
     if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });

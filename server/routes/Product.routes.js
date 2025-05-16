@@ -13,7 +13,7 @@ router.get('/by-category', productController.getProductsByCategory);
 router.get('/sellers/:sellerId/products', productController.getProductsBySeller);
 router.get('/:productId/related', productController.getRelatedProducts);
 
-
+router.get('/similar-products', productController.getSimilarProducts);
 // Product CRUD operations
 router.post("/", 
   upload.array('images', 10), 
