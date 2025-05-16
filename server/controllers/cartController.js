@@ -5,7 +5,7 @@ const Product = require('../models/Product');
 // Add item to cart
 exports.addToCart = async (req, res) => {
   try {
-    const { userId, productId, sellerId, quantity } = req.body;
+    const { userId, productId, sellerId, quantity, price, variantId } = req.body;
 
     // Validate inputs
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -25,12 +25,12 @@ exports.addToCart = async (req, res) => {
     const product = await Product.findOne({
       _id: productId,
       'sellers.sellerId': sellerId,
-    });
+    }).populate('sellers.promotions.promotionId');
     if (!product) {
       return res.status(404).json({ message: 'Product or seller not found' });
     }
 
-    // Check stock
+    // Check stock and promotion
     const seller = product.sellers.find(
       (s) => s.sellerId.toString() === sellerId
     );
@@ -38,6 +38,33 @@ exports.addToCart = async (req, res) => {
       return res
         .status(400)
         .json({ message: `Insufficient stock. Available: ${seller.stock}` });
+    }
+
+    // Determine price and promotion details
+    let finalPrice = seller.price;
+    let promotionDetails = null;
+    if (seller.activePromotion && seller.promotions.length > 0) {
+      const activePromo = seller.promotions.find(
+        (p) => p.promotionId._id.toString() === seller.activePromotion.toString()
+      );
+      if (activePromo && activePromo.isActive) {
+        finalPrice = activePromo.newPrice;
+        promotionDetails = {
+          promotionId: {
+            _id: activePromo.promotionId._id,
+            name: activePromo.promotionId.name,
+            discountRate: activePromo.promotionId.discountRate,
+          },
+          oldPrice: activePromo.oldPrice,
+          newPrice: activePromo.newPrice,
+          image: activePromo.image,
+        };
+      }
+    }
+
+    // Validate provided price
+    if (price !== finalPrice) {
+      return res.status(400).json({ message: 'Provided price does not match current price' });
     }
 
     // Update or create cart
@@ -50,8 +77,10 @@ exports.addToCart = async (req, res) => {
             productId,
             sellerId,
             quantity,
-            price: seller.price,
+            price: finalPrice,
             stock: seller.stock,
+            promotion: promotionDetails,
+            variantId: variantId ? mongoose.Types.ObjectId(variantId) : undefined,
           },
         ],
       });
@@ -59,19 +88,23 @@ exports.addToCart = async (req, res) => {
       const itemIndex = cart.items.findIndex(
         (item) =>
           item.productId.toString() === productId &&
-          item.sellerId.toString() === sellerId
+          item.sellerId.toString() === sellerId &&
+          (item.variantId?.toString() === variantId || (!item.variantId && !variantId))
       );
       if (itemIndex > -1) {
         cart.items[itemIndex].quantity += quantity;
         cart.items[itemIndex].stock = seller.stock;
-        cart.items[itemIndex].price = seller.price;
+        cart.items[itemIndex].price = finalPrice;
+        cart.items[itemIndex].promotion = promotionDetails;
       } else {
         cart.items.push({
           productId,
           sellerId,
           quantity,
-          price: seller.price,
+          price: finalPrice,
           stock: seller.stock,
+          promotion: promotionDetails,
+          variantId: variantId ? mongoose.Types.ObjectId(variantId) : undefined,
         });
       }
     }
@@ -112,7 +145,7 @@ exports.getCartByUserId = async (req, res) => {
       return res.status(404).json({ message: 'Cart not found' });
     }
 
-    // Filter out invalid items and enrich with price/stock
+    // Filter out invalid items and enrich with price/stock/promotion
     const validItems = [];
     const invalidItemIds = [];
 
@@ -130,7 +163,7 @@ exports.getCartByUserId = async (req, res) => {
         const product = await Product.findOne(
           { _id: item.productId._id, 'sellers.sellerId': item.sellerId._id },
           { 'sellers.$': 1 }
-        );
+        ).populate('sellers.promotions.promotionId');
 
         if (!product) {
           console.warn(`Product not found for cart item: ${item._id}`);
@@ -139,10 +172,33 @@ exports.getCartByUserId = async (req, res) => {
         }
 
         const seller = product.sellers[0];
+        let finalPrice = seller.price;
+        let promotionDetails = null;
+
+        if (seller.activePromotion && seller.promotions.length > 0) {
+          const activePromo = seller.promotions.find(
+            (p) => p.promotionId._id.toString() === seller.activePromotion.toString()
+          );
+          if (activePromo && activePromo.isActive) {
+            finalPrice = activePromo.newPrice;
+            promotionDetails = {
+              promotionId: {
+                _id: activePromo.promotionId._id,
+                name: activePromo.promotionId.name,
+                discountRate: activePromo.promotionId.discountRate,
+              },
+              oldPrice: activePromo.oldPrice,
+              newPrice: activePromo.newPrice,
+              image: activePromo.image,
+            };
+          }
+        }
+
         validItems.push({
           ...item.toObject(),
-          price: seller?.price || item.price || 0,
-          stock: seller?.stock || item.stock || 0,
+          price: finalPrice,
+          stock: seller.stock || 0,
+          promotion: promotionDetails,
         });
       })
     );
@@ -232,11 +288,11 @@ exports.updateCartItemQuantity = async (req, res) => {
       return res.status(404).json({ message: 'Item not found in cart' });
     }
 
-    // Check stock for the product
+    // Check stock and promotion for the product
     const product = await Product.findOne({
       _id: item.productId,
       'sellers.sellerId': item.sellerId,
-    });
+    }).populate('sellers.promotions.promotionId');
     if (!product) {
       return res.status(404).json({ message: 'Product or seller not found' });
     }
@@ -249,10 +305,33 @@ exports.updateCartItemQuantity = async (req, res) => {
         .json({ message: `Insufficient stock. Available: ${seller.stock}` });
     }
 
-    // Update quantity and stock
+    // Update price and promotion details
+    let finalPrice = seller.price;
+    let promotionDetails = null;
+    if (seller.activePromotion && seller.promotions.length > 0) {
+      const activePromo = seller.promotions.find(
+        (p) => p.promotionId._id.toString() === seller.activePromotion.toString()
+      );
+      if (activePromo && activePromo.isActive) {
+        finalPrice = activePromo.newPrice;
+        promotionDetails = {
+          promotionId: {
+            _id: activePromo.promotionId._id,
+            name: activePromo.promotionId.name,
+            discountRate: activePromo.promotionId.discountRate,
+          },
+          oldPrice: activePromo.oldPrice,
+          newPrice: activePromo.newPrice,
+          image: activePromo.image,
+        };
+      }
+    }
+
+    // Update item
     item.quantity = quantity;
     item.stock = seller.stock;
-    item.price = seller.price;
+    item.price = finalPrice;
+    item.promotion = promotionDetails;
     await cart.save();
 
     res.status(200).json({ message: 'Item quantity updated', cart });

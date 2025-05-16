@@ -26,16 +26,16 @@ const CartPage = () => {
         try {
           setLoading(true);
           const response = await axios.get(`${API_URL}?userId=${currentUser.id}&populate=productId,sellerId`);
-          const validItems = response.data.items.filter(item => 
-            item._id && item.productId?._id && item.sellerId?._id
-          ).map(item => ({
-            ...item,
-            productId: {
-              ...item.productId,
-              images: item.productId.images || [],
-            },
-            inStock: item.stock > 0
-          }));
+          const validItems = response.data.items
+            .filter(item => item._id && item.productId?._id && item.sellerId?._id)
+            .map(item => ({
+              ...item,
+              productId: {
+                ...item.productId,
+                images: item.productId.images || [],
+              },
+              inStock: item.stock > 0,
+            }));
           
           dispatch(setCart(validItems));
         } catch (err) {
@@ -266,6 +266,11 @@ const CartPage = () => {
                             <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
                               Sold by: {item.sellerId.shopName}
                             </p>
+                            {item.promotion && (
+                              <p className="text-xs text-red-600 mt-0.5">
+                                Promotion: {item.promotion.promotionId.name} ({item.promotion.promotionId.discountRate}% OFF)
+                              </p>
+                            )}
                           </div>
                           <button
                             onClick={() => handleRemoveItem(item._id)}
@@ -283,6 +288,11 @@ const CartPage = () => {
                         <div className="mt-auto pt-2 flex items-end justify-between">
                           <div className="text-base font-bold text-gray-800">
                             ${item.price.toFixed(2)}
+                            {item.promotion && (
+                              <span className="text-xs text-gray-500 line-through ml-2">
+                                ${item.promotion.oldPrice.toFixed(2)}
+                              </span>
+                            )}
                           </div>
                           
                           <div className="flex items-center gap-2">
