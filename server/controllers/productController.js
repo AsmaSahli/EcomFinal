@@ -828,7 +828,12 @@ exports.getProductsByCategory = async (req, res) => {
       .populate({
         path: "sellers.sellerId",
         select: "shopName",
-      });
+      })
+      .populate({
+        path: "sellers.activePromotion",
+        select: "name discountRate startDate endDate isActive image"
+      })
+      .lean();
 
     // Transform and return the products
     const transformedProducts = products.map(transformProductData);

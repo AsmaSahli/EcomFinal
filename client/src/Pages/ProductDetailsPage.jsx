@@ -35,6 +35,7 @@ const ProductDetailsPage = () => {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
+  const [showPromotionModal, setShowPromotionModal] = useState(false);
 
   const API_URL = 'http://localhost:8000/api';
   const queryParams = new URLSearchParams(location.search);
@@ -115,6 +116,8 @@ const ProductDetailsPage = () => {
       const priceToUse = currentSeller.hasActivePromotion
         ? currentSeller.promotions.find(p => p.promotionId._id === currentSeller.activePromotion._id)?.newPrice
         : currentSeller.price;
+
+      console.log('Adding to cart with price:', priceToUse); // Debug log for price
 
       const response = await axios.post(`${API_URL}/cart/add`, {
         userId: currentUser.id,
@@ -290,7 +293,10 @@ const ProductDetailsPage = () => {
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden relative">
           {hasDiscount && (
-            <div className="absolute top-4 left-4 z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-300">
+            <div 
+              className="absolute top-4 left-4 z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-300 cursor-pointer"
+              onClick={() => setShowPromotionModal(true)}
+            >
               <div className="relative group">
                 <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg shadow-md flex items-stretch overflow-hidden min-w-[120px]">
                   {promotionImage ? (

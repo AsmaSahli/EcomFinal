@@ -193,6 +193,7 @@ const createPromotion = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 const getUserPromotions = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -221,7 +222,43 @@ const getUserPromotions = async (req, res) => {
   }
 };
 
+const getPromotionById = async (req, res) => {
+  try {
+    const { promotionId } = req.params;
+
+    // Validate promotionId
+    if (!mongoose.isValidObjectId(promotionId)) {
+      return res.status(400).json({ message: 'Invalid promotion ID' });
+    }
+
+    // Find promotion with populated product details
+    const promotion = await Promotion.findById(promotionId)
+      .populate({
+        path: 'applicableProducts',
+        select: 'name price reference images description categoryDetails sellers',
+        populate: [
+          { path: 'categoryDetails.category', select: 'name' },
+          { 
+            path: 'sellers.sellerId', 
+            select: 'name email' 
+          }
+        ],
+      })
+      .populate('createdBy', 'name email');
+
+    if (!promotion) {
+      return res.status(404).json({ message: 'Promotion not found' });
+    }
+
+    res.status(200).json(promotion);
+  } catch (error) {
+    console.error('Error fetching promotion:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   createPromotion,
   getUserPromotions,
+  getPromotionById,
 };

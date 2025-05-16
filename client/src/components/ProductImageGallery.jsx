@@ -72,12 +72,7 @@ const ProductImageGallery = ({ images, productName, currentSeller, hasDiscount }
             <FaExpand size={14} />
           </button>
 
-          {/* Discount Badge */}
-          {hasDiscount && (
-            <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-              {currentSeller.promotions[0].discountPercentage}% OFF
-            </div>
-          )}
+
         </div>
 
         {/* Thumbnail Strip */}
