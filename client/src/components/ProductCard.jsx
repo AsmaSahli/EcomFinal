@@ -8,8 +8,10 @@ import { addItem as addCartItem } from '../redux/user/cartSlice';
 import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
 import debounce from 'lodash.debounce';
+import { useTranslation } from 'react-i18next';
 
 const ProductCard = ({ product, sellerOffer }) => {
+  const { t, i18n } = useTranslation();
   const { currentUser } = useSelector((state) => state.user);
   const wishlistItems = useSelector((state) => state.wishlist.items || []);
   const dispatch = useDispatch();
@@ -31,9 +33,9 @@ const ProductCard = ({ product, sellerOffer }) => {
 
   const price = (sellerOffer?.price || product?.price || 0).toFixed(2);
   const stock = sellerOffer?.stock ?? product?.stock ?? 0;
-  const status = stock > 0 ? 'In Stock' : 'Out of Stock';
+  const status = stock > 0 ? t('productCard.inStock') : t('productCard.outOfStock');
   const sellerId = sellerOffer?.sellerId?._id || product?.sellerId?._id;
-  const shopName = sellerOffer?.sellerId?.shopName || product?.sellerId?.shopName || 'Seller';
+  const shopName = sellerOffer?.sellerId?.shopName || product?.sellerId?.shopName || t('productCard.seller');
 
   // Promotion details
   useEffect(() => {
@@ -51,11 +53,11 @@ const ProductCard = ({ product, sellerOffer }) => {
   }, [sellerOffer]);
 
   const hasActivePromotion = !!activePromotion;
-  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name || activePromotion.name || 'HOT DEAL' : '';
+  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name || activePromotion.name || t('product.specialOffer') : '';
   const discountRate = hasActivePromotion ? activePromotion.promotionId?.discountRate || activePromotion.discountRate || 0 : 0;
   const promotionImage = hasActivePromotion ? activePromotion.promotionId?.image?.url || activePromotion.promotionImage?.url : null;
   const promotionEndDate = hasActivePromotion
-    ? new Date(activePromotion.promotionId?.endDate || activePromotion.endDate).toLocaleDateString('en-US', {
+    ? new Date(activePromotion.promotionId?.endDate || activePromotion.endDate).toLocaleDateString(i18n.language, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -97,7 +99,7 @@ const ProductCard = ({ product, sellerOffer }) => {
     e.stopPropagation();
 
     if (!currentUser) {
-      toast.error('You must log in to manage your wishlist.');
+      toast.error(t('productCard.wishlist.loginRequired'));
       return;
     }
 
@@ -116,7 +118,7 @@ const ProductCard = ({ product, sellerOffer }) => {
             data: { userId: currentUser.id, itemId: item._id },
           });
           dispatch(removeWishlistItem(item._id));
-          toast.success('Removed from wishlist');
+          toast.success(t('productCard.wishlist.successRemove'));
         }
       } else {
         const response = await axios.post(`${WISHLIST_API_URL}/add`, {
@@ -139,7 +141,7 @@ const ProductCard = ({ product, sellerOffer }) => {
 
         if (newItem) {
           dispatch(addWishlistItem(newItem));
-          toast.success('Added to wishlist');
+          toast.success(t('productCard.wishlist.successAdd'));
         }
       }
     } catch (err) {
@@ -147,7 +149,7 @@ const ProductCard = ({ product, sellerOffer }) => {
       const errorMessage =
         err.response?.status === 400
           ? err.response.data.message
-          : 'Failed to update wishlist';
+          : t('productCard.wishlist.error');
       toast.error(errorMessage);
     } finally {
       setIsToggling(false);
@@ -170,12 +172,12 @@ const ProductCard = ({ product, sellerOffer }) => {
     e.stopPropagation();
 
     if (!currentUser) {
-      toast.error('You must log in to add items to your cart.');
+      toast.error(t('productCard.cart.loginRequired'));
       return;
     }
 
     if (stock <= 0) {
-      toast.error('This item is out of stock.');
+      toast.error(t('productCard.cart.outOfStock'));
       return;
     }
 
@@ -206,10 +208,10 @@ const ProductCard = ({ product, sellerOffer }) => {
           stock,
         })
       );
-      toast.success('Item added to cart');
+      toast.success(t('productCard.cart.success'));
     } catch (err) {
       console.error('Add to cart error:', err);
-      toast.error(err.response?.data?.message || 'Failed to add item to cart');
+      toast.error(err.response?.data?.message || t('productCard.cart.error'));
     }
   };
 
@@ -261,7 +263,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           )}
           {!primaryImage && (
             <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
-              <span className="text-gray-400 text-sm">No Image</span>
+              <span className="text-gray-400 text-sm">{t('product.noImage')}</span>
             </div>
           )}
         </Link>
@@ -352,7 +354,7 @@ const ProductCard = ({ product, sellerOffer }) => {
                 ? 'text-red-500 bg-white/80 shadow-sm'
                 : 'text-gray-400 hover:text-red-500 bg-white/80 hover:bg-white/90'
             } ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-label={isWishlisted ? t('productCard.wishlist.remove') : t('productCard.wishlist.add')}
           >
             {isToggling ? (
               <span className="loading loading-spinner loading-xs"></span>
@@ -377,7 +379,7 @@ const ProductCard = ({ product, sellerOffer }) => {
 
         {sellerId && (
           <p className="text-xs text-gray-500 mb-1">
-            Sold by:{' '}
+            {t('productCard.soldBy')}:{' '}
             <Link
               to={`/sellers/${sellerId}/products`}
               className="text-[#4C0ADA] hover:underline"
@@ -391,7 +393,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           <div className="flex mr-1">{renderStars()}</div>
           <span className="text-xs text-gray-500 ml-1">
             {averageRating.toFixed(1)} ({reviewCount}{' '}
-            {reviewCount === 1 ? 'review' : 'reviews'})
+            {reviewCount === 1 ? t('productCard.reviews.single') : t('productCard.reviews.multiple')})
           </span>
         </div>
 
@@ -412,10 +414,10 @@ const ProductCard = ({ product, sellerOffer }) => {
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
             }`}
             disabled={stock <= 0}
-            aria-label="Add to cart"
+            aria-label={t('productCard.cart.add')}
           >
             <FaShoppingCart className="w-3 h-3" />
-            <span>{stock > 0 ? 'Add' : 'Sold'}</span>
+            <span>{stock > 0 ? t('productCard.cart.add') : t('productCard.cart.soldOut')}</span>
           </button>
         </div>
       </div>

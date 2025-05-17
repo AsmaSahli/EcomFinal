@@ -7,8 +7,10 @@ import axios from 'axios';
 import ProductCard from '../components/ProductCard';
 import { toast } from 'react-toastify';
 import { setWishlist, removeItem, clearWishlist } from '../redux/user/wishlistSlice';
+import { useTranslation } from 'react-i18next';
 
 const WishlistPage = () => {
+  const { t, i18n } = useTranslation();
   const { currentUser } = useSelector((state) => state.user);
   const wishlistItems = useSelector((state) => state.wishlist.items);
   const dispatch = useDispatch();
@@ -48,15 +50,15 @@ const WishlistPage = () => {
           
           dispatch(setWishlist(transformedItems));
         } catch (err) {
-          setError(err.response?.data?.message || 'Failed to fetch wishlist');
-          toast.error('Failed to load wishlist');
+          setError(err.response?.data?.message || t('wishlist.errors.loadError'));
+          toast.error(t('wishlist.errors.loadError'));
         } finally {
           setLoading(false);
         }
       };
       fetchWishlist();
     }
-  }, [currentUser, dispatch]);
+  }, [currentUser, dispatch, t]);
 
   const handleRemoveItem = async (itemId) => {
     setRemovingItem(itemId);
@@ -65,17 +67,17 @@ const WishlistPage = () => {
         data: { userId: currentUser.id, itemId }
       });
       dispatch(removeItem(itemId));
-      toast.success('Item removed from wishlist');
+      toast.success(t('wishlist.success.itemRemoved'));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to remove item');
-      toast.error('Failed to remove item');
+      setError(err.response?.data?.message || t('wishlist.errors.removeError'));
+      toast.error(t('wishlist.errors.removeError'));
     } finally {
       setRemovingItem(null);
     }
   };
 
   const handleClearWishlist = async () => {
-    if (!window.confirm('Are you sure you want to clear your wishlist?')) return;
+    if (!window.confirm(t('wishlist.errors.clearConfirm'))) return;
     
     setIsClearing(true);
     try {
@@ -83,10 +85,10 @@ const WishlistPage = () => {
         data: { userId: currentUser.id }
       });
       dispatch(clearWishlist());
-      toast.success('Wishlist cleared');
+      toast.success(t('wishlist.success.wishlistCleared'));
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to clear wishlist');
-      toast.error('Failed to clear wishlist');
+      setError(err.response?.data?.message || t('wishlist.errors.clearError'));
+      toast.error(t('wishlist.errors.clearError'));
     } finally {
       setIsClearing(false);
     }
@@ -103,22 +105,22 @@ const WishlistPage = () => {
           <div className="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-purple-100 mb-6">
             <FaHeart className="h-10 w-10 text-purple-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-3">Your Wishlist Awaits</h2>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">{t('wishlist.authRequired.title')}</h2>
           <p className="text-gray-600 mb-6">
-            Sign in to save items you love and access them anytime
+            {t('wishlist.authRequired.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => navigate("/login")}
               className="btn btn-primary gap-2"
             >
-              <FaSignInAlt /> Sign In
+              <FaSignInAlt /> {t('wishlist.authRequired.signIn')}
             </button>
             <button
               onClick={() => navigate("/signup")}
               className="btn btn-outline btn-primary gap-2"
             >
-              <FaUserPlus /> Create Account
+              <FaUserPlus /> {t('wishlist.authRequired.createAccount')}
             </button>
           </div>
         </div>
@@ -143,9 +145,9 @@ const WishlistPage = () => {
               <FaHeart className="text-4xl" />
             </motion.div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Your Wishlist</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{t('wishlist.title')}</h1>
               <p className="text-gray-500">
-                {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'}
+                {wishlistItems.length} {wishlistItems.length === 1 ? t('wishlist.item') : t('wishlist.items')}
               </p>
             </div>
           </div>
@@ -157,7 +159,7 @@ const WishlistPage = () => {
               className={`btn btn-error btn-sm ${isClearing ? 'loading' : ''}`}
             >
               {!isClearing && <FaTrash className="mr-2" />}
-              Clear All
+              {t('wishlist.clearAll')}
             </button>
           )}
         </div>
@@ -177,7 +179,7 @@ const WishlistPage = () => {
                 onClick={() => window.location.reload()} 
                 className="btn btn-primary"
               >
-                Try Again
+                {t('cart.errors.tryAgain')}
               </button>
             </div>
           </div>
@@ -191,15 +193,15 @@ const WishlistPage = () => {
               <div className="absolute inset-0 bg-purple-100 rounded-full opacity-20"></div>
               <FaHeart className="h-full w-full text-purple-200" />
             </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">Your Wishlist is Empty</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">{t('wishlist.emptyWishlist.title')}</h3>
             <p className="text-gray-500 mb-6">
-              Add items to your wishlist to see them here
+              {t('wishlist.emptyWishlist.description')}
             </p>
             <button
               onClick={() => navigate("/")}
               className="btn btn-primary gap-2"
             >
-              <FaShoppingBag /> Start Shopping
+              <FaShoppingBag /> {t('wishlist.emptyWishlist.button')}
             </button>
           </motion.div>
         ) : (
@@ -234,6 +236,7 @@ const WishlistPage = () => {
                         onClick={() => handleRemoveItem(item._id)}
                         disabled={removingItem === item._id}
                         className="absolute top-2 right-2 z-10 btn btn-circle btn-sm btn-ghost hover:bg-red-100 text-red-500"
+                        aria-label={t('wishlist.clearAll')}
                       >
                         {removingItem === item._id ? (
                           <span className="loading loading-spinner loading-xs"></span>

@@ -29,9 +29,11 @@ import DashAnalytics from "../components/Seller/DashAnalytics";
 import DashSettings from "../components/Seller/DashSettings";
 import DashNewProduct from "../components/Seller/DashNewProduct";
 import DashPromotion from "../components/Seller/DashPromotion";
+import { useTranslation } from 'react-i18next';
 
 const SellerDashboard = () => {
   const currentUser = useSelector(state => state.user.currentUser);
+  const { t, i18n } = useTranslation();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -56,6 +58,10 @@ const SellerDashboard = () => {
     } catch (error) {
       console.error('Error signing out:', error);
     }
+  };
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
   };
 
   // Mock data
@@ -101,10 +107,10 @@ const SellerDashboard = () => {
         <div className="p-6 pb-4 border-b border-[#4A12C4]">
           <div className="flex items-center space-x-3">
             <FaShoppingBag className="text-2xl text-purple-300" />
-            <h1 className="text-xl font-bold">Seller Hub</h1>
+            <h1 className="text-xl font-bold">{t('sellerDashboard.title')}</h1>
           </div>
           <div className="mt-4 text-sm text-purple-200">
-            Welcome back, <span className="font-medium text-white">{username}</span>
+            {t('sellerDashboard.welcome')} { username }
           </div>
         </div>
         
@@ -117,7 +123,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'dashboard' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaHome className="mr-3 text-purple-200" />
-                Dashboard
+                {t('sellerDashboard.sidebar.dashboard')}
               </Link>
             </li>
             <li>
@@ -126,7 +132,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'products' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaBox className="mr-3 text-purple-200" />
-                Product Catalog
+                {t('sellerDashboard.sidebar.products')}
                 <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
                   {stats.products}
                 </span>
@@ -138,7 +144,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'add-inventory' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaBoxes className="mr-3 text-purple-200" />
-                Add Inventory
+                {t('sellerDashboard.sidebar.addInventory')}
               </Link>
             </li>
             <li>
@@ -147,7 +153,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'promotions' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaGift className="mr-3 text-purple-200" />
-                Promotions
+                {t('sellerDashboard.sidebar.promotions')}
               </Link>
             </li>
             <li>
@@ -156,7 +162,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'orders' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaClipboardList className="mr-3 text-purple-200" />
-                Orders
+                {t('sellerDashboard.sidebar.orders')}
                 <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
                   {stats.orders}
                 </span>
@@ -168,7 +174,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'customers' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaUsers className="mr-3 text-purple-200" />
-                Customers
+                {t('sellerDashboard.sidebar.customers')}
               </Link>
             </li>
             <li>
@@ -177,7 +183,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'sales' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaDollarSign className="mr-3 text-purple-200" />
-                Sales
+                {t('sellerDashboard.sidebar.sales')}
               </Link>
             </li>
             <li>
@@ -186,7 +192,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'analytics' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaChartPie className="mr-3 text-purple-200" />
-                Analytics
+                {t('sellerDashboard.sidebar.analytics')}
               </Link>
             </li>
             <li>
@@ -195,7 +201,7 @@ const SellerDashboard = () => {
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'settings' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaCog className="mr-3 text-purple-200" />
-                Settings
+                {t('sellerDashboard.sidebar.settings')}
               </Link>
             </li>
           </ul>
@@ -208,7 +214,7 @@ const SellerDashboard = () => {
             className="flex items-center w-full px-4 py-2 text-sm text-purple-200 hover:text-white rounded-lg hover:bg-[#4A12C4] transition"
           >
             <FaSignOutAlt className="mr-3" />
-            Sign Out
+            {t('sellerDashboard.sidebar.signOut')}
           </button>
         </div>
       </div>
@@ -223,14 +229,66 @@ const SellerDashboard = () => {
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search products, orders..."
+                placeholder={t('sellerDashboard.searchPlaceholder')}
                 className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3F0AAD] focus:border-transparent"
               />
             </div>
             
             {/* User Info and Notifications */}
             <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100">
+              {/* Language Toggle */}
+              <div className="dropdown dropdown-end">
+                <label tabIndex={0} className="btn btn-ghost btn-sm gap-1 normal-case">
+                  {i18n.language === 'en' ? (
+                    <>
+                      <span className="fi fi-us fis"></span>
+                      <span className="hidden sm:inline">EN</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="fi fi-fr fis"></span>
+                      <span className="hidden sm:inline">FR</span>
+                    </>
+                  )}
+                  <svg
+                    className="fill-current"
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M7 10l5 5 5-5z" />
+                  </svg>
+                </label>
+                <ul
+                  tabIndex={0}
+                  className="dropdown-content menu p-2 shadow bg-white rounded-box w-40 border border-gray-100 mt-2"
+                >
+                  <li>
+                    <button
+                      className={`flex items-center ${i18n.language === 'en' ? 'active bg-gray-100' : ''}`}
+                      onClick={() => changeLanguage('en')}
+                    >
+                      <span className="fi fi-us fis mr-2"></span>
+                      English (US)
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      className={`flex items-center ${i18n.language === 'fr' ? 'active bg-gray-100' : ''}`}
+                      onClick={() => changeLanguage('fr')}
+                    >
+                      <span className="fi fi-fr fis mr-2"></span>
+                      Français
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+              <button 
+                className="relative p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
+                aria-label={t('sellerDashboard.notifications.new')}
+              >
                 <FaBell className="text-xl" />
                 <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
               </button>
@@ -238,7 +296,7 @@ const SellerDashboard = () => {
               <div className="flex items-center space-x-2">
                 <div className="text-right hidden md:block">
                   <div className="font-medium text-gray-800">{username}</div>
-                  <div className="text-xs text-gray-500">Premium Seller</div>
+                  <div className="text-xs text-gray-500">{t('sellerDashboard.role')}</div>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
                   <FaUserCircle className="text-2xl text-[#3F0AAD]" />

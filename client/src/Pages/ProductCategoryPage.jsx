@@ -6,8 +6,10 @@ import { FaSpinner, FaShoppingBag } from 'react-icons/fa';
 import ProductCard from '../components/ProductCard';
 import BreadcrumbNav from '../components/BreadcrumbNav';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const ProductCategoryPage = () => {
+  const { t, i18n } = useTranslation();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -38,7 +40,7 @@ const ProductCategoryPage = () => {
         setProducts(productsWithOffers);
       } catch (error) {
         console.error('Error fetching products:', error);
-        setError(error.response?.data?.message || 'Unable to load products. Please try again later.');
+        setError(error.response?.data?.message || t('productCategory.errors.loadError'));
       } finally {
         setLoading(false);
       }
@@ -62,18 +64,18 @@ const ProductCategoryPage = () => {
             }))
           });
         } catch (err) {
-          toast.error('Failed to load wishlist');
+          toast.error(t('productCategory.errors.wishlist.loadError'));
         }
       }
     };
 
     fetchProducts();
     fetchWishlist();
-  }, [location.search, currentUser, dispatch]);
+  }, [location.search, currentUser, dispatch, t]);
 
   const handleWishlistToggle = async (productId, isAdded, sellerId) => {
     if (!currentUser) {
-      toast.error('You must log in to manage your wishlist.');
+      toast.error(t('productCategory.errors.wishlist.loginRequired'));
       return;
     }
 
@@ -96,7 +98,7 @@ const ProductCategoryPage = () => {
             stock: sellerOffer?.stock || product?.stock || 0
           }
         });
-        toast.success('Added to wishlist');
+        toast.success(t('productCategory.errors.wishlist.addSuccess'));
       } else {
         const response = await axios.get(`${API_URL}?userId=${currentUser.id}`);
         const wishlist = response.data;
@@ -110,11 +112,11 @@ const ProductCategoryPage = () => {
             data: { userId: currentUser.id, itemId: item._id }
           });
           dispatch({ type: 'wishlist/removeItem', payload: item._id });
-          toast.success('Removed from wishlist');
+          toast.success(t('productCategory.errors.wishlist.removeSuccess'));
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update wishlist');
+      toast.error(err.response?.data?.message || t('productCategory.errors.wishlist.error'));
     }
   };
 
@@ -129,7 +131,7 @@ const ProductCategoryPage = () => {
           {new URLSearchParams(location.search).get('item') || 
            new URLSearchParams(location.search).get('group') || 
            new URLSearchParams(location.search).get('category') || 
-           'All Products'}
+           t('productCategory.title')}
         </h1>
       </div>
 
@@ -137,24 +139,24 @@ const ProductCategoryPage = () => {
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[300px] space-y-4">
           <FaSpinner className="animate-spin text-3xl text-[#4C0ADA]" />
-          <p className="text-gray-600">Loading products...</p>
+          <p className="text-gray-600">{t('productCategory.loading')}</p>
         </div>
       ) : error ? (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-lg">
           <div className="flex items-start">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
               </svg>
             </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Error loading products</h3>
+              <h3 className="text-sm font-medium text-red-800">{t('productCategory.errors.loadError')}</h3>
               <p className="mt-1 text-sm text-red-700">{error}</p>
               <button 
                 onClick={() => window.location.reload()} 
                 className="mt-2 text-sm font-medium text-red-700 hover:text-red-600"
               >
-                Try again
+                {t('cart.errors.tryAgain')}
               </button>
             </div>
           </div>
@@ -164,7 +166,7 @@ const ProductCategoryPage = () => {
           {/* Products Summary */}
           <div className="mb-6 flex items-center justify-between">
             <p className="text-gray-600 text-sm">
-              Showing <span className="font-medium text-gray-900">{products.flatMap(p => p.sellers).length}</span> products
+           {t('productCategory.showing')}  <span className="font-medium text-gray-900">{products.flatMap(p => p.sellers).length}</span> {t('productCategory.products')}
             </p>
           </div>
 
@@ -196,9 +198,11 @@ const ProductCategoryPage = () => {
             <FaShoppingBag className="w-16 h-16 text-[#4C0ADA]" />
           </div>
           
-          <h3 className="text-2xl font-bold text-gray-900 mb-3">No Products Found</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">
+            {t('productCategory.noProducts.title')}
+          </h3>
           <p className="text-gray-600 mb-8">
-            We couldn't find any products in this category. Try browsing other categories or check back later.
+            {t('productCategory.noProducts.description')}
           </p>
         </div>
       )}

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/ecomLogo.png";
+import { useTranslation } from "react-i18next";
 
 const BecomeSeller = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     email: "",
     shopName: "",
@@ -15,13 +17,12 @@ const BecomeSeller = () => {
   const [alert, setAlert] = useState({ show: false, type: "", message: "" });
   const navigate = useNavigate();
 
-  // Auto-dismiss alert after 5 seconds
   useEffect(() => {
     if (alert.show) {
       const timer = setTimeout(() => {
         setAlert({ ...alert, show: false });
-      }, 5000); // 5 seconds
-      return () => clearTimeout(timer); // Cleanup on unmount or alert change
+      }, 5000);
+      return () => clearTimeout(timer);
     }
   }, [alert]);
 
@@ -29,11 +30,11 @@ const BecomeSeller = () => {
     const { name, value, files } = e.target;
     if (files) {
       if (files[0].type !== "application/pdf") {
-        setAlert({ show: true, type: "error", message: "Please upload a PDF file." });
+        setAlert({ show: true, type: "error", message: t('seller.fileTypeError') });
         return;
       }
       if (files[0].size > 5 * 1024 * 1024) {
-        setAlert({ show: true, type: "error", message: "File size must be less than 5MB." });
+        setAlert({ show: true, type: "error", message: t('seller.fileSizeError') });
         return;
       }
       setFormData({ ...formData, [name]: files[0] });
@@ -59,15 +60,12 @@ const BecomeSeller = () => {
         withCredentials: true,
       });
 
-      // Show success toast
       setAlert({
         show: true,
         type: "success",
-        message:
-          "Your application has been submitted successfully! Please wait for our team to review your request. We will contact you via email.",
+        message: t('seller.successMessage'),
       });
 
-      // Reset the form
       setFormData({
         email: "",
         shopName: "",
@@ -76,16 +74,14 @@ const BecomeSeller = () => {
         tradeRegister: null,
       });
 
-      // Navigate after a delay to allow toast visibility
       setTimeout(() => {
         navigate("/application-status");
-      }, 3000); // Navigate after 3 seconds
+      }, 3000);
     } catch (err) {
-      // Show error toast
       setAlert({
         show: true,
         type: "error",
-        message: err.response?.data?.message || "Something went wrong!",
+        message: err.response?.data?.message || t('seller.errorMessage'),
       });
     } finally {
       setLoading(false);
@@ -94,7 +90,6 @@ const BecomeSeller = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-purple-50 p-6">
-      {/* DaisyUI Toast */}
       {alert.show && (
         <div
           className={`alert alert-${alert.type} fixed top-4 right-4 w-96 z-50 shadow-lg rounded-lg transition-all duration-300 transform ${
@@ -114,70 +109,65 @@ const BecomeSeller = () => {
       )}
 
       <div className="flex w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
-        {/* Left Side - Form */}
         <div className="w-1/2 p-6">
           <div className="flex justify-center mb-4">
             <img src={logo} alt="Ecom Logo" className="h-16" />
           </div>
-          <h2 className="text-xl font-bold text-center mb-3">Become a Seller</h2>
+          <h2 className="text-xl font-bold text-center mb-3">{t('seller.title')}</h2>
           <p className="text-center text-gray-600 mb-5 text-sm">
-            Start your journey as a seller by filling out the form below.
+            {t('seller.subtitle')}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Email */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-gray-600 text-sm">Email</span>
+                <span className="label-text text-gray-600 text-sm">{t('seller.email')}</span>
               </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="Enter your email"
+                placeholder={t('seller.emailPlaceholder')}
                 className="input input-bordered w-full bg-white border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 required
               />
             </div>
 
-            {/* Shop Name */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-gray-600 text-sm">Shop Name</span>
+                <span className="label-text text-gray-600 text-sm">{t('seller.shopName')}</span>
               </label>
               <input
                 type="text"
                 name="shopName"
                 value={formData.shopName}
                 onChange={handleChange}
-                placeholder="Enter your shop name"
+                placeholder={t('seller.shopNamePlaceholder')}
                 className="input input-bordered w-full bg-white border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 required
               />
             </div>
 
-            {/* Headquarters Address */}
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-gray-600 text-sm">Headquarters Address</span>
+                <span className="label-text text-gray-600 text-sm">{t('seller.address')}</span>
               </label>
               <input
                 type="text"
                 name="headquartersAddress"
                 value={formData.headquartersAddress}
                 onChange={handleChange}
-                placeholder="Enter your headquarters address"
+                placeholder={t('seller.addressPlaceholder')}
                 className="input input-bordered w-full bg-white border-gray-200 focus:ring-2 focus:ring-primary focus:border-primary text-sm"
                 required
               />
             </div>
 
-            {/* Fiscal Identification Card and Trade Register */}
             <div className="flex gap-3">
               <div className="form-control w-1/2">
                 <label className="label">
-                  <span className="label-text text-gray-600 text-sm">Fiscal Identification Card</span>
+                  <span className="label-text text-gray-600 text-sm">{t('seller.fiscalId')}</span>
                 </label>
                 <input
                   type="file"
@@ -190,7 +180,7 @@ const BecomeSeller = () => {
               </div>
               <div className="form-control w-1/2">
                 <label className="label">
-                  <span className="label-text text-gray-600 text-sm">Trade Register</span>
+                  <span className="label-text text-gray-600 text-sm">{t('seller.tradeRegister')}</span>
                 </label>
                 <input
                   type="file"
@@ -203,7 +193,6 @@ const BecomeSeller = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -211,60 +200,59 @@ const BecomeSeller = () => {
                 loading ? "opacity-50 cursor-not-allowed" : "hover:bg-primary-focus hover:shadow-lg"
               }`}
             >
-              {loading ? "Submitting..." : "Submit"}
+              {loading ? t('seller.submitting') : t('seller.submit')}
             </button>
           </form>
 
           <div className="flex items-center my-4">
             <div className="flex-grow border-t border-gray-200"></div>
-            <span className="mx-4 text-gray-400 text-sm">OR</span>
+            <span className="mx-4 text-gray-400 text-sm">{t('seller.or')}</span>
             <div className="flex-grow border-t border-gray-200"></div>
           </div>
 
           <div className="text-center">
-            <p className="mb-2 text-gray-600 text-sm">Already a seller?</p>
+            <p className="mb-2 text-gray-600 text-sm">{t('seller.alreadySeller')}</p>
             <button
               className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900 transition-all duration-300 text-sm"
               onClick={() => navigate("/signin")}
             >
-              Sign In
+              {t('seller.signIn')}
             </button>
             <div className="mt-4">
               <p className="text-sm text-gray-600">
-                Want to check your application status?{" "}
+                {t('seller.checkStatus')}{" "}
                 <a href="/application-status" className="text-blue-500 hover:underline">
-                  Click here
+                  {t('seller.clickHere')}
                 </a>
               </p>
             </div>
           </div>
         </div>
 
-        {/* Right Side - Vertical Steps */}
         <div className="w-1/2 bg-gradient-to-r from-blue-100 to-purple-100 p-6 flex flex-col justify-center items-center">
           <ul className="steps steps-vertical">
             <li className="step step-primary">
               <div className="text-left">
-                <h3 className="text-lg font-bold text-gray-800">Step 1: Fill out your registration request</h3>
-                <p className="text-gray-600 text-sm">Complete the initial registration form to begin the process.</p>
+                <h3 className="text-lg font-bold text-gray-800">{t('seller.step1')}</h3>
+                <p className="text-gray-600 text-sm">{t('seller.step1Desc')}</p>
               </div>
             </li>
             <li className="step step-primary">
               <div className="text-left">
-                <h3 className="text-lg font-bold text-gray-800">Step 2: Complete the registration form</h3>
-                <p className="text-gray-600 text-sm">You will receive an email with further instructions and required documents.</p>
+                <h3 className="text-lg font-bold text-gray-800">{t('seller.step2')}</h3>
+                <p className="text-gray-600 text-sm">{t('seller.step2Desc')}</p>
               </div>
             </li>
             <li className="step">
               <div className="text-left">
-                <h3 className="text-lg font-bold text-gray-800">Step 3: Application Review</h3>
-                <p className="text-gray-600 text-sm">Our team will carefully review your application and documents.</p>
+                <h3 className="text-lg font-bold text-gray-800">{t('seller.step3')}</h3>
+                <p className="text-gray-600 text-sm">{t('seller.step3Desc')}</p>
               </div>
             </li>
             <li className="step">
               <div className="text-left">
-                <h3 className="text-lg font-bold text-gray-800">Step 4: Start Selling</h3>
-                <p className="text-gray-600 text-sm">Once approved, you can start making your first sales on our platform 🥳.</p>
+                <h3 className="text-lg font-bold text-gray-800">{t('seller.step4')}</h3>
+                <p className="text-gray-600 text-sm">{t('seller.step4Desc')}</p>
               </div>
             </li>
           </ul>

@@ -7,8 +7,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { setCart, removeItem, updateItemQuantity, clearCart } from '../redux/user/cartSlice';
+import { useTranslation } from 'react-i18next';
 
 const CartPage = () => {
+  const { t, i18n } = useTranslation();
   const { currentUser } = useSelector((state) => state.user);
   const cartItems = useSelector((state) => state.cart?.items || []);
   const dispatch = useDispatch();
@@ -39,8 +41,8 @@ const CartPage = () => {
           
           dispatch(setCart(validItems));
         } catch (err) {
-          setError(err.response?.data?.message || 'Failed to load cart');
-          toast.error('Failed to load your cart');
+          setError(err.response?.data?.message || t('cart.errors.loadError'));
+          toast.error(t('cart.errors.loadError'));
         } finally {
           setLoading(false);
         }
@@ -49,16 +51,16 @@ const CartPage = () => {
     } else {
       setLoading(false);
     }
-  }, [currentUser, dispatch]);
+  }, [currentUser, dispatch, t]);
 
   const handleRemoveItem = async (itemId) => {
     setRemovingItem(itemId);
     try {
       await axios.delete(`${API_URL}/item`, { data: { userId: currentUser.id, itemId } });
       dispatch(removeItem(itemId));
-      toast.success('Item removed from cart');
+      toast.success(t('cart.product.remove'));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to remove item');
+      toast.error(err.response?.data?.message || t('cart.errors.removeError'));
     } finally {
       setRemovingItem(null);
     }
@@ -66,11 +68,11 @@ const CartPage = () => {
 
   const handleUpdateQuantity = async (itemId, quantity, stock) => {
     if (quantity < 1) {
-      toast.error('Quantity cannot be less than 1');
+      toast.error(t('cart.errors.quantityMin'));
       return;
     }
     if (quantity > stock) {
-      toast.error(`Quantity cannot exceed available stock (${stock})`);
+      toast.error(t('cart.errors.quantityMax', { stock }));
       return;
     }
 
@@ -78,10 +80,10 @@ const CartPage = () => {
     try {
       const response = await axios.put(`${API_URL}/item/quantity`, { userId: currentUser.id, itemId, quantity });
       dispatch(updateItemQuantity({ itemId, quantity }));
-      toast.success('Quantity updated');
+      toast.success(t('cart.product.quantity'));
       return response.data.cart;
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update quantity');
+      toast.error(err.response?.data?.message || t('cart.errors.quantityError'));
       throw err;
     } finally {
       setUpdatingQuantity(null);
@@ -89,14 +91,14 @@ const CartPage = () => {
   };
 
   const handleClearCart = async () => {
-    if (!window.confirm('Are you sure you want to clear your cart?')) return;
+    if (!window.confirm(t('cart.errors.clearConfirm'))) return;
     
     try {
       await axios.delete(API_URL, { data: { userId: currentUser.id } });
       dispatch(clearCart());
-      toast.success('Cart cleared successfully');
+      toast.success(t('cart.clearCart'));
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to clear cart');
+      toast.error(err.response?.data?.message || t('cart.errors.clearError'));
     }
   };
 
@@ -117,22 +119,22 @@ const CartPage = () => {
           <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-purple-50 mb-4">
             <IoMdCart className="h-8 w-8 text-purple-600" />
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Your Shopping Cart</h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-2">{t('cart.authRequired.title')}</h2>
           <p className="text-gray-500 mb-6">
-            Sign in to view your saved items and checkout
+            {t('cart.authRequired.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => navigate('/login')}
               className="btn btn-primary btn-sm gap-2"
             >
-              Sign In
+              {t('cart.authRequired.signIn')}
             </button>
             <button
               onClick={() => navigate('/signup')}
               className="btn btn-outline btn-primary btn-sm gap-2"
             >
-              Create Account
+              {t('cart.authRequired.createAccount')}
             </button>
           </div>
         </div>
@@ -159,9 +161,9 @@ const CartPage = () => {
               )}
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Your Cart</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">{t('cart.title')}</h1>
               <p className="text-sm text-gray-500">
-                {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+                {cartItems.length} {cartItems.length === 1 ? t('cart.item') : t('cart.items')}
               </p>
             </div>
           </div>
@@ -172,7 +174,7 @@ const CartPage = () => {
               className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 text-sm"
             >
               <FaTrash className="w-3 h-3" />
-              Clear Cart
+              {t('cart.clearCart')}
             </button>
           )}
         </div>
@@ -192,7 +194,7 @@ const CartPage = () => {
               onClick={() => window.location.reload()}
               className="btn btn-primary btn-sm"
             >
-              Try Again
+              {t('cart.errors.tryAgain')}
             </button>
           </div>
         ) : cartItems.length === 0 ? (
@@ -205,16 +207,16 @@ const CartPage = () => {
               <IoMdCart className="h-full w-full text-purple-200" />
             </div>
             <h3 className="text-lg font-bold text-gray-800 mb-1">
-              Your cart is empty
+              {t('cart.emptyCart.title')}
             </h3>
             <p className="text-gray-500 mb-4">
-              Start shopping to add items to your cart
+              {t('cart.emptyCart.description')}
             </p>
             <button
               onClick={() => navigate('/')}
               className="btn btn-primary btn-sm gap-1"
             >
-              Browse Products
+              {t('cart.emptyCart.button')}
             </button>
           </motion.div>
         ) : (
@@ -249,7 +251,7 @@ const CartPage = () => {
                             ? 'text-green-800 bg-green-100/90' 
                             : 'text-red-800 bg-red-100/90'
                         }`}>
-                          {item.inStock ? 'In Stock' : 'Out of Stock'}
+                          {item.inStock ? t('cart.product.inStock') : t('cart.product.outOfStock')}
                         </span>
                       </Link>
                       
@@ -264,11 +266,11 @@ const CartPage = () => {
                               {item.productId.name}
                             </Link>
                             <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                              Sold by: {item.sellerId.shopName}
+                              {t('cart.product.soldBy')}: {item.sellerId.shopName}
                             </p>
                             {item.promotion && (
                               <p className="text-xs text-red-600 mt-0.5">
-                                Promotion: {item.promotion.promotionId.name} ({item.promotion.promotionId.discountRate}% OFF)
+                                {t('product.specialOffer')}: {item.promotion.promotionId.name} ({item.promotion.promotionId.discountRate}% {t('product.off')})
                               </p>
                             )}
                           </div>
@@ -276,6 +278,7 @@ const CartPage = () => {
                             onClick={() => handleRemoveItem(item._id)}
                             disabled={removingItem === item._id}
                             className="text-gray-400 hover:text-red-500 text-sm"
+                            aria-label={t('cart.product.remove')}
                           >
                             {removingItem === item._id ? (
                               <span className="loading loading-spinner loading-xs"></span>
@@ -301,6 +304,7 @@ const CartPage = () => {
                                 onClick={() => handleUpdateQuantity(item._id, item.quantity - 1, item.stock)}
                                 disabled={item.quantity <= 1 || !item.inStock || updatingQuantity === item._id}
                                 className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-xs"
+                                aria-label={t('cart.product.quantity')}
                               >
                                 {updatingQuantity === item._id ? (
                                   <span className="loading loading-spinner loading-xs"></span>
@@ -315,6 +319,7 @@ const CartPage = () => {
                                 onClick={() => handleUpdateQuantity(item._id, item.quantity + 1, item.stock)}
                                 disabled={!item.inStock || updatingQuantity === item._id || item.quantity >= item.stock}
                                 className="px-2 py-0.5 text-gray-600 hover:bg-gray-100 disabled:opacity-30 text-xs"
+                                aria-label={t('cart.product.quantity')}
                               >
                                 {updatingQuantity === item._id ? (
                                   <span className="loading loading-spinner loading-xs"></span>
@@ -329,7 +334,7 @@ const CartPage = () => {
                     </div>
                     {/* Item Total */}
                     <div className="px-3 py-2 border-t border-gray-100 bg-gray-50 flex justify-between text-sm">
-                      <span className="text-gray-500">Item total</span>
+                      <span className="text-gray-500">{t('cart.product.itemTotal')}</span>
                       <span className="font-medium">
                         ${(item.price * item.quantity).toFixed(2)}
                       </span>
@@ -343,30 +348,30 @@ const CartPage = () => {
             <div className="lg:col-span-1">
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 sticky top-4">
                 <h2 className="text-xl font-bold text-gray-800 mb-6 pb-4 border-b border-gray-100">
-                  Order Summary
+                  {t('cart.orderSummary.title')}
                 </h2>
                 
                 <div className="space-y-4 mb-6">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Subtotal</span>
+                    <span className="text-gray-600">{t('cart.orderSummary.subtotal')}</span>
                     <span className="font-medium">${subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Shipping</span>
+                    <span className="text-gray-600">{t('cart.orderSummary.shipping')}</span>
                     <span className="font-medium">
                       {shipping === 0 ? (
-                        <span className="text-green-600">FREE</span>
+                        <span className="text-green-600">{t('cart.orderSummary.freeShipping')}</span>
                       ) : (
                         `$${shipping.toFixed(2)}`
                       )}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Tax (10%)</span>
+                    <span className="text-gray-600">{t('cart.orderSummary.tax')}</span>
                     <span className="font-medium">${tax.toFixed(2)}</span>
                   </div>
                   <div className="border-t border-gray-100 pt-4 flex justify-between text-lg font-bold">
-                    <span>Total</span>
+                    <span>{t('cart.orderSummary.total')}</span>
                     <span className="text-purple-600">${total}</span>
                   </div>
                 </div>
@@ -375,14 +380,15 @@ const CartPage = () => {
                   onClick={() => navigate('/checkout')}
                   className="btn btn-primary w-full gap-2 hover:shadow-lg transition-all"
                   disabled={cartItems.some(item => !item.inStock)}
+                  aria-label={t('cart.orderSummary.checkout')}
                 >
-                  Proceed to Checkout
+                  {t('cart.orderSummary.checkout')}
                   <FaChevronRight />
                 </button>
                 
                 {cartItems.some(item => !item.inStock) && (
                   <div className="mt-4 text-sm text-red-500 text-center">
-                    Please remove out of stock items to checkout
+                    {t('cart.errors.removeOutOfStock')}
                   </div>
                 )}
                 
@@ -391,7 +397,7 @@ const CartPage = () => {
                     to="/"
                     className="text-purple-600 hover:text-purple-800 text-sm font-medium flex items-center justify-center gap-1"
                   >
-                    Continue Shopping
+                    {t('cart.orderSummary.continueShopping')}
                   </Link>
                 </div>
               </div>

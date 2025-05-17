@@ -6,21 +6,23 @@ import axios from "axios";
 import logo from "../assets/ecomLogo.png";
 import { ToastContainer, toast } from "react-toastify"; 
 import "react-toastify/dist/ReactToastify.css";
+import { useTranslation } from 'react-i18next';
 
 const SignUp = () => {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [address, setAddress] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState(""); // Only store the local part
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState("buyer");
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value.replace(/\D/g, ''); // Remove non-digit characters
-    if (value.length <= 8) { // Tunisian numbers are 8 digits after +216
+    const value = e.target.value.replace(/\D/g, '');
+    if (value.length <= 8) {
       setPhoneNumber(value);
     }
   };
@@ -29,12 +31,12 @@ const SignUp = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error("Passwords do not match!");
+      toast.error(t('signUp.errors.passwordMismatch'));
       return;
     }
 
     if (phoneNumber.length !== 8) {
-      toast.error("Please enter a valid 8-digit Tunisian phone number");
+      toast.error(t('signUp.errors.invalidPhone'));
       return;
     }
 
@@ -50,16 +52,17 @@ const SignUp = () => {
           confirmPassword, 
           role, 
           address, 
-          phoneNumber: `+216${phoneNumber}` // Combine with country code
+          phoneNumber: `+216${phoneNumber}`
         },
         { withCredentials: true }
       );
       dispatch(signUpSuccess(response.data.user)); 
-      toast.success("Signup successful!"); 
+      toast.success(t('signUp.success')); 
       navigate("/"); 
     } catch (err) {
-      dispatch(signUpFailure(err.response?.data?.message || "Something went wrong!"));
-      toast.error(err.response?.data?.message || "Something went wrong!"); 
+      const errorMessage = err.response?.data?.message || t('signUp.errors.generic');
+      dispatch(signUpFailure(errorMessage));
+      toast.error(errorMessage); 
     }
   };
 
@@ -69,22 +72,22 @@ const SignUp = () => {
         <div className="flex justify-center mb-6">
           <img src={logo} alt="Ecom Logo" className="h-20" />
         </div>
-        <h2 className="text-2xl font-bold text-center mb-4">Create an Account</h2>
+        <h2 className="text-2xl font-bold text-center mb-4">{t('signUp.title')}</h2>
         <p className="text-center text-gray-600 mb-6">
-          Enter your details to sign up.
+          {t('signUp.subtitle')}
         </p>
 
         <form onSubmit={handleSignUp} className="space-y-4">
           {/* Name Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">Name</span>
+              <span className="label-text text-gray-600">{t('signUp.nameLabel')}</span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
+              placeholder={t('signUp.namePlaceholder')}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
             />
@@ -93,13 +96,13 @@ const SignUp = () => {
           {/* Email Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">Email</span>
+              <span className="label-text text-gray-600">{t('signUp.emailLabel')}</span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder={t('signUp.emailPlaceholder')}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
             />
@@ -108,13 +111,13 @@ const SignUp = () => {
           {/* Password Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">Password</span>
+              <span className="label-text text-gray-600">{t('signUp.passwordLabel')}</span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t('signUp.passwordPlaceholder')}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
               minLength={6}
@@ -124,13 +127,13 @@ const SignUp = () => {
           {/* Confirm Password Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">Confirm Password</span>
+              <span className="label-text text-gray-600">{t('signUp.confirmPasswordLabel')}</span>
             </label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
+              placeholder={t('signUp.confirmPasswordPlaceholder')}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
               minLength={6}
@@ -140,13 +143,13 @@ const SignUp = () => {
           {/* Address Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">Address</span>
+              <span className="label-text text-gray-600">{t('signUp.addressLabel')}</span>
             </label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="Enter your address"
+              placeholder={t('signUp.addressPlaceholder')}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
             />
@@ -155,7 +158,7 @@ const SignUp = () => {
           {/* Phone Number Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">Phone Number</span>
+              <span className="label-text text-gray-600">{t('signUp.phoneLabel')}</span>
             </label>
             <div className="flex">
               <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-600">
@@ -165,7 +168,7 @@ const SignUp = () => {
                 type="tel"
                 value={phoneNumber}
                 onChange={handlePhoneChange}
-                placeholder="20 123 456"
+                placeholder={t('signUp.phonePlaceholder')}
                 className="flex-1 input input-bordered rounded-r-md border-l-0 border-gray-300 bg-white focus:border-primary focus:ring-2 focus:ring-primary/20"
                 maxLength={8}
                 required
@@ -173,7 +176,7 @@ const SignUp = () => {
             </div>
             <label className="label">
               <span className="label-text-alt text-gray-400">
-                Tunisian number (8 digits)
+                {t('signUp.phoneHint')}
               </span>
             </label>
           </div>
@@ -186,18 +189,18 @@ const SignUp = () => {
             type="submit"
             className="btn btn-primary w-full mt-2 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
           >
-            Sign Up
+            {t('signUp.submitButton')}
           </button>
         </form>
 
         {/* Sign In Section */}
         <div className="text-center mt-4">
-          <p className="mb-2 text-gray-600">Already have an account?</p>
+          <p className="mb-2 text-gray-600">{t('signUp.existingAccountPrompt')}</p>
           <Link
             to="/login"
             className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900"
           >
-            Sign In
+            {t('signUp.signInLink')}
           </Link>
         </div>
       </div>

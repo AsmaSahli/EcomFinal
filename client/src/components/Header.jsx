@@ -7,8 +7,10 @@ import axios from 'axios';
 import { signoutSuccess } from '../redux/user/userSlice';
 import { toast } from 'react-toastify';
 import AllCategories from './AllCategories';
+import { useTranslation } from 'react-i18next';
 
 const Header = () => {
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const currentUser = useSelector((state) => state.user?.currentUser);
   const wishlistItems = useSelector((state) => state.wishlist?.items || []);
@@ -31,10 +33,14 @@ const Header = () => {
       dispatch({ type: 'wishlist/clearWishlist' });
       dispatch({ type: 'cart/clearCart' });
       navigate('/');
-      toast.success('Signed out successfully');
+      toast.success(t('header.signoutSuccess'));
     } catch (error) {
-      toast.error('Failed to sign out');
+      toast.error(t('header.signoutError'));
     }
+  };
+
+  const changeLanguage = (lng) => {
+    i18n.changeLanguage(lng);
   };
 
   if (
@@ -62,7 +68,7 @@ const Header = () => {
         <div className="form-control relative w-full max-w-md">
           <input
             type="text"
-            placeholder="Search products..."
+            placeholder={t('header.searchPlaceholder')}
             className="input input-bordered w-full bg-white focus:ring-2 focus:ring-primary focus:border-primary pl-10 pr-4 py-2"
           />
           <FaSearch className="absolute left-3 top-3.5 text-gray-400" />
@@ -70,11 +76,75 @@ const Header = () => {
       </div>
 
       <div className="flex-1 flex items-center justify-end gap-4 sm:gap-6">
+
+    {/* Language Switcher - USA/French Version */}
+      <div className="dropdown dropdown-end">
+        <label tabIndex={0} className="btn btn-ghost btn-sm gap-1 normal-case">
+          {i18n.language === 'en' ? (
+            <>
+              <span className="fi fi-us fis"></span>
+              <span className="hidden sm:inline">EN</span>
+            </>
+          ) : i18n.language === 'fr' ? (
+            <>
+              <span className="fi fi-fr fis"></span>
+              <span className="hidden sm:inline">FR</span>
+            </>
+          ) : (
+            <>
+              <span className="fi fi-sa fis"></span>
+              <span className="hidden sm:inline">AR</span>
+            </>
+          )}
+          <svg
+            className="fill-current"
+            xmlns="http://www.w3.org/2000/svg"
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+          >
+            <path d="M7 10l5 5 5-5z" />
+          </svg>
+        </label>
+        <ul
+          tabIndex={0}
+          className="dropdown-content menu p-2 shadow bg-white rounded-box w-40 border border-gray-100 mt-2"
+        >
+          <li>
+            <button
+              className={`flex items-center ${i18n.language === 'en' ? 'active bg-gray-100' : ''}`}
+              onClick={() => changeLanguage('en')}
+            >
+              <span className="fi fi-us fis mr-2"></span>
+              English (US)
+            </button>
+          </li>
+          <li>
+            <button
+              className={`flex items-center ${i18n.language === 'fr' ? 'active bg-gray-100' : ''}`}
+              onClick={() => changeLanguage('fr')}
+            >
+              <span className="fi fi-fr fis mr-2"></span>
+              Français
+            </button>
+          </li>
+          <li>
+            <button
+              className={`flex items-center ${i18n.language === 'ar' ? 'active bg-gray-100' : ''}`}
+              onClick={() => changeLanguage('ar')}
+            >
+              <span className="fi fi-sa fis mr-2"></span>
+              العربية (AR)
+            </button>
+          </li>
+        </ul>
+      </div>
+
         {/* Wishlist Button */}
         <button
           className="relative p-2 rounded-full hover:bg-pink-50 transition-colors duration-200"
           onClick={() => navigate('/wishlist')}
-          aria-label="Wishlist"
+          aria-label={t('header.wishlist')}
           onMouseEnter={() => setIsWishlistHovered(true)}
           onMouseLeave={() => setIsWishlistHovered(false)}
         >
@@ -114,9 +184,9 @@ const Header = () => {
           >
             <div className="p-4">
               <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-lg text-gray-800">Your Cart</h3>
+                <h3 className="font-bold text-lg text-gray-800">{t('header.yourCart')}</h3>
                 <span className="text-sm text-gray-500">
-                  {cartCount} {cartCount === 1 ? 'item' : 'items'}
+                  {cartCount} {cartCount === 1 ? t('header.item') : t('header.items')}
                 </span>
               </div>
               
@@ -134,11 +204,11 @@ const Header = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-gray-800 truncate">
-                            {item.productId?.name || 'Product'}
+                            {item.productId?.name || t('header.product')}
                           </p>
                           <div className="flex justify-between items-center mt-1">
                             <span className="text-xs text-gray-500">
-                              Qty: {item.quantity}
+                              {t('header.qty')}: {item.quantity}
                             </span>
                             <span className="text-sm font-bold text-purple-600">
                               ${(item.price * item.quantity).toFixed(2)}
@@ -158,32 +228,32 @@ const Header = () => {
                     ))}
                     {cartItems.length > 3 && (
                       <div className="text-center py-2 text-sm text-gray-500">
-                        +{cartItems.length - 3} more items
+                        +{cartItems.length - 3} {t('header.moreItems')}
                       </div>
                     )}
                   </div>
                   
                   <div className="mt-4 pt-3 border-t border-gray-100">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-gray-700">Subtotal:</span>
+                      <span className="text-gray-700">{t('header.subtotal')}:</span>
                       <span className="font-bold text-purple-600">${cartTotal}</span>
                     </div>
                     <button
                       className="btn btn-block bg-purple-600 hover:bg-purple-700 text-white border-0"
                       onClick={() => navigate('/cart')}
                     >
-                      View Cart & Checkout
+                      {t('header.viewCart')}
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="py-4 text-center">
-                  <p className="text-gray-500 mb-3">Your cart is empty</p>
+                  <p className="text-gray-500 mb-3">{t('header.emptyCart')}</p>
                   <button
                     className="btn btn-sm bg-purple-600 hover:bg-purple-700 text-white border-0"
                     onClick={() => navigate('/')}
                   >
-                    Start Shopping
+                    {t('header.startShopping')}
                   </button>
                 </div>
               )}
@@ -215,7 +285,7 @@ const Header = () => {
                   className="hover:bg-gray-50 rounded-md"
                   onClick={() => navigate('/profile')}
                 >
-                  My Profile
+                  {t('header.myProfile')}
                 </button>
               </li>
               <li>
@@ -223,7 +293,7 @@ const Header = () => {
                   className="hover:bg-gray-50 rounded-md text-red-500"
                   onClick={signOut}
                 >
-                  Logout
+                  {t('header.logout')}
                 </button>
               </li>
             </ul>
@@ -234,12 +304,12 @@ const Header = () => {
               onClick={() => navigate('/login')}
               className="btn btn-outline btn-primary btn-sm sm:btn-md"
             >
-              Sign In
+              {t('header.signIn')}
             </button>
             <div className="dropdown dropdown-end hidden sm:block">
               <label tabIndex={0} className="btn btn-primary btn-sm sm:btn-md">
                 <FaUserPlus className="mr-2" />
-                Join Us
+                {t('header.joinUs')}
               </label>
               <ul
                 tabIndex={0}
@@ -250,7 +320,7 @@ const Header = () => {
                     className="hover:bg-gray-50 rounded-md"
                     onClick={() => navigate('/become-seller')}
                   >
-                    <FaStore className="mr-2 text-purple-600" /> Become Seller
+                    <FaStore className="mr-2 text-purple-600" /> {t('header.becomeSeller')}
                   </button>
                 </li>
                 <li>
@@ -258,7 +328,7 @@ const Header = () => {
                     className="hover:bg-gray-50 rounded-md"
                     onClick={() => navigate('/join-delivery-team')}
                   >
-                    <FaTruck className="mr-2 text-blue-600" /> Delivery Team
+                    <FaTruck className="mr-2 text-blue-600" /> {t('header.deliveryTeam')}
                   </button>
                 </li>
               </ul>

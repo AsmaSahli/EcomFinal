@@ -1,0 +1,521 @@
+{
+
+    "header": {
+        "searchPlaceholder": "Rechercher des produits...",
+        "wishlist": "Liste de souhaits",
+        "yourCart": "Votre Panier",
+        "item": "article",
+        "items": "articles",
+        "product": "Produit",
+        "qty": "Qté",
+        "moreItems": "articles supplémentaires",
+        "subtotal": "Sous-total",
+        "viewCart": "Voir le panier",
+        "emptyCart": "Votre panier est vide",
+        "startShopping": "Commencer à magasiner",
+        "myProfile": "Mon Profil",
+        "logout": "Déconnexion",
+        "signIn": "Connexion",
+        "joinUs": "Rejoignez-nous",
+        "becomeSeller": "Devenir Partenaire",
+        "deliveryTeam": "Rejoignez L'Équipe de Livraison",
+        "signoutSuccess": "Déconnexion réussie",
+        "signoutError": "Échec de la déconnexion"
+      },
+      "categories": {
+        "title": "Toutes les catégories",
+        "loading": "Chargement...",
+        "fetchError": "Échec du chargement des catégories",
+        "errorPrefix": "Erreur lors du chargement des catégories :",
+        "Laptops": "Ordinateurs portables",
+        "Gaming": "Jeux vidéo",
+        "Business": "Professionnel",
+        "Ultrabooks": "Ultrabooks",
+        "MacBooks": "MacBooks",
+        "Desktops": "Ordinateurs de bureau",
+        "Gaming PCs": "PC Gaming",
+        "All-in-One": "Tout-en-un",
+        "Workstations": "Stations de travail",
+        "Mini PCs": "Mini PC",
+        "Accessories": "Accessoires",
+        "groups": {
+          "Keyboards": "Claviers",
+          "Mice": "Souris",
+          "External Drives": "Disques externes",
+          "Monitors": "Écrans",
+          "Routers": "Routeurs",
+          "Modems": "Modems",
+          "Switches": "Switchs",
+          "Adapters": "Adaptateurs",
+          "Storage": "Stockage"
+        },
+        "items": {
+          "Mechanical": "Mécanique",
+          "Wireless": "Sans fil",
+          "Gaming": "Gaming",
+          "SSD": "SSD",
+          "HDD": "Disque dur",
+          "4K": "4K",
+          "Wi-Fi 6": "Wi-Fi 6",
+          "Ethernet": "Ethernet"
+        }
+      },"signIn": {
+    "title": "Bienvenue",
+    "subtitle": "Entrez votre email et mot de passe pour vous connecter.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Entrez votre email",
+    "passwordLabel": "Mot de passe",
+    "passwordPlaceholder": "Entrez votre mot de passe",
+    "showPassword": "Afficher le mot de passe",
+    "hidePassword": "Masquer le mot de passe",
+    "forgotPassword": "Mot de passe oublié ?",
+    "signInButton": "Se connecter",
+    "signingIn": "Connexion en cours...",
+    "orDivider": "OU",
+    "newUserPrompt": "Nouveau sur Electsy ?",
+    "createAccount": "Créer un compte",
+    "success": "Connexion réussie !",
+    "error": "Quelque chose s'est mal passé !"
+  },
+
+ "signUp": {
+    "title": "Créer un compte",
+    "subtitle": "Entrez vos détails pour vous inscrire.",
+    "nameLabel": "Nom",
+    "namePlaceholder": "Entrez votre nom",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Entrez votre email",
+    "passwordLabel": "Mot de passe",
+    "passwordPlaceholder": "Entrez votre mot de passe",
+    "confirmPasswordLabel": "Confirmer le mot de passe",
+    "confirmPasswordPlaceholder": "Confirmez votre mot de passe",
+    "addressLabel": "Adresse",
+    "addressPlaceholder": "Entrez votre adresse",
+    "phoneLabel": "Numéro de téléphone",
+    "phonePlaceholder": "20 123 456",
+    "phoneHint": "Numéro tunisien (8 chiffres)",
+    "submitButton": "S'inscrire",
+    "existingAccountPrompt": "Vous avez déjà un compte ?",
+    "signInLink": "Se connecter",
+    "success": "Inscription réussie !",
+    "errors": {
+      "passwordMismatch": "Les mots de passe ne correspondent pas !",
+      "invalidPhone": "Veuillez entrer un numéro tunisien valide de 8 chiffres",
+      "generic": "Quelque chose s'est mal passé !"
+    }
+  },
+
+"product": {
+    "loading": "Chargement...",
+    "fetchError": "Échec du chargement du produit",
+    "reviewError": "Erreur lors du chargement des avis :",
+    "notFound": "Produit non trouvé",
+    "goBack": "Retour",
+    "home": "Accueil",
+    "mustLogin": "Vous devez vous connecter pour ajouter des articles à votre panier.",
+    "mustLoginWishlist": "Vous devez vous connecter pour gérer votre liste de souhaits.",
+    "outOfStock": "Cet article est en rupture de stock ou quantité insuffisante.",
+    "addedToCart": "Ajouté au panier avec succès !",
+    "cartError": "Échec de l'ajout au panier",
+    "addedToWishlist": "Ajouté à la liste de souhaits",
+    "removedFromWishlist": "Retiré de la liste de souhaits",
+    "wishlistError": "Échec de la mise à jour de la liste de souhaits",
+    "inStock": "En stock",
+    "review": "avis",
+    "reviews": "avis",
+    "selectOption": "Sélectionner une option :",
+    "save": "Économisez",
+    "off": "DE RÉDUCTION",
+    "discount": "réduction",
+    "ends": "Se termine le",
+    "specialOffer": "Offre spéciale",
+    "ecoFriendly": "Emballage écologique",
+    "keyFeatures": "Caractéristiques clés",
+    "unknownSeller": "Vendeur inconnu",
+    "positive": "Positif",
+    "freeShipping": "Livraison gratuite",
+    "warranty": "Garantie 1 an",
+    "quantity": "Quantité",
+    "addToCart": "Ajouter au panier",
+    "soldOut": "En rupture de stock",
+    "buyNow": "Acheter maintenant",
+    "securePayment": "Paiement sécurisé",
+    "freeReturns": "Retours gratuits",
+    "returnsPolicy": "Retours sous 30 jours",
+    "tabs": {
+      "description": "Description",
+      "specifications": "Spécifications",
+      "reviews": "Avis"
+    },
+    "description": "Description du produit",
+    "general": "Général",
+    "brand": "Marque",
+    "model": "Modèle",
+    "technical": "Technique"
+  },
+  "seller": {
+    "title": "Devenir Vendeur",
+    "subtitle": "Commencez votre parcours en tant que vendeur en remplissant le formulaire ci-dessous.",
+    "email": "Email",
+    "emailPlaceholder": "Entrez votre email",
+    "shopName": "Nom du magasin",
+    "shopNamePlaceholder": "Entrez le nom de votre magasin",
+    "address": "Adresse du siège",
+    "addressPlaceholder": "Entrez l'adresse de votre siège",
+    "fiscalId": "Carte d'identification fiscale",
+    "tradeRegister": "Registre du commerce",
+    "submit": "Soumettre",
+    "submitting": "Envoi en cours...",
+    "or": "OU",
+    "alreadySeller": "Déjà vendeur ?",
+    "signIn": "Se connecter",
+    "checkStatus": "Voulez-vous vérifier l'état de votre demande ?",
+    "clickHere": "Cliquez ici",
+    "step1": "Étape 1 : Remplissez votre demande d'inscription",
+    "step1Desc": "Complétez le formulaire initial pour commencer le processus.",
+    "step2": "Étape 2 : Complétez le formulaire d'inscription",
+    "step2Desc": "Vous recevrez un email avec des instructions supplémentaires et les documents requis.",
+    "step3": "Étape 3 : Examen de la demande",
+    "step3Desc": "Notre équipe examinera attentivement votre demande et vos documents.",
+    "step4": "Étape 4 : Commencez à vendre",
+    "step4Desc": "Une fois approuvé, vous pouvez commencer à faire vos premières ventes sur notre plateforme 🥳.",
+    "fileTypeError": "Veuillez télécharger un fichier PDF.",
+    "fileSizeError": "La taille du fichier doit être inférieure à 5 Mo.",
+    "successMessage": "Votre demande a été soumise avec succès ! Veuillez attendre que notre équipe examine votre demande. Nous vous contacterons par email.",
+    "errorMessage": "Quelque chose s'est mal passé !"
+  },
+  "delivery": {
+    "title": "Rejoignez Notre Équipe de Livraison",
+    "email": "Email",
+    "emailPlaceholder": "votre@email.com",
+    "vehicleType": "Type de véhicule",
+    "vehicleTypePlaceholder": "Voiture, Moto, etc.",
+    "vehicleNumber": "Numéro de véhicule",
+    "vehicleNumberPlaceholder": "ex. TN 1234",
+    "deliveryArea": "Zone de livraison",
+    "deliveryAreaPlaceholder": "Votre zone de travail",
+    "contactNumber": "Numéro de contact",
+    "contactNumberPlaceholder": "20 123 456",
+    "phoneHint": "Entrez votre numéro tunisien à 8 chiffres",
+    "phoneError": "Veuillez entrer un numéro tunisien valide à 8 chiffres",
+    "cv": "Votre CV (PDF)",
+    "submit": "Soumettre la demande",
+    "submitting": "Envoi en cours...",
+    "checkStatus": "Voulez-vous vérifier l'état de votre demande ?",
+    "clickHere": "Cliquez ici",
+    "fileTypeError": "Veuillez télécharger un fichier PDF.",
+    "fileSizeError": "La taille du fichier doit être inférieure à 5 Mo.",
+    "successMessage": "Demande soumise avec succès ! Nous examinerons votre demande bientôt.",
+    "errorMessage": "Quelque chose s'est mal passé !",
+    "benefitsTitle": "Livrez Avec Nous",
+    "benefitsSubtitle": "Gagnez un revenu compétitif avec des horaires flexibles tout en livrant le bonheur aux clients à travers la Tunisie.",
+    "benefit1": "Horaires flexibles",
+    "benefit2": "Revenus compétitifs",
+    "benefit3": "Paiements hebdomadaires"
+  },
+  "cart": {
+    "title": "Votre Panier",
+    "items": "articles",
+    "item": "article",
+    "clearCart": "Vider le panier",
+    "emptyCart": {
+      "title": "Votre panier est vide",
+      "description": "Commencez vos achats pour ajouter des articles à votre panier",
+      "button": "Parcourir les produits"
+    },
+    "orderSummary": {
+      "title": "Récapitulatif de commande",
+      "subtotal": "Sous-total",
+      "shipping": "Livraison",
+      "freeShipping": "GRATUITE",
+      "tax": "Taxe (10%)",
+      "total": "Total",
+      "checkout": "Passer à la caisse",
+      "continueShopping": "Continuer vos achats"
+    },
+    "product": {
+      "soldBy": "Vendu par",
+      "inStock": "En stock",
+      "outOfStock": "En rupture",
+      "itemTotal": "Total de l'article",
+      "quantity": "Quantité",
+      "remove": "Supprimer"
+    },
+    "authRequired": {
+      "title": "Votre panier d'achat",
+      "description": "Connectez-vous pour voir vos articles enregistrés et passer commande",
+      "signIn": "Se connecter",
+      "createAccount": "Créer un compte"
+    },
+    "errors": {
+      "removeOutOfStock": "Veuillez supprimer les articles en rupture de stock pour passer commande",
+      "quantityMin": "La quantité ne peut pas être inférieure à 1",
+      "quantityMax": "La quantité ne peut pas dépasser le stock disponible ({stock})",
+      "clearConfirm": "Êtes-vous sûr de vouloir vider votre panier ?",
+      "loadError": "Échec du chargement de votre panier",
+      "removeError": "Échec de la suppression de l'article",
+      "quantityError": "Échec de la mise à jour de la quantité",
+      "clearError": "Échec de la suppression du panier"
+    }
+  },
+  "wishlist": {
+    "title": "Votre Liste de Souhaits",
+    "items": "articles",
+    "item": "article",
+    "clearAll": "effacer Tout",
+    "emptyWishlist": {
+      "title": "Votre liste de souhaits est vide",
+      "description": "Ajoutez des articles à votre liste de souhaits pour les voir ici",
+      "button": "Commencer à magasiner"
+    },
+    "authRequired": {
+      "title": "Votre Liste de Souhaits Vous Attend",
+      "description": "Connectez-vous pour enregistrer les articles que vous aimez et y accéder à tout moment",
+      "signIn": "Se connecter",
+      "createAccount": "Créer un compte"
+    },
+    "errors": {
+      "loadError": "Échec du chargement de la liste de souhaits",
+      "removeError": "Échec de la suppression de l'article",
+      "clearError": "Échec de la suppression de la liste de souhaits",
+      "clearConfirm": "Êtes-vous sûr de vouloir vider votre liste de souhaits ?"
+    },
+    "success": {
+      "itemRemoved": "Article retiré de la liste de souhaits",
+      "wishlistCleared": "Liste de souhaits vidée"
+    }
+  },
+  "productCard": {
+    "inStock": "En stock",
+    "outOfStock": "En rupture",
+    "soldBy": "Vendu par",
+    "reviews": {
+      "single": "avis",
+      "multiple": "avis"
+    },
+    "wishlist": {
+      "add": "Ajouter à la liste de souhaits",
+      "remove": "Retirer de la liste de souhaits",
+      "successAdd": "Ajouté à la liste de souhaits",
+      "successRemove": "Retiré de la liste de souhaits",
+      "error": "Échec de la mise à jour de la liste de souhaits",
+      "loginRequired": "Vous devez vous connecter pour gérer votre liste de souhaits"
+    },
+    "cart": {
+      "add": "Ajouter au panier",
+      "soldOut": "Épuisé",
+      "success": "Article ajouté au panier",
+      "error": "Échec de l'ajout au panier",
+      "loginRequired": "Vous devez vous connecter pour ajouter des articles au panier",
+      "outOfStock": "Cet article est en rupture de stock"
+    },
+    "promotion": {
+      "ends": "Se termine le",
+      "discount": "{discountRate}% DE RÉDUCTION",
+      "tooltip": {
+        "discount": "{discountRate}% de réduction"
+      }
+    }
+  },
+
+ "productCategory": {
+    "title": "Tous les produits",
+    "loading": "Chargement des produits...",
+    "showing": "Affichage de",
+    "products": "produits",
+    "noProducts": {
+      "title": "Aucun produit trouvé",
+      "description": "Nous n'avons trouvé aucun produit dans cette catégorie. Essayez de parcourir d'autres catégories ou revenez plus tard."
+    },
+    "errors": {
+      "loadError": "Impossible de charger les produits. Veuillez réessayer plus tard.",
+      "wishlist": {
+        "loginRequired": "Vous devez vous connecter pour gérer votre liste de souhaits.",
+        "addSuccess": "Ajouté à la liste de souhaits",
+        "removeSuccess": "Retiré de la liste de souhaits",
+        "error": "Échec de la mise à jour de la liste de souhaits",
+        "loadError": "Échec du chargement de la liste de souhaits"
+      }
+    }
+  },
+
+  "applicationStatus": {
+    "title": "Vérifier l'état de la demande",
+    "emailPlaceholder": "Entrez votre email",
+    "checkButton": "Vérifier l'état",
+    "checkingButton": "Vérification en cours...",
+    "error": {
+      "emptyEmail": "Veuillez entrer votre email",
+      "fetchError": "Erreur lors de la vérification de l'état de la demande. Veuillez réessayer."
+    },
+    "status": {
+      "approved": {
+        "title": "Votre demande a été approuvée !",
+        "details": "Veuillez vérifier votre email pour plus de détails.",
+        "redirect": "Vous serez redirigé vers la page de connexion sous peu..."
+      },
+      "pending": "Votre demande est toujours en cours d'examen.",
+      "rejected": {
+        "title": "Votre demande a été rejetée.",
+        "details": "Vérifiez votre email pour plus d'informations."
+      },
+      "label": "Statut : {status}"
+    },
+    "becomeSeller": {
+      "text": "Vous souhaitez devenir vendeur ?",
+      "link": "Cliquez ici pour postuler"
+    }
+  },
+  "adminDashboard": {
+    "title": "Portail Admin",
+    "welcome": "Bienvenue ",
+    "searchPlaceholder": "Rechercher utilisateurs, vendeurs...",
+    "role": "Administrateur",
+    "sidebar": {
+      "dashboard": "Tableau de bord",
+      "users": "Gestion des utilisateurs",
+      "sellers": "Vendeurs",
+      "deliveries": "Livraisons",
+      "analytics": "Analytique",
+      "settings": "Paramètres",
+      "signOut": "Déconnexion"
+    },
+    "notifications": {
+      "new": "Nouvelles notifications"
+    }
+  },
+  "sellerDashboard": {
+    "title": "Espace Vendeur",
+    "welcome": "Bienvenue",
+    "searchPlaceholder": "Rechercher produits, commandes...",
+    "role": "Vendeur Premium",
+    "sidebar": {
+      "dashboard": "Tableau de bord",
+      "products": "Catalogue produits",
+      "addInventory": "Ajouter stock",
+      "promotions": "Promotions",
+      "orders": "Commandes",
+      "customers": "Clients",
+      "sales": "Ventes",
+      "analytics": "Analytique",
+      "settings": "Paramètres",
+      "signOut": "Déconnexion"
+    },
+    "notifications": {
+      "new": "Nouvelles notifications"
+    }
+  },
+
+  "deliveryDashboard": {
+    "title": "Centre de Livraison",
+    "welcome": "Bienvenue",
+    "searchPlaceholder": "Rechercher des livraisons...",
+    "role": "Livreur",
+    "sidebar": {
+      "dashboard": "Tableau de bord",
+      "deliveries": "Mes Livraisons",
+      "map": "Carte de Livraison",
+      "history": "Historique",
+      "settings": "Paramètres",
+      "signOut": "Déconnexion"
+    },
+    "notifications": {
+      "new": "Nouvelles notifications"
+    }
+  },
+"sellerProductsPage": {
+    "loading": "Chargement...",
+    "error": "Erreur lors du chargement des produits",
+    "noProducts": "Aucun produit trouvé pour ce vendeur",
+    "shopHeader": {
+      "defaultShopName": "Boutique du vendeur",
+      "productsAvailable": {
+        "one": "produit disponible",
+        "other": "produits disponibles"
+      }
+    },
+    "emptyState": "Aucun produit disponible de ce vendeur",
+    "wishlistMessages": {
+      "loginRequired": "Vous devez vous connecter pour gérer votre liste de souhaits",
+      "added": "Ajouté à la liste de souhaits",
+      "removed": "Retiré de la liste de souhaits",
+      "updateError": "Échec de la mise à jour de la liste de souhaits"
+    }
+  },
+  "setPassword": {
+    "title": "Définir votre mot de passe",
+    "passwordPlaceholder": "Entrez un nouveau mot de passe",
+    "confirmPlaceholder": "Confirmez le mot de passe",
+    "submitButton": "Définir le mot de passe",
+    "loadingButton": "Enregistrement du mot de passe...",
+    "errors": {
+      "mismatch": "Les mots de passe ne correspondent pas.",
+      "generic": "Erreur lors de la définition du mot de passe. Veuillez réessayer."
+    },
+    "success": "Mot de passe défini avec succès! Redirection vers la connexion...",
+    "validation": {
+      "minLength": "Le mot de passe doit contenir au moins 8 caractères",
+      "requirements": "Doit contenir majuscule, minuscule, chiffre et caractère spécial"
+    }
+  },
+  "forgotPassword": {
+    "title": "Mot de passe oublié",
+    "subtitle": "Entrez votre email pour réinitialiser votre mot de passe",
+    "emailLabel": "Email",
+    "emailPlaceholder": "Entrez votre email",
+    "submitButton": "Envoyer le lien de réinitialisation",
+    "backButton": "Retour à la connexion",
+    "success": "Email de réinitialisation envoyé. Vérifiez votre boîte de réception.",
+    "error": "Quelque chose s'est mal passé!"
+  },
+  "productReviews": {
+    "title": "Avis des clients",
+    "noReviews": {
+      "title": "Pas encore d'avis",
+      "message": {
+        "loggedIn": "Soyez le premier à partager votre avis !",
+        "loggedOut": "Connectez-vous pour écrire le premier avis."
+      }
+    },
+    "summary": {
+      "average": "Basé sur {count} avi{countSuffix}",
+      "breakdown": "Répartition des notes"
+    },
+    "review": {
+      "anonymous": "Anonyme",
+      "edit": "Modifier l'avis",
+      "delete": "Supprimer l'avis",
+      "deleteConfirm": "Êtes-vous sûr de vouloir supprimer cet avis ?",
+      "alreadyReviewed": "Vous avez déjà évalué ce produit",
+      "editInstructions": "Vous pouvez modifier ou supprimer votre avis ci-dessus."
+    },
+    "form": {
+      "title": "Écrire un avis",
+      "ratingLabel": "Votre note",
+      "commentLabel": "Votre avis",
+      "commentPlaceholder": "Partagez votre expérience détaillée avec ce produit...",
+      "submit": "Soumettre l'avis",
+      "update": "Mettre à jour l'avis",
+      "cancel": "Annuler",
+      "loginRequired": "Vous devez vous connecter pour {action} un avis.",
+      "actions": {
+        "submit": "soumettre",
+        "update": "mettre à jour",
+        "delete": "supprimer"
+      }
+    },
+    "success": {
+      "submit": "Avis soumis avec succès !",
+      "update": "Avis mis à jour avec succès !",
+      "delete": "Avis supprimé avec succès !"
+    },
+    "error": {
+      "load": "Échec du chargement des avis",
+      "submit": "Échec de la soumission de l'avis",
+      "update": "Échec de la mise à jour de l'avis",
+      "delete": "Échec de la suppression de l'avis",
+      "tryAgain": "Réessayer"
+    },
+    "writeReview": "Écrire un avis"
+  }
+}

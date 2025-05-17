@@ -5,8 +5,10 @@ import axios from 'axios';
 import ProductCard from '../components/ProductCard';
 import { BsShop } from 'react-icons/bs';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const SellerProductsPage = () => {
+  const { t, i18n } = useTranslation();
   const { sellerId } = useParams();
   const { currentUser } = useSelector((state) => state.user);
   const wishlistItems = useSelector((state) => state.wishlist.items || []);
@@ -30,7 +32,7 @@ const SellerProductsPage = () => {
         }
       } catch (error) {
         console.error('Error fetching seller products:', error);
-        setError(error.response?.data?.message || 'Failed to load products');
+        setError(error.response?.data?.message || t('sellerProductsPage.error'));
         setProducts([]);
       } finally {
         setLoading(false);
@@ -55,18 +57,18 @@ const SellerProductsPage = () => {
             }))
           });
         } catch (err) {
-          toast.error('Failed to load wishlist');
+          toast.error(t('sellerProductsPage.wishlistMessages.updateError'));
         }
       }
     };
 
     fetchProducts();
     fetchWishlist();
-  }, [sellerId, currentUser, dispatch]);
+  }, [sellerId, currentUser, dispatch, t]);
 
   const handleWishlistToggle = async (productId, isAdded, sellerId) => {
     if (!currentUser) {
-      toast.error('You must log in to manage your wishlist.');
+      toast.error(t('sellerProductsPage.wishlistMessages.loginRequired'));
       return;
     }
 
@@ -89,7 +91,7 @@ const SellerProductsPage = () => {
             stock: sellerOffer?.stock || product?.stock || 0
           }
         });
-        toast.success('Added to wishlist');
+        toast.success(t('sellerProductsPage.wishlistMessages.added'));
       } else {
         const response = await axios.get(`${API_URL}?userId=${currentUser.id}`);
         const wishlist = response.data;
@@ -103,16 +105,16 @@ const SellerProductsPage = () => {
             data: { userId: currentUser.id, itemId: item._id }
           });
           dispatch({ type: 'wishlist/removeItem', payload: item._id });
-          toast.success('Removed from wishlist');
+          toast.success(t('sellerProductsPage.wishlistMessages.removed'));
         }
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update wishlist');
+      toast.error(err.response?.data?.message || t('sellerProductsPage.wishlistMessages.updateError'));
     }
   };
 
   if (loading) {
-    return <div className="container mx-auto p-4">Loading...</div>;
+    return <div className="container mx-auto p-4">{t('sellerProductsPage.loading')}</div>;
   }
 
   if (error) {
@@ -120,11 +122,11 @@ const SellerProductsPage = () => {
   }
 
   if (products.length === 0) {
-    return <div className="container mx-auto p-4">No products found for this seller.</div>;
+    return <div className="container mx-auto p-4">{t('sellerProductsPage.noProducts')}</div>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Premium Seller Header */}
       <div className="mb-8">
         <div className="flex items-center justify-center gap-4">
@@ -169,7 +171,7 @@ const SellerProductsPage = () => {
         </div>
       ) : (
         <div className="text-center py-12">
-          <p className="text-gray-500 text-lg">No products available from this seller</p>
+          <p className="text-gray-500 text-lg">{t('sellerProductsPage.emptyState')}</p>
         </div>
       )}
     </div>

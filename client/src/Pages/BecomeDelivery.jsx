@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import logo from "../assets/ecomLogo.png";
 import deliveryIllustration from "../assets/deliveryIllustration.png";
+import { useTranslation } from "react-i18next";
 
 const BecomeDelivery = () => {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     email: "",
     vehicleType: "",
@@ -21,26 +23,19 @@ const BecomeDelivery = () => {
     const { name, value, files } = e.target;
     
     if (name === "contactNumber") {
-      // Only allow numbers and automatically add +216 if not present
       const numericValue = value.replace(/\D/g, '');
-      
-      // Limit to 8 digits after +216
       if (numericValue.length > 8) return;
-      
-      setFormData({ 
-        ...formData, 
-        [name]: `+216${numericValue}` 
-      });
+      setFormData({ ...formData, [name]: `+216${numericValue}` });
       return;
     }
     
     if (files) {
       if (files[0].type !== "application/pdf") {
-        setAlert({ show: true, type: "error", message: "Please upload a PDF file." });
+        setAlert({ show: true, type: "error", message: t('delivery.fileTypeError') });
         return;
       }
       if (files[0].size > 5 * 1024 * 1024) {
-        setAlert({ show: true, type: "error", message: "File size must be less than 5MB." });
+        setAlert({ show: true, type: "error", message: t('delivery.fileSizeError') });
         return;
       }
       setFormData({ ...formData, [name]: files[0] });
@@ -52,12 +47,11 @@ const BecomeDelivery = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Final validation for Tunisian phone number
-    if (formData.contactNumber.length !== 12) { // +216 + 8 digits
+    if (formData.contactNumber.length !== 12) {
       setAlert({ 
         show: true, 
         type: "error", 
-        message: "Please enter a valid 8-digit Tunisian phone number" 
+        message: t('delivery.phoneError') 
       });
       return;
     }
@@ -80,7 +74,7 @@ const BecomeDelivery = () => {
       setAlert({
         show: true,
         type: "success",
-        message: "Application submitted successfully! We'll review your request soon.",
+        message: t('delivery.successMessage'),
       });
 
       setFormData({
@@ -96,7 +90,7 @@ const BecomeDelivery = () => {
       setAlert({
         show: true,
         type: "error",
-        message: err.response?.data?.message || "Something went wrong!",
+        message: err.response?.data?.message || t('delivery.errorMessage'),
       });
     } finally {
       setLoading(false);
@@ -122,26 +116,25 @@ const BecomeDelivery = () => {
       )}
 
       <div className="flex w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
-        {/* Left Form Section */}
         <div className="w-1/2 p-8">
           <div className="flex justify-center mb-6">
             <img src={logo} alt="Ecom Logo" className="h-16" />
           </div>
           <h2 className="text-2xl font-bold text-center mb-6 text-gray-800">
-            Join Our Delivery Team
+            {t('delivery.title')}
           </h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-gray-600">Email</span>
+                <span className="label-text text-gray-600">{t('delivery.email')}</span>
               </label>
               <input
                 type="email"
                 name="email"
                 value={formData.email}
                 onChange={handleChange}
-                placeholder="your@email.com"
+                placeholder={t('delivery.emailPlaceholder')}
                 className="input input-bordered w-full bg-white border-gray-200"
                 required
               />
@@ -150,28 +143,28 @@ const BecomeDelivery = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-gray-600">Vehicle Type</span>
+                  <span className="label-text text-gray-600">{t('delivery.vehicleType')}</span>
                 </label>
                 <input
                   type="text"
                   name="vehicleType"
                   value={formData.vehicleType}
                   onChange={handleChange}
-                  placeholder="Car, Bike, etc."
+                  placeholder={t('delivery.vehicleTypePlaceholder')}
                   className="input input-bordered w-full bg-white border-gray-200"
                   required
                 />
               </div>
               <div className="form-control">
                 <label className="label">
-                  <span className="label-text text-gray-600">Vehicle Number</span>
+                  <span className="label-text text-gray-600">{t('delivery.vehicleNumber')}</span>
                 </label>
                 <input
                   type="text"
                   name="vehicleNumber"
                   value={formData.vehicleNumber}
                   onChange={handleChange}
-                  placeholder="e.g. TN 1234"
+                  placeholder={t('delivery.vehicleNumberPlaceholder')}
                   className="input input-bordered w-full bg-white border-gray-200"
                   required
                 />
@@ -180,14 +173,14 @@ const BecomeDelivery = () => {
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-gray-600">Delivery Area</span>
+                <span className="label-text text-gray-600">{t('delivery.deliveryArea')}</span>
               </label>
               <input
                 type="text"
                 name="deliveryArea"
                 value={formData.deliveryArea}
                 onChange={handleChange}
-                placeholder="Your working area"
+                placeholder={t('delivery.deliveryAreaPlaceholder')}
                 className="input input-bordered w-full bg-white border-gray-200"
                 required
               />
@@ -195,7 +188,7 @@ const BecomeDelivery = () => {
 
             <div className="form-control">
                 <label className="label">
-                    <span className="label-text text-gray-600">Contact Number</span>
+                    <span className="label-text text-gray-600">{t('delivery.contactNumber')}</span>
                 </label>
                 <div className="flex items-stretch">
                     <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-white text-gray-600 text-sm">
@@ -206,7 +199,7 @@ const BecomeDelivery = () => {
                     name="contactNumber"
                     value={formData.contactNumber.replace('+216', '')}
                     onChange={handleChange}
-                    placeholder="20 123 456"
+                    placeholder={t('delivery.contactNumberPlaceholder')}
                     className="flex-1 input rounded-r-lg border-l-0 border-gray-300 bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100"
                     maxLength={8}
                     required
@@ -214,14 +207,14 @@ const BecomeDelivery = () => {
                 </div>
               <label className="label">
                 <span className="label-text-alt text-gray-500">
-                  Enter your 8-digit Tunisian number
+                  {t('delivery.phoneHint')}
                 </span>
               </label>
             </div>
 
             <div className="form-control">
               <label className="label">
-                <span className="label-text text-gray-600">Your CV (PDF)</span>
+                <span className="label-text text-gray-600">{t('delivery.cv')}</span>
               </label>
               <input
                 type="file"
@@ -240,23 +233,22 @@ const BecomeDelivery = () => {
                 loading ? "loading" : ""
               }`}
             >
-              {loading ? "Submitting..." : "Submit Application"}
+              {loading ? t('delivery.submitting') : t('delivery.submit')}
             </button>
           </form>
           <div className="mt-4">
                 <p className="text-sm text-gray-600">
-                Want to check your application status?{" "}
+                {t('delivery.checkStatus')}{" "}
                 <a
                     href="/application-status"
                     className="text-blue-500 hover:underline"
                 >
-                    Click here
+                    {t('delivery.clickHere')}
                 </a>
                 </p>
             </div>
         </div>
 
-        {/* Right Design Section */}
         <div className="w-1/2 bg-gradient-to-br from-indigo-600 to-purple-700 p-10 flex flex-col items-center justify-center relative overflow-hidden">
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-20 left-20 w-32 h-32 rounded-full bg-white"></div>
@@ -265,9 +257,9 @@ const BecomeDelivery = () => {
           </div>
           
           <div className="relative z-10 text-center text-white">
-            <h2 className="text-3xl font-bold mb-6">Deliver With Us</h2>
+            <h2 className="text-3xl font-bold mb-6">{t('delivery.benefitsTitle')}</h2>
             <p className="text-lg mb-8 max-w-md">
-              Earn competitive pay with flexible hours while delivering happiness to customers across Tunisia.
+              {t('delivery.benefitsSubtitle')}
             </p>
             
             <div className="w-3/4 mx-auto">
@@ -283,19 +275,19 @@ const BecomeDelivery = () => {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                Flexible working hours
+                {t('delivery.benefit1')}
               </p>
               <p className="flex items-center justify-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                Competitive earnings
+                {t('delivery.benefit2')}
               </p>
               <p className="flex items-center justify-center gap-2">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
                 </svg>
-                Weekly payments
+                {t('delivery.benefit3')}
               </p>
             </div>
           </div>

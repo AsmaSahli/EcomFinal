@@ -17,8 +17,10 @@ import ProductImageGallery from '../components/ProductImageGallery';
 import ProductReviews from '../components/ProductReviews';
 import BreadcrumbNav from '../components/BreadcrumbNav';
 import SimilarProducts from '../components/SimilarProducts';
+import { useTranslation } from 'react-i18next';
 
 const ProductDetailsPage = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -53,14 +55,14 @@ const ProductDetailsPage = () => {
           setSelectedVariant(response.data.product.variants[0]);
         }
       } catch (err) {
-        setError(err.response?.data?.message || 'Failed to load product');
+        setError(err.response?.data?.message || t('product.fetchError'));
       } finally {
         setLoading(false);
       }
     };
 
     fetchProduct();
-  }, [id, sellerId]);
+  }, [id, sellerId, t]);
 
   useEffect(() => {
     if (product && currentSeller?.sellerId._id) {
@@ -74,14 +76,14 @@ const ProductDetailsPage = () => {
           setAverageRating(parseFloat(avgRating));
           setReviewCount(reviews.length);
         } catch (err) {
-          console.error('Error fetching reviews:', err);
+          console.error(t('product.reviewError'), err);
           setAverageRating(0);
           setReviewCount(0);
         }
       };
       fetchReviews();
     }
-  }, [product, currentSeller]);
+  }, [product, currentSeller, t]);
 
   useEffect(() => {
     if (product && currentUser) {
@@ -103,12 +105,12 @@ const ProductDetailsPage = () => {
 
   const handleAddToCart = async () => {
     if (!currentUser) {
-      toast.error('You must log in to add items to your cart.');
+      toast.error(t('product.mustLogin'));
       return;
     }
 
     if (!currentSeller?.stock || currentSeller.stock < quantity) {
-      toast.error('This item is out of stock or insufficient quantity.');
+      toast.error(t('product.outOfStock'));
       return;
     }
 
@@ -140,19 +142,19 @@ const ProductDetailsPage = () => {
         variantId: selectedVariant?._id,
       }));
 
-      toast.success('Added to cart successfully!', {
+      toast.success(t('product.addedToCart'), {
         position: "bottom-right",
         className: "!bg-green-50 !text-green-700",
         icon: <BsCheckCircleFill className="text-green-500" />,
       });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to add item to cart');
+      toast.error(err.response?.data?.message || t('product.cartError'));
     }
   };
 
   const toggleWishlist = async () => {
     if (!currentUser) {
-      toast.error('You must log in to manage your wishlist.');
+      toast.error(t('product.mustLoginWishlist'));
       return;
     }
 
@@ -175,7 +177,7 @@ const ProductDetailsPage = () => {
             data: { userId: currentUser.id, itemId: item._id },
           });
           dispatch(removeWishlistItem(item._id));
-          toast.success('Removed from wishlist', {
+          toast.success(t('product.removedFromWishlist'), {
             position: "bottom-right",
             className: "!bg-red-50 !text-red-700",
             icon: <IoMdHeartEmpty className="text-red-500" />,
@@ -206,7 +208,7 @@ const ProductDetailsPage = () => {
             stock: currentSeller?.stock || product.stock || 0,
             variantId: selectedVariant?._id,
           }));
-          toast.success('Added to wishlist', {
+          toast.success(t('product.addedToWishlist'), {
             position: "bottom-right",
             className: "!bg-pink-50 !text-pink-700",
             icon: <IoMdHeart className="text-pink-500" />,
@@ -215,7 +217,7 @@ const ProductDetailsPage = () => {
       }
       setIsWishlisted(!isWishlisted);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update wishlist');
+      toast.error(err.response?.data?.message || t('product.wishlistError'));
     } finally {
       setIsTogglingWishlist(false);
     }
@@ -233,7 +235,7 @@ const ProductDetailsPage = () => {
     <div className="bg-white py-3 px-6 border-b border-gray-100">
       <div className="max-w-7xl mx-auto">
         <nav className="flex items-center text-sm text-gray-600">
-          <span className="text-gray-500">Loading...</span>
+          <span className="text-gray-500">{t('product.loading')}</span>
         </nav>
       </div>
     </div>
@@ -243,20 +245,20 @@ const ProductDetailsPage = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="bg-white p-8 rounded-xl shadow-sm max-w-md text-center">
         <div className="text-red-400 text-5xl mb-4">⚠️</div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">Product Not Found</h2>
+        <h2 className="text-xl font-semibold text-gray-800 mb-2">{t('product.notFound')}</h2>
         <p className="text-gray-500 mb-5">{error}</p>
         <div className="flex space-x-3 justify-center">
           <button
             onClick={() => navigate(-1)}
             className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
           >
-            Go back
+            {t('product.goBack')}
           </button>
           <button
             onClick={() => navigate('/')}
             className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
           >
-            Home
+            {t('product.home')}
           </button>
         </div>
       </div>
@@ -274,9 +276,9 @@ const ProductDetailsPage = () => {
   const currentPrice = hasDiscount ? promotionDetails?.newPrice?.toFixed(2) : currentSeller?.price?.toFixed(2);
   const originalPrice = hasDiscount ? promotionDetails?.oldPrice?.toFixed(2) : null;
   const discountRate = hasDiscount ? activePromotion.discountRate : 0;
-  const promotionName = hasDiscount ? activePromotion.name || 'Special Offer' : '';
+  const promotionName = hasDiscount ? activePromotion.name || t('product.specialOffer') : '';
   const promotionEndDate = hasDiscount
-    ? new Date(activePromotion.endDate).toLocaleDateString('en-US', {
+    ? new Date(activePromotion.endDate).toLocaleDateString(navigator.language, {
         month: 'short',
         day: 'numeric',
         year: 'numeric',
@@ -311,7 +313,7 @@ const ProductDetailsPage = () => {
                           {promotionName}
                         </span>
                         <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
-                          {discountRate}% OFF
+                          {discountRate}% {t('product.off')}
                         </span>
                       </div>
                     </div>
@@ -327,7 +329,7 @@ const ProductDetailsPage = () => {
                           {promotionName}
                         </span>
                         <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
-                          {discountRate}% OFF
+                          {discountRate}% {t('product.off')}
                         </span>
                       </div>
                     </div>
@@ -336,7 +338,7 @@ const ProductDetailsPage = () => {
                 <div className="absolute -top-1 left-2 w-5 h-2 bg-red-700/80 transform rotate-45 origin-bottom-left rounded-sm"></div>
                 <div className="absolute top-0 left-0 w-full h-1/2 bg-white/10 rounded-t-lg"></div>
                 <div className="absolute z-20 left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-gray-800 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg min-w-[150px]">
-                  <div className="absolute -top-1 left-1/ two w-2 h-2 bg-gray-800 rotate-45"></div>
+                  <div className="absolute -top-1 left-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
                   <div className="flex items-start space-x-2">
                     {promotionImage && (
                       <img
@@ -348,10 +350,10 @@ const ProductDetailsPage = () => {
                     <div>
                       <p className="font-bold text-sm">{promotionName}</p>
                       <p className="text-orange-300 font-medium text-xs">
-                        {discountRate}% discount
+                        {discountRate}% {t('product.discount')}
                       </p>
                       <p className="text-[10px] text-gray-300 mt-0.5">
-                        Ends {promotionEndDate}
+                        {t('product.ends')} {promotionEndDate}
                       </p>
                     </div>
                   </div>
@@ -404,14 +406,14 @@ const ProductDetailsPage = () => {
                   {renderStars(averageRating)}
                 </div>
                 <span className="text-sm text-gray-500">
-                  {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? 'review' : 'reviews'}) •{' '}
-                  <span className="text-green-600">{currentSeller?.stock > 0 ? 'In Stock' : 'Out of Stock'}</span>
+                  {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? t('product.review') : t('product.reviews')}) •{' '}
+                  <span className="text-green-600">{currentSeller?.stock > 0 ? t('product.inStock') : t('product.outOfStock')}</span>
                 </span>
               </div>
 
               {product.variants?.length > 0 && (
                 <div className="mb-5">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">Select Option:</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">{t('product.selectOption')}</h3>
                   <div className="flex flex-wrap gap-2">
                     {product.variants.map((variant, index) => (
                       <button
@@ -441,25 +443,25 @@ const ProductDetailsPage = () => {
                         ${originalPrice}
                       </span>
                       <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                        Save ${(originalPrice - currentPrice).toFixed(2)} ({discountRate}% OFF)
+                        {t('product.save')} ${(originalPrice - currentPrice).toFixed(2)} ({discountRate}% {t('product.off')})
                       </span>
                     </div>
                   )}
                 </div>
                 {hasDiscount && (
                   <div className="mt-2 text-sm text-gray-600">
-                    <span className="font-medium">{promotionName}</span> • Ends {promotionEndDate}
+                    <span className="font-medium">{promotionName}</span> • {t('product.ends')} {promotionEndDate}
                   </div>
                 )}
                 <div className="mt-2 flex items-center text-sm text-gray-600">
                   <RiLeafLine className="text-green-500 mr-1" />
-                  Eco-friendly packaging
+                  {t('product.ecoFriendly')}
                 </div>
               </div>
 
               {keyFeatures.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-medium text-lg text-gray-900 mb-3">Key Features</h3>
+                  <h3 className="font-medium text-lg text-gray-900 mb-3">{t('product.keyFeatures')}</h3>
                   <ul className="space-y-3">
                     {keyFeatures.map((feature, index) => (
                       <li key={index} className="flex items-start">
@@ -482,7 +484,7 @@ const ProductDetailsPage = () => {
                         to={`/sellers/${currentSeller.sellerId._id}/products`}
                         className="font-medium text-gray-900 hover:text-purple-600"
                       >
-                        {currentSeller.sellerId.shopName || 'Unknown Seller'}
+                        {currentSeller.sellerId.shopName || t('product.unknownSeller')}
                       </Link>
                       <div className="flex items-center text-xs text-gray-500 mt-1">
                         <div className="flex items-center mr-3">
@@ -491,7 +493,7 @@ const ProductDetailsPage = () => {
                         </div>
                         <span>•</span>
                         <span className="ml-2">
-                          {currentSeller.sellerId.positiveFeedbackPercentage?.toFixed(0) || '90'}% Positive
+                          {currentSeller.sellerId.positiveFeedbackPercentage?.toFixed(0) || '90'}% {t('product.positive')}
                         </span>
                       </div>
                     </div>
@@ -499,11 +501,11 @@ const ProductDetailsPage = () => {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex items-center text-gray-600 p-2 bg-white rounded-lg border border-gray-200">
                       <RiTruckLine className="text-purple-500 mr-2" />
-                      Free shipping
+                      {t('product.freeShipping')}
                     </div>
                     <div className="flex items-center text-gray-600 p-2 bg-white rounded-lg border border-gray-200">
                       <RiShieldCheckLine className="text-purple-500 mr-2" />
-                      1-year warranty
+                      {t('product.warranty')}
                     </div>
                   </div>
                 </div>
@@ -511,7 +513,7 @@ const ProductDetailsPage = () => {
 
               <div className="mb-6">
                 <div className="flex items-center mb-4">
-                  <span className="mr-3 font-medium">Quantity:</span>
+                  <span className="mr-3 font-medium">{t('product.quantity')}:</span>
                   <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
                     <button
                       onClick={() => setQuantity(q => Math.max(1, q - 1))}
@@ -537,13 +539,13 @@ const ProductDetailsPage = () => {
                     disabled={currentSeller?.stock <= 0}
                   >
                     <FaShoppingCart className="mr-3" />
-                    {currentSeller?.stock > 0 ? 'Add to Cart' : 'Sold Out'}
+                    {currentSeller?.stock > 0 ? t('product.addToCart') : t('product.soldOut')}
                   </button>
                   <button
                     className="w-full py-3 px-4 bg-white border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
                     disabled={currentSeller?.stock <= 0}
                   >
-                    Buy Now
+                    {t('product.buyNow')}
                   </button>
                 </div>
               </div>
@@ -551,15 +553,15 @@ const ProductDetailsPage = () => {
               <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500 border-t border-gray-200 pt-4">
                 <div className="flex items-center">
                   <BsShieldCheck className="text-green-500 mr-1" />
-                  Secure Payment
+                  {t('product.securePayment')}
                 </div>
                 <div className="flex items-center">
                   <BsBoxSeam className="text-blue-500 mr-1" />
-                  Free Returns
+                  {t('product.freeReturns')}
                 </div>
                 <div className="flex items-center">
                   <RiExchangeLine className="text-purple-500 mr-1" />
-                  30-Day Returns
+                  {t('product.returnsPolicy')}
                 </div>
               </div>
             </div>
@@ -577,14 +579,14 @@ const ProductDetailsPage = () => {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {t(`product.tabs.${tab}`)}
                 </button>
               ))}
             </div>
             <div className="p-6 md:p-8">
               {activeTab === 'description' && (
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">Product Description</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">{t('product.description')}</h3>
                   <div className="text-gray-700 space-y-4">
                     {product.description.split('\n\n').map((p, i) => (
                       <p key={i}>{p}</p>
@@ -595,20 +597,20 @@ const ProductDetailsPage = () => {
               {activeTab === 'specifications' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-3">General</h4>
+                    <h4 className="font-bold text-gray-900 mb-3">{t('product.general')}</h4>
                     <div className="space-y-3">
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Brand</span>
+                        <span className="text-gray-600">{t('product.brand')}</span>
                         <span className="font-medium">BrandName</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">Model</span>
+                        <span className="text-gray-600">{t('product.model')}</span>
                         <span className="font-medium">{product.reference}</span>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-3">Technical</h4>
+                    <h4 className="font-bold text-gray-900 mb-3">{t('product.technical')}</h4>
                     <div className="space-y-3">
                       {product.tags?.slice(0, 4).map((tag, i) => (
                         <div key={i} className="flex justify-between py-2 border-b border-gray-100">

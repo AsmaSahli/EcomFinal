@@ -4,8 +4,10 @@ import { FiSend } from 'react-icons/fi';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 const ProductReviews = ({ productId, sellerId }) => {
+  const { t, i18n } = useTranslation();
   const { currentUser } = useSelector((state) => state.user);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,18 +28,15 @@ const ProductReviews = ({ productId, sellerId }) => {
         setReviews(response.data);
         
         if (response.data.length > 0) {
-          // Calculate average rating
           const avg = response.data.reduce((sum, review) => sum + review.rating, 0) / response.data.length;
           setAverageRating(avg.toFixed(1));
           
-          // Calculate rating distribution
           const distribution = [0, 0, 0, 0, 0];
           response.data.forEach(review => {
             distribution[5 - review.rating]++;
           });
           setRatingDistribution(distribution);
           
-          // Check if current user has reviewed
           if (currentUser) {
             const hasReviewed = response.data.some(review => review.user?._id === currentUser.id);
             setUserHasReviewed(hasReviewed);
@@ -47,7 +46,7 @@ const ProductReviews = ({ productId, sellerId }) => {
         setError(null);
       } catch (err) {
         console.error('Error fetching reviews:', err);
-        setError(err.response?.data?.message || 'Failed to load reviews');
+        setError(t('productReviews.error.load'));
       } finally {
         setLoading(false);
       }
@@ -56,12 +55,12 @@ const ProductReviews = ({ productId, sellerId }) => {
     if (productId && sellerId) {
       fetchReviews();
     }
-  }, [productId, sellerId, currentUser]);
+  }, [productId, sellerId, currentUser, t]);
 
   const handleSubmitReview = async (e) => {
     e.preventDefault();
     if (!currentUser) {
-      toast.error('You must log in to submit a review.');
+      toast.error(t('productReviews.form.loginRequired', { action: t('productReviews.form.actions.submit') }));
       return;
     }
 
@@ -79,18 +78,17 @@ const ProductReviews = ({ productId, sellerId }) => {
       setUserHasReviewed(true);
       setNewReview({ rating: 5, comment: '' });
       
-      // Update average rating
       const newAvg = (updatedReviews.reduce((sum, r) => sum + r.rating, 0) / 
                      updatedReviews.length).toFixed(1);
       setAverageRating(newAvg);
       
-      toast.success('Review submitted successfully!', {
+      toast.success(t('productReviews.success.submit'), {
         position: 'bottom-right',
         className: '!bg-green-50 !text-green-700 !border !border-green-200',
         icon: <FaCheckCircle className="text-green-500" />
       });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to submit review', {
+      toast.error(err.response?.data?.message || t('productReviews.error.submit'), {
         className: '!bg-red-50 !text-red-700 !border !border-red-200'
       });
     }
@@ -104,7 +102,7 @@ const ProductReviews = ({ productId, sellerId }) => {
   const handleUpdateReview = async (e) => {
     e.preventDefault();
     if (!currentUser) {
-      toast.error('You must log in to update a review.');
+      toast.error(t('productReviews.form.loginRequired', { action: t('productReviews.form.actions.update') }));
       return;
     }
 
@@ -117,20 +115,19 @@ const ProductReviews = ({ productId, sellerId }) => {
       const updatedReviews = reviews.map(r => (r._id === editingReviewId ? response.data.review : r));
       setReviews(updatedReviews);
       
-      // Update average rating
       const newAvg = (updatedReviews.reduce((sum, r) => sum + r.rating, 0) / 
                      updatedReviews.length).toFixed(1);
       setAverageRating(newAvg);
       
       setEditingReviewId(null);
       setEditForm({ rating: 5, comment: '' });
-      toast.success('Review updated successfully!', {
+      toast.success(t('productReviews.success.update'), {
         position: 'bottom-right',
         className: '!bg-green-50 !text-green-700 !border !border-green-200',
         icon: <FaCheckCircle className="text-green-500" />
       });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to update review', {
+      toast.error(err.response?.data?.message || t('productReviews.error.update'), {
         className: '!bg-red-50 !text-red-700 !border !border-red-200'
       });
     }
@@ -138,7 +135,7 @@ const ProductReviews = ({ productId, sellerId }) => {
 
   const handleDeleteReview = async (reviewId) => {
     if (!currentUser) {
-      toast.error('You must log in to delete a review.');
+      toast.error(t('productReviews.form.loginRequired', { action: t('productReviews.form.actions.delete') }));
       return;
     }
 
@@ -148,18 +145,17 @@ const ProductReviews = ({ productId, sellerId }) => {
       setReviews(updatedReviews);
       setUserHasReviewed(false);
       
-      // Update average rating
       const newAvg = updatedReviews.length > 0 ? 
         (updatedReviews.reduce((sum, r) => sum + r.rating, 0) / updatedReviews.length).toFixed(1) : 0;
       setAverageRating(newAvg);
       
-      toast.success('Review deleted successfully!', {
+      toast.success(t('productReviews.success.delete'), {
         position: 'bottom-right',
         className: '!bg-green-50 !text-green-700 !border !border-green-200',
         icon: <FaCheckCircle className="text-green-500" />
       });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete review', {
+      toast.error(err.response?.data?.message || t('productReviews.error.delete'), {
         className: '!bg-red-50 !text-red-700 !border !border-red-200'
       });
     }
@@ -193,7 +189,7 @@ const ProductReviews = ({ productId, sellerId }) => {
             type="button"
             onClick={() => setRating(star)}
             className="focus:outline-none transition-transform hover:scale-110"
-            aria-label={`Rate ${star} star${star !== 1 ? 's' : ''}`}
+            aria-label={`${t('productReviews.form.ratingLabel')} ${star}`}
           >
             {star <= rating ? (
               <FaStar className="text-yellow-400 w-8 h-8" />
@@ -243,14 +239,14 @@ const ProductReviews = ({ productId, sellerId }) => {
             </svg>
           </div>
           <div className="ml-3">
-            <h3 className="text-sm font-medium text-red-800">Error loading reviews</h3>
+            <h3 className="text-sm font-medium text-red-800">{t('productReviews.error.load')}</h3>
             <div className="mt-2 text-sm text-red-700">
               <p>{error}</p>
               <button 
                 onClick={() => window.location.reload()} 
                 className="mt-2 text-purple-600 hover:text-purple-800 font-medium"
               >
-                Try again
+                {t('productReviews.error.tryAgain')}
               </button>
             </div>
           </div>
@@ -260,10 +256,10 @@ const ProductReviews = ({ productId, sellerId }) => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" dir={i18n.language === 'ar' ? 'rtl' : 'ltr'}>
       {/* Reviews Summary Section */}
       <div className="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-gray-100">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Customer Reviews</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('productReviews.title')}</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Average Rating */}
@@ -277,9 +273,10 @@ const ProductReviews = ({ productId, sellerId }) => {
             </div>
           </div>
           
+          
           {/* Rating Distribution */}
           <div className="col-span-2">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Rating Breakdown</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">{t('productReviews.summary.breakdown')}</h3>
             <div className="space-y-2">
               {ratingDistribution.map((count, index) => renderRatingBar(count, index))}
             </div>
@@ -292,7 +289,7 @@ const ProductReviews = ({ productId, sellerId }) => {
               className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
               onClick={() => document.getElementById('review-form').scrollIntoView({ behavior: 'smooth' })}
             >
-              Write a Review
+              {t('productReviews.writeReview')}
             </button>
           </div>
         )}
@@ -305,9 +302,9 @@ const ProductReviews = ({ productId, sellerId }) => {
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
-            <h3 className="mt-2 text-lg font-medium text-gray-900">No reviews yet</h3>
+            <h3 className="mt-2 text-lg font-medium text-gray-900">{t('productReviews.noReviews.title')}</h3>
             <p className="mt-1 text-gray-500">
-              {currentUser ? 'Be the first to share your thoughts!' : 'Log in to write the first review.'}
+              {currentUser ? t('productReviews.noReviews.message.loggedIn') : t('productReviews.noReviews.message.loggedOut')}
             </p>
           </div>
         </div>
@@ -333,13 +330,13 @@ const ProductReviews = ({ productId, sellerId }) => {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h4 className="font-semibold text-gray-900">{review.user?.name || 'Anonymous'}</h4>
+                      <h4 className="font-semibold text-gray-900">{review.user?.name || t('productReviews.review.anonymous')}</h4>
                       <div className="flex items-center mt-1">
                         <div className="flex mr-2">
                           {renderStars(review.rating, 'md')}
                         </div>
                         <span className="text-sm text-gray-500">
-                          {new Date(review.createdAt).toLocaleDateString('en-US', {
+                          {new Date(review.createdAt).toLocaleDateString(i18n.language, {
                             year: 'numeric',
                             month: 'short',
                             day: 'numeric'
@@ -353,20 +350,20 @@ const ProductReviews = ({ productId, sellerId }) => {
                         <button
                           onClick={() => handleEditReview(review)}
                           className="text-gray-400 hover:text-purple-600 transition-colors"
-                          title="Edit review"
-                          aria-label="Edit review"
+                          title={t('productReviews.review.edit')}
+                          aria-label={t('productReviews.review.edit')}
                         >
                           <FaEdit className="w-5 h-5" />
                         </button>
                         <button
                           onClick={() => {
-                            if (window.confirm('Are you sure you want to delete this review?')) {
+                            if (window.confirm(t('productReviews.review.deleteConfirm'))) {
                               handleDeleteReview(review._id);
                             }
                           }}
                           className="text-gray-400 hover:text-red-600 transition-colors"
-                          title="Delete review"
-                          aria-label="Delete review"
+                          title={t('productReviews.review.delete')}
+                          aria-label={t('productReviews.review.delete')}
                         >
                           <FaTrash className="w-5 h-5" />
                         </button>
@@ -377,12 +374,12 @@ const ProductReviews = ({ productId, sellerId }) => {
                   {editingReviewId === review._id ? (
                     <form onSubmit={handleUpdateReview} className="mt-4">
                       <div className="mb-4">
-                        <label className="block text-gray-700 font-medium mb-2">Your Rating</label>
+                        <label className="block text-gray-700 font-medium mb-2">{t('productReviews.form.ratingLabel')}</label>
                         {renderRatingInput(editForm.rating, (rating) => setEditForm({ ...editForm, rating }))}
                       </div>
                       <div className="mb-4">
                         <label htmlFor="edit-comment" className="block text-gray-700 font-medium mb-2">
-                          Your Review
+                          {t('productReviews.form.commentLabel')}
                         </label>
                         <textarea
                           id="edit-comment"
@@ -398,14 +395,14 @@ const ProductReviews = ({ productId, sellerId }) => {
                           type="submit"
                           className="px-5 py-2.5 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors shadow-sm"
                         >
-                          Update Review
+                          {t('productReviews.form.update')}
                         </button>
                         <button
                           type="button"
                           onClick={() => setEditingReviewId(null)}
                           className="px-5 py-2.5 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                         >
-                          Cancel
+                          {t('productReviews.form.cancel')}
                         </button>
                       </div>
                     </form>
@@ -423,22 +420,22 @@ const ProductReviews = ({ productId, sellerId }) => {
       {currentUser && !userHasReviewed && (
         <div id="review-form" className="mt-12 pt-8 border-t border-gray-200">
           <div className="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Write a Review</h3>
+            <h3 className="text-xl font-bold text-gray-900 mb-6">{t('productReviews.form.title')}</h3>
             <form onSubmit={handleSubmitReview} className="space-y-6">
               <div>
-                <label className="block text-gray-700 font-medium mb-3">Your Rating</label>
+                <label className="block text-gray-700 font-medium mb-3">{t('productReviews.form.ratingLabel')}</label>
                 {renderRatingInput(newReview.rating, (rating) => setNewReview({ ...newReview, rating }))}
               </div>
               
               <div>
                 <label htmlFor="comment" className="block text-gray-700 font-medium mb-3">
-                  Your Review
+                  {t('productReviews.form.commentLabel')}
                 </label>
                 <textarea
                   id="comment"
                   rows="5"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                  placeholder="Share your detailed experience with this product..."
+                  placeholder={t('productReviews.form.commentPlaceholder')}
                   value={newReview.comment}
                   onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
                   required
@@ -450,7 +447,7 @@ const ProductReviews = ({ productId, sellerId }) => {
                 className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
               >
                 <FiSend className="mr-2" />
-                Submit Review
+                {t('productReviews.form.submit')}
               </button>
             </form>
           </div>
@@ -463,9 +460,9 @@ const ProductReviews = ({ productId, sellerId }) => {
           <div className="flex items-start">
             <FaCheckCircle className="flex-shrink-0 h-5 w-5 text-indigo-500 mt-0.5" />
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-indigo-800">You've already reviewed this product</h3>
+              <h3 className="text-sm font-medium text-indigo-800">{t('productReviews.review.alreadyReviewed')}</h3>
               <p className="mt-1 text-sm text-indigo-700">
-                You can edit or delete your review above.
+                {t('productReviews.review.editInstructions')}
               </p>
             </div>
           </div>
