@@ -511,5 +511,75 @@
       "tryAgain": "حاول مرة أخرى"
     },
     "writeReview": "كتابة تقييم"
+  },
+  "checkout": {
+    "title": "الدفع",
+    "subtitle": "أكمل عملية الشراء",
+    "steps": {
+      "step1": "المعلومات الشخصية",
+      "step2": "عنوان الشحن",
+      "step3": "طريقة التوصيل",
+      "step4": "الدفع"
+    },
+    "personalInfo": {
+      "title": "المعلومات الشخصية",
+      "firstName": "الاسم الأول",
+      "lastName": "الاسم الأخير",
+      "phone": "رقم الهاتف",
+      "email": "البريد الإلكتروني"
+    },
+    "shippingAddress": {
+      "title": "عنوان الشحن",
+      "street": "العنوان",
+      "apartment": "الشقة/الوحدة",
+      "city": "المدينة",
+      "postalCode": "الرمز البريدي",
+      "governorate": "الولاية",
+      "selectGovernorate": "اختر الولاية",
+      "deliveryInstructions": "تعليمات التوصيل"
+    },
+    "deliveryMethod": {
+      "title": "طريقة التوصيل",
+      "standard": "توصيل عادي",
+      "standardDescription": "3-5 أيام عمل",
+      "express": "توصيل سريع",
+      "expressDescription": "1-2 أيام عمل",
+      "pickup": "استلام من المتجر",
+      "pickupDescription": "استلم طلبك من المتجر"
+    },
+    "paymentMethod": {
+      "title": "طريقة الدفع",
+      "cod": "الدفع عند الاستلام",
+      "codDescription": "ادفع عند استلام طلبك",
+      "creditCard": "بطاقة ائتمان",
+      "creditCardDescription": "ادفع بشكل آمن باستخدام بطاقتك",
+        "comingSoon": "قريباً",
+  "creditCardDisabledMessage": "نحن نعمل على إضافة مدفوعات آمنة ببطاقات الائتمان في المستقبل القريب. يرجى التحقق لاحقاً!"
+    },
+    "orderSummary": {
+      "title": "ملخص الطلب",
+      "subtotal": "المجموع الجزئي",
+      "shipping": "الشحن",
+      "free": "مجاني",
+      "tax": "الضريبة",
+      "total": "المجموع الكلي",
+      "quantity": "الكمية"
+    },
+    "termsAgreement": {
+      "part1": "أوافق على",
+      "terms": "شروط الخدمة",
+      "and": "و",
+      "privacyPolicy": "سياسة الخصوصية"
+    },
+    "buttons": {
+      "back": "رجوع",
+      "backToCart": "العودة إلى السلة",
+      "continue": "متابعة",
+      "placeOrder": "تأكيد الطلب"
+    },
+    "errors": {
+      "agreeTerms": "يجب الموافقة على الشروط والأحكام",
+      "submitError": "خطأ في إرسال طلبك. يرجى المحاولة مرة أخرى."
+    }
   }
 }

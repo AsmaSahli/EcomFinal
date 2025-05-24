@@ -517,5 +517,77 @@
       "tryAgain": "Try again"
     },
     "writeReview": "Write a Review"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "subtitle": "Complete your purchase",
+    "steps": {
+      "step1": "Personal Info",
+      "step2": "Shipping",
+      "step3": "Delivery",
+      "step4": "Payment"
+    },
+    "personalInfo": {
+      "title": "Personal Information",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone Number",
+      "email": "Email Address"
+    },
+    "shippingAddress": {
+      "title": "Shipping Address",
+      "street": "Street Address",
+      "apartment": "Apartment/Suite/Unit",
+      "city": "City",
+      "postalCode": "Postal Code",
+      "governorate": "Governorate",
+      "selectGovernorate": "Select Governorate",
+      "deliveryInstructions": "Delivery Instructions"
+    },
+    "deliveryMethod": {
+      "title": "Delivery Method",
+      "standard": "Standard Delivery",
+      "standardDescription": "3-5 business days",
+      "express": "Express Delivery",
+      "expressDescription": "1-2 business days",
+      "pickup": "Store Pickup",
+      "pickupDescription": "Pick up from our store location"
+    },
+    "paymentMethod": {
+      "title": "Payment Method",
+      "cod": "Cash on Delivery",
+      "codDescription": "Pay when you receive your order",
+      "creditCard": "Credit Card",
+      "creditCardDescription": "Pay securely with your credit card",
+        "comingSoon": "Coming Soon",
+  "creditCardDisabledMessage": "We're working on adding secure credit card payments in the near future. Please check back later!"
+
+    },
+    "orderSummary": {
+      "title": "Order Summary",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "free": "Free",
+      "tax": "Tax",
+      "total": "Total",
+      "quantity": "Quantity"
+    },
+    "termsAgreement": {
+      "part1": "I agree to the",
+      "terms": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "buttons": {
+      "back": "Back",
+      "backToCart": "Back to Cart",
+      "continue": "Continue",
+      "placeOrder": "Place Order"
+    },
+    "errors": {
+      "agreeTerms": "You must agree to the terms and conditions",
+      "submitError": "Error submitting your order. Please try again."
+    }
+    
   }
 }

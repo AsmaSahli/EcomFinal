@@ -23,6 +23,7 @@ import SellerProductsPage from "./Pages/SellerProductsPage";
 import WishlistPage from "./Pages/WishlistPage";
 import CartPage from "./Pages/CartPage";
 import ProductDetailsPage from "./Pages/ProductDetailsPage";
+import CheckoutPage from "./Pages/CheckoutPage";
 
 
 function App() {
@@ -51,6 +52,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/sellers/:sellerId/products" element={<SellerProductsPage />} />
         <Route path="/products/:id" element={<ProductDetailsPage />} />
+        <Route path="/checkout" element={<CheckoutPage/>} />
 
         
         {/* Authentication routes (only for non-logged in users) */}

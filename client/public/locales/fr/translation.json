@@ -517,5 +517,75 @@
       "tryAgain": "Réessayer"
     },
     "writeReview": "Écrire un avis"
+  },
+  "checkout": {
+    "title": "Commande",
+    "subtitle": "Finalisez votre achat",
+    "steps": {
+      "step1": "Informations",
+      "step2": "Livraison",
+      "step3": "Méthode",
+      "step4": "Paiement"
+    },
+    "personalInfo": {
+      "title": "Informations Personnelles",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "phone": "Téléphone",
+      "email": "Adresse Email"
+    },
+    "shippingAddress": {
+      "title": "Adresse de Livraison",
+      "street": "Adresse",
+      "apartment": "Appartement/Étage",
+      "city": "Ville",
+      "postalCode": "Code Postal",
+      "governorate": "Gouvernorat",
+      "selectGovernorate": "Sélectionnez un gouvernorat",
+      "deliveryInstructions": "Instructions de Livraison"
+    },
+    "deliveryMethod": {
+      "title": "Méthode de Livraison",
+      "standard": "Livraison Standard",
+      "standardDescription": "3-5 jours ouvrables",
+      "express": "Livraison Express",
+      "expressDescription": "1-2 jours ouvrables",
+      "pickup": "Retrait en Magasin",
+      "pickupDescription": "Retirez votre commande en magasin"
+    },
+    "paymentMethod": {
+      "title": "Méthode de Paiement",
+      "cod": "Paiement à la Livraison",
+      "codDescription": "Payez lorsque vous recevez votre commande",
+      "creditCard": "Carte de Crédit",
+      "creditCardDescription": "Payez en toute sécurité avec votre carte",
+        "comingSoon": "Bientôt Disponible",
+  "creditCardDisabledMessage": "Nous travaillons sur l'ajout de paiements par carte de crédit sécurisés. Veuillez vérifier plus tard!"
+    },
+    "orderSummary": {
+      "title": "Résumé de la Commande",
+      "subtotal": "Sous-total",
+      "shipping": "Livraison",
+      "free": "Gratuit",
+      "tax": "Taxe",
+      "total": "Total",
+      "quantity": "Quantité"
+    },
+    "termsAgreement": {
+      "part1": "J'accepte les",
+      "terms": "Conditions d'Utilisation",
+      "and": "et la",
+      "privacyPolicy": "Politique de Confidentialité"
+    },
+    "buttons": {
+      "back": "Retour",
+      "backToCart": "Retour au Panier",
+      "continue": "Continuer",
+      "placeOrder": "Passer la Commande"
+    },
+    "errors": {
+      "agreeTerms": "Vous devez accepter les conditions générales",
+      "submitError": "Erreur lors de la soumission de votre commande. Veuillez réessayer."
+    }
   }
 }
