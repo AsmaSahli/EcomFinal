@@ -40,9 +40,17 @@ const CartPage = () => {
             }));
           
           dispatch(setCart(validItems));
+          setError(null); // Clear any previous error
         } catch (err) {
-          setError(err.response?.data?.message || t('cart.errors.loadError'));
-          toast.error(t('cart.errors.loadError'));
+          // Only set error for actual server errors (not 404 or empty cart)
+          if (err.response?.status >= 500) {
+            setError(err.response?.data?.message || t('cart.errors.loadError'));
+            toast.error(t('cart.errors.loadError'));
+          } else {
+            // For non-error responses (e.g., empty cart), clear error and set empty cart
+            dispatch(setCart([]));
+            setError(null);
+          }
         } finally {
           setLoading(false);
         }
@@ -50,6 +58,8 @@ const CartPage = () => {
       fetchCart();
     } else {
       setLoading(false);
+      dispatch(setCart([])); // Ensure cart is empty for non-logged-in users
+      setError(null);
     }
   }, [currentUser, dispatch, t]);
 
@@ -105,7 +115,7 @@ const CartPage = () => {
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const shipping = subtotal > 50 ? 0 : 5.99;
-  const tax = subtotal * 0.1;
+  const tax = subtotal * 0.19;
   const total = (subtotal + shipping + tax).toFixed(2);
 
   if (!currentUser) {

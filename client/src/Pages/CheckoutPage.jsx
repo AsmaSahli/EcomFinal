@@ -43,8 +43,8 @@ const CheckoutPage = () => {
 
   // Calculate order totals
   const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const shipping = subtotal > 50 ? 0 : 5.99;
-  const tax = subtotal * 0.1;
+  const shipping = formData.deliveryMethod === 'pickup' ? 0 : formData.deliveryMethod === 'express' ? 9.99 : (subtotal > 50 ? 0 : 5.99);
+  const tax = subtotal * 0.19;
   const total = (subtotal + shipping + tax).toFixed(2);
 
   useEffect(() => {
@@ -91,7 +91,12 @@ const CheckoutPage = () => {
           sellerId: item.sellerId._id,
           quantity: item.quantity,
           price: item.price,
-          promotion: item.promotion
+          promotion: item.promotion ? {
+            promotionId: item.promotion.promotionId._id,
+            oldPrice: item.promotion.oldPrice,
+            newPrice: item.promotion.newPrice,
+            image: item.promotion.image
+          } : null
         })),
         shippingInfo: {
           firstName: formData.firstName,
@@ -115,7 +120,7 @@ const CheckoutPage = () => {
         total
       };
 
-      const response = await axios.post('http://localhost:8000/api/orders/create', orderData);
+      const response = await axios.post('http://localhost:8000/api/orders', orderData);
       
       // Clear cart on successful order
       dispatch(clearCart());
@@ -399,7 +404,7 @@ const CheckoutPage = () => {
                     <div className="flex-1">
                       <div className="flex justify-between">
                         <span className="font-medium">{t('checkout.deliveryMethod.standard')}</span>
-                        <span className="font-bold">5.99 TND</span>
+                        <span className="font-bold">{subtotal > 50 ? t('checkout.orderSummary.free') : '$5.99'}</span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
                         {t('checkout.deliveryMethod.standardDescription')}
@@ -419,7 +424,7 @@ const CheckoutPage = () => {
                     <div className="flex-1">
                       <div className="flex justify-between">
                         <span className="font-medium">{t('checkout.deliveryMethod.express')}</span>
-                        <span className="font-bold">9.99 TND</span>
+                        <span className="font-bold">$9.99</span>
                       </div>
                       <p className="text-sm text-gray-500 mt-1">
                         {t('checkout.deliveryMethod.expressDescription')}
@@ -427,114 +432,95 @@ const CheckoutPage = () => {
                     </div>
                   </label>
 
-                  <label className="flex items-start p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-500 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
-                    <input
-                      type="radio"
-                      name="deliveryMethod"
-                      value="pickup"
-                      checked={formData.deliveryMethod === 'pickup'}
-                      onChange={handleInputChange}
-                      className="mt-0.5 mr-3 text-purple-600 focus:ring-purple-500"
-                    />
-                    <div className="flex-1">
-                      <div className="flex justify-between">
-                        <span className="font-medium">{t('checkout.deliveryMethod.pickup')}</span>
-                        <span className="font-bold">0.00 TND</span>
-                      </div>
-                      <p className="text-sm text-gray-500 mt-1">
-                        {t('checkout.deliveryMethod.pickupDescription')}
-                      </p>
-                    </div>
-                  </label>
                 </div>
               </motion.div>
             )}
 
-        {activeStep === 4 && (
-        <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6"
-        >
-            <h2 className="text-xl font-bold text-gray-800 mb-6">
-            {t('checkout.paymentMethod.title')}
-            </h2>
+            {activeStep === 4 && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6"
+              >
+                <h2 className="text-xl font-bold text-gray-800 mb-6">
+                  {t('checkout.paymentMethod.title')}
+                </h2>
 
-            <div className="space-y-4">
-            {/* Cash on Delivery Option */}
-            <label className="flex items-start p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-500 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
-                <input
-                type="radio"
-                name="paymentMethod"
-                value="cod"
-                checked={formData.paymentMethod === 'cod'}
-                onChange={handleInputChange}
-                className="mt-0.5 mr-3 text-purple-600 focus:ring-purple-500"
-                />
-                <div className="flex-1">
-                <div className="flex items-center gap-3">
-                    <FaMoneyBillWave className="text-green-600 text-xl" />
-                    <span className="font-medium">{t('checkout.paymentMethod.cod')}</span>
-                </div>
-                <p className="text-sm text-gray-500 mt-1 ml-8">
-                    {t('checkout.paymentMethod.codDescription')}
-                </p>
-                </div>
-            </label>
-
-            {/* Credit Card Option - Disabled */}
-            <div className="relative">
-                <label className="flex items-start p-4 border border-gray-200 rounded-lg cursor-not-allowed opacity-60">
-                <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="credit"
-                    disabled
-                    className="mt-0.5 mr-3 text-purple-600 focus:ring-purple-500"
-                />
-                <div className="flex-1">
-                    <div className="flex items-center gap-3">
-                    <FaRegCreditCard className="text-blue-600 text-xl" />
-                    <span className="font-medium">{t('checkout.paymentMethod.creditCard')}</span>
-                    <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
-                        {t('checkout.paymentMethod.comingSoon')}
-                    </span>
+                <div className="space-y-4">
+                  {/* Cash on Delivery Option */}
+                  <label className="flex items-start p-4 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-500 has-[:checked]:border-purple-500 has-[:checked]:bg-purple-50">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={formData.paymentMethod === 'cod'}
+                      onChange={handleInputChange}
+                      className="mt-0.5 mr-3 text-purple-600 focus:ring-purple-500"
+                    />
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <FaMoneyBillWave className="text-green-600 text-xl" />
+                        <span className="font-medium">{t('checkout.paymentMethod.cod')}</span>
+                      </div>
+                      <p className="text-sm text-gray-500 mt-1 ml-8">
+                        {t('checkout.paymentMethod.codDescription')}
+                      </p>
                     </div>
-                    <p className="text-sm text-gray-600 mt-1 ml-8">
-                    {t('checkout.paymentMethod.creditCardDescription')}
-                    </p>
-                    <div className="mt-2 ml-8 text-xs text-gray-600">
-                    {t('checkout.paymentMethod.creditCardDisabledMessage')}
-                    </div>
-                </div>
-                </label>
-            </div>
+                  </label>
 
-            {/* Terms Agreement */}
-            <div className="mt-6">
-                <label className="flex items-start">
-                <input
-                    type="checkbox"
-                    name="agreeTerms"
-                    checked={formData.agreeTerms}
-                    onChange={handleInputChange}
-                    className="mt-0.5 mr-3 text-purple-600 rounded focus:ring-purple-500"
-                />
-                <span className="text-sm text-gray-700">
-                    {t('checkout.termsAgreement.part1')}{' '}
-                    <a href="/terms" className="text-purple-600 hover:underline">
-                    {t('checkout.termsAgreement.terms')}
-                    </a>{' '}
-                    {t('checkout.termsAgreement.and')}{' '}
-                    <a href="/privacy" className="text-purple-600 hover:underline">
-                    {t('checkout.termsAgreement.privacyPolicy')}
-                    </a>
-                </span>
-                </label>
-            </div>
-            </div>
-        </motion.div>
-        )}
+                  {/* Credit Card Option - Disabled */}
+                  <div className="relative">
+                    <label className="flex items-start p-4 border border-gray-200 rounded-lg cursor-not-allowed opacity-60">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="credit"
+                        disabled
+                        className="mt-0.5 mr-3 text-purple-600 focus:ring-purple-500"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3">
+                          <FaRegCreditCard className="text-blue-600 text-xl" />
+                          <span className="font-medium">{t('checkout.paymentMethod.creditCard')}</span>
+                          <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                            {t('checkout.paymentMethod.comingSoon')}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1 ml-8">
+                          {t('checkout.paymentMethod.creditCardDescription')}
+                        </p>
+                        <div className="mt-2 ml-8 text-xs text-gray-600">
+                          {t('checkout.paymentMethod.creditCardDisabledMessage')}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+
+                  {/* Terms Agreement */}
+                  <div className="mt-6">
+                    <label className="flex items-start">
+                      <input
+                        type="checkbox"
+                        name="agreeTerms"
+                        checked={formData.agreeTerms}
+                        onChange={handleInputChange}
+                        className="mt-0.5 mr-3 text-purple-600 rounded focus:ring-purple-500"
+                      />
+                      <span className="text-sm text-gray-700">
+                        {t('checkout.termsAgreement.part1')}{' '}
+                        <a href="/terms" className="text-purple-600 hover:underline">
+                          {t('checkout.termsAgreement.terms')}
+                        </a>{' '}
+                        {t('checkout.termsAgreement.and')}{' '}
+                        <a href="/privacy" className="text-purple-600 hover:underline">
+                          {t('checkout.termsAgreement.privacyPolicy')}
+                        </a>
+                      </span>
+                    </label>
+                  </div>
+                </div>
+              </motion.div>
+            )}
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-6">

@@ -117,7 +117,6 @@ exports.addToCart = async (req, res) => {
   }
 };
 
-// Get cart by user ID
 exports.getCartByUserId = async (req, res) => {
   try {
     const { userId } = req.query;
@@ -127,36 +126,37 @@ exports.getCartByUserId = async (req, res) => {
       return res.status(400).json({ message: 'Invalid user ID' });
     }
 
-    const cart = await Cart.findOne({ userId })
-    .populate({
-      path: 'items.productId',
-      select: 'reference name description images categoryDetails sellers',
-      populate: [
-        {
-          path: 'categoryDetails.category',
-          select: 'name'
-        },
-        {
-          path: 'sellers.sellerId',
-          select: 'shopName'
-        },
-        {
-          path: 'sellers.promotions.promotionId',
-          select: 'name discountRate image endDate'
-        },
-        {
-          path: 'sellers.activePromotion',
-          select: 'name discountRate image endDate'
-        }
-      ]
-    })
-    .populate({
-      path: 'items.sellerId',
-      select: 'shopName'
-    });
+    let cart = await Cart.findOne({ userId })
+      .populate({
+        path: 'items.productId',
+        select: 'reference name description images categoryDetails sellers',
+        populate: [
+          {
+            path: 'categoryDetails.category',
+            select: 'name'
+          },
+          {
+            path: 'sellers.sellerId',
+            select: 'shopName'
+          },
+          {
+            path: 'sellers.promotions.promotionId',
+            select: 'name discountRate image endDate'
+          },
+          {
+            path: 'sellers.activePromotion',
+            select: 'name discountRate image endDate'
+          }
+        ]
+      })
+      .populate({
+        path: 'items.sellerId',
+        select: 'shopName'
+      });
 
+    // If no cart exists, return an empty cart object
     if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
+      return res.status(200).json({ items: [], userId });
     }
 
     // Filter out invalid items and enrich with price/stock/promotion
@@ -236,7 +236,6 @@ exports.getCartByUserId = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
-
 // Delete an item from cart
 exports.deleteCartItem = async (req, res) => {
   try {
