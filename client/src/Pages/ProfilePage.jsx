@@ -1,18 +1,27 @@
-import React from 'react';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { FaBox, FaTruck, FaEnvelope, FaCreditCard, FaHeart, FaUser, FaCog, FaSignOutAlt } from 'react-icons/fa';
 import { useSelector, useDispatch } from 'react-redux';
-import { signoutSuccess } from '../redux/user/userSlice';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import ProfileOrders from '../components/Profile/ProfileOrders';
+import ProfileTrackOrder from '../components/Profile/ProfileTrackOrder';
+import ProfileMessages from '../components/Profile/ProfileMessages';
+import ProfilePayments from '../components/Profile/ProfilePayments';
+import ProfileWishlist from '../components/Profile/ProfileWishlist';
+import ProfilePersonalInfo from '../components/Profile/ProfilePersonalInfo';
+import ProfileSettings from '../components/Profile/ProfileSettings';
+import { useNavigate } from 'react-router-dom';
+
+
 
 const ProfilePage = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.user?.currentUser);
+  const [activeComponent, setActiveComponent] = useState('orders'); // Default component
 
   const signOut = async () => {
     try {
@@ -28,14 +37,17 @@ const ProfilePage = () => {
   };
 
   const navItems = [
-    { path: "/profile/orders", icon: <FaBox />, label: t('profile.myOrders') },
-    { path: "/profile/track-order", icon: <FaTruck />, label: t('profile.trackOrder') },
-    { path: "/profile/messages", icon: <FaEnvelope />, label: t('profile.requestsMessages') },
-    { path: "/profile/payments", icon: <FaCreditCard />, label: t('profile.payments') },
-    { path: "/profile/wishlist", icon: <FaHeart />, label: t('profile.wishlist') },
-    { path: "/profile/personal-info", icon: <FaUser />, label: t('profile.personalInfo') },
-    { path: "/profile/settings", icon: <FaCog />, label: t('profile.accountSettings') },
+    { id: 'orders', icon: <FaBox />, label: t('profile.myOrders'), component: <ProfileOrders /> },
+    { id: 'track-order', icon: <FaTruck />, label: t('profile.trackOrder'), component: <ProfileTrackOrder /> },
+    { id: 'messages', icon: <FaEnvelope />, label: t('profile.requestsMessages'), component: <ProfileMessages /> },
+    { id: 'payments', icon: <FaCreditCard />, label: t('profile.payments'), component: <ProfilePayments /> },
+    { id: 'wishlist', icon: <FaHeart />, label: t('profile.wishlist'), component: <ProfileWishlist /> },
+    { id: 'personal-info', icon: <FaUser />, label: t('profile.personalInfo'), component: <ProfilePersonalInfo /> },
+    { id: 'settings', icon: <FaCog />, label: t('profile.accountSettings'), component: <ProfileSettings /> },
   ];
+
+  // Find the currently active component
+  const currentActiveComponent = navItems.find(item => item.id === activeComponent)?.component;
 
   return (
     <motion.div
@@ -55,8 +67,8 @@ const ProfilePage = () => {
                 className="w-16 h-16 rounded-full object-cover border-2 border-white shadow-sm"
               />
               <div>
-              <h1 className="text-xl font-semibold text-gray-800">
-                {currentUser?.name?.charAt(0).toUpperCase() + currentUser?.name?.slice(1).toLowerCase() || t('profile.user')}
+                <h1 className="text-xl font-semibold text-gray-800">
+                  {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() + currentUser.name.slice(1).toLowerCase() : t('profile.user')}
                 </h1>
                 <p className="text-gray-500 text-xs">{currentUser?.email}</p>
               </div>
@@ -67,14 +79,16 @@ const ProfilePage = () => {
           <div className="bg-white rounded-lg shadow-sm p-4 h-fit">
             <nav className="space-y-2">
               {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 text-gray-700 hover:text-purple-600 transition-colors"
+                <button
+                  key={item.id}
+                  onClick={() => setActiveComponent(item.id)}
+                  className={`flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 w-full text-left ${
+                    activeComponent === item.id ? 'text-purple-600' : 'text-gray-700'
+                  } hover:text-purple-600 transition-colors`}
                 >
                   <span className="text-gray-500">{item.icon}</span>
                   <span>{item.label}</span>
-                </Link>
+                </button>
               ))}
             </nav>
 
@@ -92,7 +106,7 @@ const ProfilePage = () => {
 
         {/* Main Content Area */}
         <div className="flex-1 bg-white rounded-lg shadow-sm p-6">
-          <Outlet />
+          {currentActiveComponent}
         </div>
       </div>
     </motion.div>
