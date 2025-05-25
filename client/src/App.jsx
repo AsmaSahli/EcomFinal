@@ -24,6 +24,8 @@ import WishlistPage from "./Pages/WishlistPage";
 import CartPage from "./Pages/CartPage";
 import ProductDetailsPage from "./Pages/ProductDetailsPage";
 import CheckoutPage from "./Pages/CheckoutPage";
+import OrderTrakingPage from "./Pages/OrderTrakingPage";
+import ProfilePage from "./Pages/ProfilePage";
 
 
 function App() {
@@ -53,6 +55,8 @@ function App() {
         <Route path="/sellers/:sellerId/products" element={<SellerProductsPage />} />
         <Route path="/products/:id" element={<ProductDetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage/>} />
+        <Route path="/Profile" element={<ProfilePage/>} />
+        <Route path="/trackOrder/:id" element={<OrderTrakingPage/>} />
 
         
         {/* Authentication routes (only for non-logged in users) */}

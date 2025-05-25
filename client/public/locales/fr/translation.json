@@ -230,7 +230,7 @@
       "freeShipping": "GRATUITE",
       "tax": "Taxe (19%)",
       "total": "Total",
-      "checkout": "Passer à la caisse",
+      "checkout": "Passer au Paiement",
       "continueShopping": "Continuer vos achats"
     },
     "product": {
@@ -586,6 +586,72 @@
     "errors": {
       "agreeTerms": "Vous devez accepter les conditions générales",
       "submitError": "Erreur lors de la soumission de votre commande. Veuillez réessayer."
+    },
+    "success": {
+      "orderPlaced": "Votre commande a été passée avec succès !"
     }
+  },
+  "orderTracking": {
+  "title": "Suivi de Commande",
+  "placedOn": "Passée le",
+  "orderStatus": "État de la Commande",
+  "orderDetails": "Détails de la Commande",
+  "orderSummary": "Résumé de la Commande",
+  "shippingInfo": "Informations de Livraison",
+  "paymentInfo": "Informations de Paiement",
+  "deliveryInstructions": "Instructions de Livraison",
+  "paymentMethod": "Méthode de Paiement",
+  "deliveryMethod": "Méthode de Livraison",
+  "orderTotal": "Total de la Commande",
+  "paymentStatus": "État du Paiement",
+  "quantity": "Quantité",
+  "subtotal": "Sous-total",
+  "shipping": "Livraison",
+  "tax": "Taxe",
+  "total": "Total",
+  "free": "Gratuit",
+  "status": {
+    "pending": "Commande Passée",
+    "pendingDescription": "Nous avons reçu votre commande",
+    "processing": "En Cours",
+    "processingDescription": "Votre commande est en préparation",
+    "shipped": "Expédiée",
+    "shippedDescription": "Votre commande est en route",
+    "delivered": "Livrée",
+    "deliveredDescription": "Votre commande est arrivée"
+  },
+  "paymentMethods": {
+    "cod": "Paiement à la Livraison",
+    "credit": "Carte de Crédit"
+  },
+  "deliveryMethods": {
+    "standard": "Livraison Standard",
+    "express": "Livraison Express",
+    "pickup": "Retrait en Magasin"
+  },
+  "paymentStatuses": {
+    "pending": "En Attente",
+    "paid": "Payé",
+    "failed": "Échoué"
+  },
+  "buttons": {
+    "continueShopping": "Continuer les Achats",
+    "leaveReview": "Laisser un Avis",
+    "backToHome": "Retour à l'Accueil"
+  },
+  "errors": {
+    "fetchError": "Échec du chargement des détails de la commande",
+    "orderNotFound": "Commande non trouvée"
+  }
+},
+"profile": {
+    "myOrders": "Mes Commandes",
+    "trackOrder": "Suivi de Commande",
+    "requestsMessages": "Demandes & Messages",
+    "payments": "Paiements",
+    "wishlist": "Liste de Souhaits",
+    "personalInfo": "Informations Personnelles",
+    "accountSettings": "Paramètres du Compte",
+    "logout": "Déconnexion"
   }
 }

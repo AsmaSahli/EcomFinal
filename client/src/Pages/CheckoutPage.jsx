@@ -16,6 +16,7 @@ const CheckoutPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [orderPlaced, setOrderPlaced] = useState(false); // New state to track order placement
   const [activeStep, setActiveStep] = useState(1);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -51,10 +52,11 @@ const CheckoutPage = () => {
     if (!currentUser) {
       navigate('/login?redirect=checkout');
     }
-    if (cartItems.length === 0) {
+    // Only redirect to cart if no order has been placed and cart is empty
+    if (!orderPlaced && cartItems.length === 0) {
       navigate('/cart');
     }
-  }, [currentUser, cartItems, navigate]);
+  }, [currentUser, cartItems, navigate, orderPlaced]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -121,13 +123,23 @@ const CheckoutPage = () => {
       };
 
       const response = await axios.post('http://localhost:8000/api/orders', orderData);
-      
-      // Clear cart on successful order
+
+      toast.success(t('checkout.success.orderPlaced'), {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
+      // Clear cart and set orderPlaced to true
       dispatch(clearCart());
-      
-      // Navigate to order confirmation page
-      navigate(`/order-confirmation/${response.data.order._id}`);
-    } catch (error) {
+      setOrderPlaced(true); // Set orderPlaced to prevent cart redirect
+
+      navigate(`/trackOrder/${response.data.order._id}`);
+    }
+ catch (error) {
       toast.error(error.response?.data?.message || t('checkout.errors.submitError'));
     } finally {
       setLoading(false);

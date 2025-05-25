@@ -268,7 +268,7 @@ const sendOrderConfirmationEmail = async (email, order, user) => {
                 </div>
               </div>
               
-              <a href="${process.env.STORE_URL}/account/orders" class="cta-button">Track Your Order</a>
+              <a href="http://localhost:5173/trackOrder/${order._id}" class="cta-button">Track Your Order</a>
               
               <p style="text-align: center;">Need help? <a href="mailto:support@${process.env.STORE_DOMAIN}" style="color: #333; text-decoration: underline;">Contact our support team</a></p>
             </div>

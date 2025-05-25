@@ -587,7 +587,72 @@
     "errors": {
       "agreeTerms": "You must agree to the terms and conditions",
       "submitError": "Error submitting your order. Please try again."
+    },
+    "success": {
+      "orderPlaced": "Your order has been successfully placed!"
     }
     
+  },"orderTracking": {
+  "title": "Order Tracking",
+  "placedOn": "Placed on",
+  "orderStatus": "Order Status",
+  "orderDetails": "Order Details",
+  "orderSummary": "Order Summary",
+  "shippingInfo": "Shipping Information",
+  "paymentInfo": "Payment Information",
+  "deliveryInstructions": "Delivery Instructions",
+  "paymentMethod": "Payment Method",
+  "deliveryMethod": "Delivery Method",
+  "orderTotal": "Order Total",
+  "paymentStatus": "Payment Status",
+  "quantity": "Quantity",
+  "subtotal": "Subtotal",
+  "shipping": "Shipping",
+  "tax": "Tax",
+  "total": "Total",
+  "free": "Free",
+  "status": {
+    "pending": "Order Placed",
+    "pendingDescription": "We've received your order",
+    "processing": "Processing",
+    "processingDescription": "Your order is being prepared",
+    "shipped": "Shipped",
+    "shippedDescription": "Your order is on its way",
+    "delivered": "Delivered",
+    "deliveredDescription": "Your order has arrived"
+  },
+  "paymentMethods": {
+    "cod": "Cash on Delivery",
+    "credit": "Credit Card"
+  },
+  "deliveryMethods": {
+    "standard": "Standard Delivery",
+    "express": "Express Delivery",
+    "pickup": "Store Pickup"
+  },
+  "paymentStatuses": {
+    "pending": "Pending",
+    "paid": "Paid",
+    "failed": "Failed"
+  },
+  "buttons": {
+    "continueShopping": "Continue Shopping",
+    "leaveReview": "Leave a Review",
+    "backToHome": "Back to Home"
+  },
+  "errors": {
+    "fetchError": "Failed to load order details",
+    "orderNotFound": "Order not found"
+  }
+},
+"profile": {
+    "myOrders": "My Orders",
+    "trackOrder": "Track Recent Order",
+    "requestsMessages": "Requests & Messages",
+    "payments": "Payments",
+    "wishlist": "Wishlist",
+    "personalInfo": "Personal Information",
+    "accountSettings": "Account Settings",
+    "logout": "Logout"
   }
 }

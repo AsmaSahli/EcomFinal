@@ -580,6 +580,72 @@
     "errors": {
       "agreeTerms": "يجب الموافقة على الشروط والأحكام",
       "submitError": "خطأ في إرسال طلبك. يرجى المحاولة مرة أخرى."
+    },
+    "success": {
+      "orderPlaced": "تم تقديم طلبك بنجاح!"
     }
+  },
+  "orderTracking": {
+  "title": "تتبع الطلب",
+  "placedOn": "تم الطلب في",
+  "orderStatus": "حالة الطلب",
+  "orderDetails": "تفاصيل الطلب",
+  "orderSummary": "ملخص الطلب",
+  "shippingInfo": "معلومات الشحن",
+  "paymentInfo": "معلومات الدفع",
+  "deliveryInstructions": "تعليمات التوصيل",
+  "paymentMethod": "طريقة الدفع",
+  "deliveryMethod": "طريقة التوصيل",
+  "orderTotal": "إجمالي الطلب",
+  "paymentStatus": "حالة الدفع",
+  "quantity": "الكمية",
+  "subtotal": "المجموع الجزئي",
+  "shipping": "الشحن",
+  "tax": "الضريبة",
+  "total": "المجموع الكلي",
+  "free": "مجاني",
+  "status": {
+    "pending": "تم استلام الطلب",
+    "pendingDescription": "لقد استلمنا طلبك",
+    "processing": "قيد المعالجة",
+    "processingDescription": "طلبك قيد التحضير",
+    "shipped": "تم الشحن",
+    "shippedDescription": "طلبك في طريقه إليك",
+    "delivered": "تم التوصيل",
+    "deliveredDescription": "وصل طلبك"
+  },
+  "paymentMethods": {
+    "cod": "الدفع عند الاستلام",
+    "credit": "بطاقة ائتمان"
+  },
+  "deliveryMethods": {
+    "standard": "توصيل عادي",
+    "express": "توصيل سريع",
+    "pickup": "استلام من المتجر"
+  },
+  "paymentStatuses": {
+    "pending": "قيد الانتظار",
+    "paid": "تم الدفع",
+    "failed": "فشل"
+  },
+  "buttons": {
+    "continueShopping": "مواصلة التسوق",
+    "leaveReview": "كتابة تقييم",
+    "backToHome": "العودة للصفحة الرئيسية"
+  },
+  "errors": {
+    "fetchError": "فشل تحميل تفاصيل الطلب",
+    "orderNotFound": "الطلب غير موجود"
+  }
+},
+"profile": {
+    "myOrders": "طلباتي",
+    "trackOrder": "تتبع الطلب الأخير",
+    "requestsMessages": "الطلبات والرسائل",
+    "payments": "المدفوعات",
+    "wishlist": "قائمة الرغبات",
+    "personalInfo": "المعلومات الشخصية",
+    "accountSettings": "إعدادات الحساب",
+    "logout": "تسجيل الخروج"
   }
 }

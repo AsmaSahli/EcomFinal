@@ -144,25 +144,44 @@ const createOrder = async (req, res) => {
 
 // Get order by ID
 const getOrderById = async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id)
-      .populate('userId', 'name email') // Adjusted to match User schema fields
-      .populate('items.productId', 'name images price')
-      .populate('items.sellerId', 'name'); // Adjusted to match User schema fields
+    try {
+        const { orderId } = req.params;
 
-    if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+        // Find the order and populate relevant fields
+        const order = await Order.findById(orderId)
+            .populate({
+                path: 'userId',
+                select: 'name email' // Populate user details
+            })
+            .populate({
+                path: 'items.productId',
+                select: 'name images price description' // Populate product details
+            })
+            .populate({
+                path: 'items.sellerId',
+                select: 'name email' // Populate seller details
+            })
+            .populate({
+                path: 'items.promotion',
+                select: 'name discount' // Populate promotion details if applicable
+            });
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        res.status(200).json({
+            message: 'Order retrieved successfully',
+            order
+        });
+    } catch (error) {
+        console.error('Error retrieving order:', error);
+        res.status(500).json({
+            message: 'Failed to retrieve order',
+            error: error.message
+        });
     }
-
-    res.status(200).json(order);
-  } catch (error) {
-    res.status(500).json({
-      message: 'Failed to fetch order',
-      error: error.message
-    });
-  }
 };
-
 // Get orders for a user
 const getUserOrders = async (req, res) => {
   try {
