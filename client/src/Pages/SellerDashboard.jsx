@@ -15,7 +15,9 @@ import {
   FaUsers,
   FaPlus,
   FaBoxes,
-  FaGift
+  FaGift,
+  FaBars,
+  FaTimes
 } from "react-icons/fa";
 import { useSelector, useDispatch } from "react-redux";
 import axios from 'axios';
@@ -38,6 +40,7 @@ const SellerDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Extract tab from URL
   useEffect(() => {
@@ -62,6 +65,10 @@ const SellerDashboard = () => {
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
+  };
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
   };
 
   // Mock data
@@ -102,16 +109,25 @@ const SellerDashboard = () => {
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Sidebar - Fixed */}
-      <div className="fixed top-0 left-0 w-64 h-full bg-gradient-to-b from-[#3F0AAD] to-[#2D077A] text-white flex flex-col p-0 shadow-xl z-10">
+      <div className={`fixed top-0 left-0 h-full bg-gradient-to-b from-[#3F0AAD] to-[#2D077A] text-white flex flex-col p-0 shadow-xl z-20 transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-64' : 'w-20'}`}>
         {/* Sidebar Header */}
-        <div className="p-6 pb-4 border-b border-[#4A12C4]">
-          <div className="flex items-center space-x-3">
-            <FaShoppingBag className="text-2xl text-purple-300" />
-            <h1 className="text-xl font-bold">{t('sellerDashboard.title')}</h1>
-          </div>
-          <div className="mt-4 text-sm text-purple-200">
-            {t('sellerDashboard.welcome')} { username }
-          </div>
+        <div className="p-6 pb-4 border-b border-[#4A12C4] flex items-center justify-between">
+          {sidebarOpen ? (
+            <div className="flex items-center space-x-3">
+              <FaShoppingBag className="text-2xl text-purple-300" />
+              <h1 className="text-xl font-bold">{t('sellerDashboard.title')}</h1>
+            </div>
+          ) : (
+            <div className="flex justify-center w-full">
+              <FaShoppingBag className="text-2xl text-purple-300" />
+            </div>
+          )}
+          <button 
+            onClick={toggleSidebar}
+            className="text-purple-200 hover:text-white transition-colors"
+          >
+            {sidebarOpen ? <FaTimes /> : <FaBars />}
+          </button>
         </div>
         
         {/* Sidebar Navigation */}
@@ -122,8 +138,8 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=dashboard" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'dashboard' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaHome className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.dashboard')}
+                <FaHome className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && t('sellerDashboard.sidebar.dashboard')}
               </Link>
             </li>
             <li>
@@ -131,11 +147,15 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=products" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'products' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaBox className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.products')}
-                <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
-                  {stats.products}
-                </span>
+                <FaBox className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && (
+                  <>
+                    {t('sellerDashboard.sidebar.products')}
+                    <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
+                      {stats.products}
+                    </span>
+                  </>
+                )}
               </Link>
             </li>
             <li>
@@ -143,8 +163,8 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=add-inventory" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'add-inventory' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaBoxes className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.addInventory')}
+                <FaBoxes className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && t('sellerDashboard.sidebar.addInventory')}
               </Link>
             </li>
             <li>
@@ -152,8 +172,8 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=promotions" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'promotions' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaGift className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.promotions')}
+                <FaGift className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && t('sellerDashboard.sidebar.promotions')}
               </Link>
             </li>
             <li>
@@ -161,11 +181,15 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=orders" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'orders' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaClipboardList className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.orders')}
-                <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
-                  {stats.orders}
-                </span>
+                <FaClipboardList className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && (
+                  <>
+                    {t('sellerDashboard.sidebar.orders')}
+                    <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
+                      {stats.orders}
+                    </span>
+                  </>
+                )}
               </Link>
             </li>
             <li>
@@ -173,8 +197,8 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=customers" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'customers' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaUsers className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.customers')}
+                <FaUsers className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && t('sellerDashboard.sidebar.customers')}
               </Link>
             </li>
             <li>
@@ -182,8 +206,8 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=sales" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'sales' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaDollarSign className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.sales')}
+                <FaDollarSign className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && t('sellerDashboard.sidebar.sales')}
               </Link>
             </li>
             <li>
@@ -191,8 +215,8 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=analytics" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'analytics' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaChartPie className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.analytics')}
+                <FaChartPie className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && t('sellerDashboard.sidebar.analytics')}
               </Link>
             </li>
             <li>
@@ -200,8 +224,8 @@ const SellerDashboard = () => {
                 to="/seller-dashboard?tab=settings" 
                 className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'settings' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
-                <FaCog className="mr-3 text-purple-200" />
-                {t('sellerDashboard.sidebar.settings')}
+                <FaCog className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
+                {sidebarOpen && t('sellerDashboard.sidebar.settings')}
               </Link>
             </li>
           </ul>
@@ -213,25 +237,30 @@ const SellerDashboard = () => {
             onClick={signOut}
             className="flex items-center w-full px-4 py-2 text-sm text-purple-200 hover:text-white rounded-lg hover:bg-[#4A12C4] transition"
           >
-            <FaSignOutAlt className="mr-3" />
-            {t('sellerDashboard.sidebar.signOut')}
+            <FaSignOutAlt className={`${sidebarOpen ? 'mr-3' : 'mx-auto'}`} />
+            {sidebarOpen && t('sellerDashboard.sidebar.signOut')}
           </button>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col ml-64">
+      <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out ${sidebarOpen ? 'ml-64' : 'ml-20'}`}>
         {/* Navbar - Fixed */}
-        <header className="fixed top-0 left-64 right-0 bg-white shadow-sm z-10">
+        <header className="fixed top-0 right-0 bg-white shadow-sm z-10" style={{ left: sidebarOpen ? '16rem' : '5rem' }}>
           <div className="flex items-center justify-between px-6 py-4">
+            {/* Mobile menu button (only shown when sidebar is closed) */}
+            {!sidebarOpen && (
+              <button 
+                onClick={toggleSidebar}
+                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 mr-4"
+              >
+                <FaBars className="text-xl" />
+              </button>
+            )}
+            
             {/* Search Bar */}
             <div className="relative w-64">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder={t('sellerDashboard.searchPlaceholder')}
-                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#3F0AAD] focus:border-transparent"
-              />
+
             </div>
             
             {/* User Info and Notifications */}

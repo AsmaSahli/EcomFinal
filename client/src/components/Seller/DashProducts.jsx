@@ -275,8 +275,8 @@ const DashProducts = () => {
                               <img className="h-full w-full object-cover" src={product.images[0].url} alt={product.name} />
                             </div>
                           )}
-                          <div>
-                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                            {product.name.length > 30 ? `${product.name.substring(0, 30)}...` : product.name}
                           </div>
                         </div>
                       </td>

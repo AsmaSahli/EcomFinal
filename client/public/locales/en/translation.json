@@ -638,7 +638,8 @@
   "buttons": {
     "continueShopping": "Continue Shopping",
     "leaveReview": "Leave a Review",
-    "backToHome": "Back to Home"
+    "backToHome": "Back to Home",
+    "refreshStatus": "Refresh Status"
   },
   "errors": {
     "fetchError": "Failed to load order details",
@@ -654,5 +655,26 @@
     "personalInfo": "Personal Information",
     "accountSettings": "Account Settings",
     "logout": "Logout"
+  },
+"search": {
+    "filters": "Filters",
+    "search": "Search",
+    "placeholder": "Search products...",
+    "category": "Category",
+    "allCategories": "All Categories",
+    "priceRange": "Price Range",
+    "rating": "Rating",
+    "rating5": "5 Stars",
+    "rating4": "4 Stars & Up",
+    "rating3": "3 Stars & Up",
+    "rating2": "2 Stars & Up",
+    "rating1": "1 Star & Up",
+    "inStock": "In Stock Only",
+    "clearFilters": "Clear Filters",
+    "applyFilters": "Apply Filters",
+    "previous": "Previous",
+    "next": "Next",
+    "showing": "Showing  products"
   }
+  
 }

@@ -631,7 +631,8 @@
   "buttons": {
     "continueShopping": "مواصلة التسوق",
     "leaveReview": "كتابة تقييم",
-    "backToHome": "العودة للصفحة الرئيسية"
+    "backToHome": "العودة للصفحة الرئيسية",
+    "refreshStatus": "تحديث الحالة"
   },
   "errors": {
     "fetchError": "فشل تحميل تفاصيل الطلب",
@@ -647,5 +648,25 @@
     "personalInfo": "المعلومات الشخصية",
     "accountSettings": "إعدادات الحساب",
     "logout": "تسجيل الخروج"
+  },
+  "search": {
+    "filters": "الفلاتر",
+    "search": "بحث",
+    "placeholder": "ابحث عن المنتجات...",
+    "category": "الفئة",
+    "allCategories": "جميع الفئات",
+    "priceRange": "نطاق السعر",
+    "rating": "التقييم",
+    "rating5": "5 نجوم",
+    "rating4": "4 نجوم وأعلى",
+    "rating3": "3 نجوم وأعلى",
+    "rating2": "نجمتان وأعلى",
+    "rating1": "نجمة واحدة وأعلى",
+    "inStock": "متوفر فقط",
+    "clearFilters": "مسح الفلاتر",
+    "applyFilters": "تطبيق الفلاتر",
+    "previous": "السابق",
+    "next": "التالي",
+    "showing": "عرض منتجات"
   }
 }

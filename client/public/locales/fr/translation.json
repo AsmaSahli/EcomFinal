@@ -637,7 +637,8 @@
   "buttons": {
     "continueShopping": "Continuer les Achats",
     "leaveReview": "Laisser un Avis",
-    "backToHome": "Retour à l'Accueil"
+    "backToHome": "Retour à l'Accueil",
+    "refreshStatus": "Actualiser l'état"
   },
   "errors": {
     "fetchError": "Échec du chargement des détails de la commande",
@@ -653,5 +654,25 @@
     "personalInfo": "Informations Personnelles",
     "accountSettings": "Paramètres du Compte",
     "logout": "Déconnexion"
+  },
+"search": {
+    "filters": "Filtres",
+    "search": "Rechercher",
+    "placeholder": "Rechercher des produits...",
+    "category": "Catégorie",
+    "allCategories": "Toutes les catégories",
+    "priceRange": "Fourchette de prix",
+    "rating": "Évaluation",
+    "rating5": "5 étoiles",
+    "rating4": "4 étoiles et plus",
+    "rating3": "3 étoiles et plus",
+    "rating2": "2 étoiles et plus",
+    "rating1": "1 étoile et plus",
+    "inStock": "En stock uniquement",
+    "clearFilters": "Effacer les filtres",
+    "applyFilters": "Appliquer les filtres",
+    "previous": "Précédent",
+    "next": "Suivant",
+    "showing": "Affichage de produits"
   }
 }

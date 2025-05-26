@@ -117,6 +117,10 @@ const orderSchema = new mongoose.Schema({
     enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending'
   },
+  statusUpdatedAt: {
+    type: Date,
+    default: Date.now, 
+  },
   createdAt: {
     type: Date,
     default: Date.now

@@ -26,6 +26,7 @@ import ProductDetailsPage from "./Pages/ProductDetailsPage";
 import CheckoutPage from "./Pages/CheckoutPage";
 import OrderTrakingPage from "./Pages/OrderTrakingPage";
 import ProfilePage from "./Pages/ProfilePage";
+import SearchPage from "./Pages/SearchPage";
 
 
 function App() {
@@ -56,6 +57,7 @@ function App() {
         <Route path="/products/:id" element={<ProductDetailsPage />} />
         <Route path="/checkout" element={<CheckoutPage/>} />
         <Route path="/Profile" element={<ProfilePage/>} />
+        <Route path="/Search" element={<SearchPage/>} />
         <Route path="/trackOrder/:id" element={<OrderTrakingPage/>} />
 
         

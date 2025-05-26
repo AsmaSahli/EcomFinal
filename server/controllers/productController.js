@@ -620,91 +620,308 @@ exports.deleteProductImage = async (req, res) => {
 // Search products by reference or name
 exports.searchProducts = async (req, res) => {
   try {
-    const { query, reference } = req.query;
+    const {
+      q = '',
+      category = '',
+      minPrice = '',
+      maxPrice = '',
+      rating = '',
+      inStock = false,
+      page = 1,
+      limit = 20,
+    } = req.query;
 
-    // Validate inputs
-    if (!query && !reference) {
-      return res.status(400).json({ message: 'Query or reference parameter is required' });
+    let query = {};
+
+    // Text search
+    if (q) {
+      query.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { reference: { $regex: q, $options: 'i' } },
+      ];
     }
 
-    if (reference) {
-      // Validate reference
-      if (typeof reference !== 'string' || reference.trim() === '') {
-        return res.status(400).json({ message: 'Invalid product reference' });
-      }
-
-      const product = await Product.findOne({ reference })
-        .select('reference name description images categoryDetails')
-        .populate({
-          path: 'sellers.sellerId',
-          select: 'name email'
-        })
-        .populate({
-          path: 'sellers.tags',
-          select: 'name'
-        })
-        .populate({
-          path: 'sellers.reviews',
-          select: 'rating comment'
-        })
-        .populate({
-          path: 'categoryDetails.category',
-          select: 'name'
-        })
-        .lean();
-
-      if (product && !product.categoryDetails?.subcategory) {
-        product.categoryDetails.subcategory = { group: '', item: '' };
-      }
-
-      return res.status(200).json(product ? [transformProductData(product)] : []);
+    // Category filter
+    if (category) {
+      query['categoryDetails.category'] = mongoose.Types.ObjectId.isValid(category)
+        ? new mongoose.Types.ObjectId(category)
+        : { $exists: false };
     }
 
-    // Validate query
-    if (typeof query !== 'string' || query.length < 3) {
-      return res.status(400).json({ 
-        message: 'Search query must be at least 3 characters long' 
-      });
+    // Price range filter
+    if (minPrice || maxPrice) {
+      query['sellers.price'] = {};
+      if (minPrice) query['sellers.price'].$gte = Number(minPrice);
+      if (maxPrice) query['sellers.price'].$lte = Number(maxPrice);
     }
 
-    const products = await Product.find({
-      $or: [
-        { reference: { $regex: query, $options: 'i' } },
-        { name: { $regex: query, $options: 'i' } }
-      ]
-    })
-      .limit(10)
-      .select('reference name description images categoryDetails')
-      .populate({
-        path: 'sellers.sellerId',
-        select: 'name email'
-      })
-      .populate({
-        path: 'sellers.tags',
-        select: 'name'
-      })
-      .populate({
-        path: 'sellers.reviews',
-        select: 'rating comment'
-      })
-      .populate({
-        path: 'categoryDetails.category',
-        select: 'name'
-      })
-      .lean();
+    // In-stock filter
+    if (inStock === 'true' || inStock === true) {
+      query['sellers.stock'] = { $gt: 0 };
+    }
 
-    // Ensure subcategory is present for all products
-    products.forEach(product => {
-      if (!product.categoryDetails?.subcategory) {
-        product.categoryDetails.subcategory = { group: '', item: '' };
-      }
+    const pipeline = [
+      { $match: query },
+      { $unwind: '$sellers' },
+
+      // Lookup seller details to populate shopName
+      {
+        $lookup: {
+          from: 'users', // Ensure this is the correct collection (e.g., 'users' or 'sellers')
+          localField: 'sellers.sellerId',
+          foreignField: '_id',
+          as: 'sellers.sellerDetails',
+        },
+      },
+
+      // Unwind sellerDetails to simplify structure
+      {
+        $unwind: {
+          path: '$sellers.sellerDetails',
+          preserveNullAndEmptyArrays: true, // Keep products if seller details are missing
+        },
+      },
+
+      // Lookup reviews
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: 'sellers.reviews',
+          foreignField: '_id',
+          as: 'sellers.reviewDetails',
+        },
+      },
+
+      // Calculate average rating
+      {
+        $addFields: {
+          'sellers.averageRating': {
+            $cond: {
+              if: { $gt: [{ $size: '$sellers.reviewDetails' }, 0] },
+              then: { $avg: '$sellers.reviewDetails.rating' },
+              else: 0,
+            },
+          },
+        },
+      },
+
+      // Apply rating filter
+      ...(rating
+        ? [
+            {
+              $match: {
+                'sellers.averageRating': { $gte: Number(rating) },
+              },
+            },
+          ]
+        : []),
+
+      // Lookup category details
+      {
+        $lookup: {
+          from: 'categories',
+          localField: 'categoryDetails.category',
+          foreignField: '_id',
+          as: 'categoryDetails.category',
+        },
+      },
+      { $unwind: { path: '$categoryDetails.category', preserveNullAndEmptyArrays: true } },
+
+      // Handle promotions
+      {
+        $addFields: {
+          'sellers.effectivePrice': {
+            $cond: {
+              if: {
+                $and: [
+                  { $eq: ['$sellers.activePromotion', null] },
+                  { $eq: [{ $size: '$sellers.promotions' }, 0] },
+                ],
+              },
+              then: '$sellers.price',
+              else: {
+                $min: [
+                  '$sellers.price',
+                  {
+                    $ifNull: [
+                      {
+                        $arrayElemAt: [
+                          '$sellers.promotions.newPrice',
+                          {
+                            $indexOfArray: ['$sellers.promotions.isActive', true],
+                          },
+                        ],
+                      },
+                      '$sellers.price',
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+
+      // Re-apply price filter on effectivePrice
+      ...(minPrice || maxPrice
+        ? [
+            {
+              $match: {
+                'sellers.effectivePrice': {
+                  ...(minPrice ? { $gte: Number(minPrice) } : {}),
+                  ...(maxPrice ? { $lte: Number(maxPrice) } : {}),
+                },
+              },
+            },
+          ]
+        : []),
+
+      // Group back to maintain product structure
+      {
+        $group: {
+          _id: '$_id',
+          reference: { $first: '$reference' },
+          name: { $first: '$name' },
+          description: { $first: '$description' },
+          images: { $first: '$images' },
+          categoryDetails: { $first: '$categoryDetails' },
+          sellers: {
+            $push: {
+              sellerId: '$sellers.sellerId',
+              shopName: '$sellers.sellerDetails.shopName', // Ensure shopName is included
+              price: '$sellers.price',
+              effectivePrice: '$sellers.effectivePrice',
+              stock: '$sellers.stock',
+              tags: '$sellers.tags',
+              warranty: '$sellers.warranty',
+              promotions: '$sellers.promotions',
+              activePromotion: '$sellers.activePromotion',
+              reviews: '$sellers.reviews',
+              averageRating: '$sellers.averageRating',
+            },
+          },
+          createdBy: { $first: '$createdBy' },
+          createdAt: { $first: '$createdAt' },
+          updatedAt: { $first: '$updatedAt' },
+        },
+      },
+
+      // Pagination
+      { $skip: (Number(page) - 1) * Number(limit) },
+      { $limit: Number(limit) },
+    ];
+
+    const products = await Product.aggregate(pipeline);
+
+    // Count total matching products
+    const countPipeline = [
+      { $match: query },
+      { $unwind: '$sellers' },
+      {
+        $lookup: {
+          from: 'users', // Ensure this is the correct collection
+          localField: 'sellers.sellerId',
+          foreignField: '_id',
+          as: 'sellers.sellerDetails',
+        },
+      },
+      {
+        $unwind: {
+          path: '$sellers.sellerDetails',
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: 'reviews',
+          localField: 'sellers.reviews',
+          foreignField: '_id',
+          as: 'sellers.reviewDetails',
+        },
+      },
+      {
+        $addFields: {
+          'sellers.averageRating': {
+            $cond: {
+              if: { $gt: [{ $size: '$sellers.reviewDetails' }, 0] },
+              then: { $avg: '$sellers.reviewDetails.rating' },
+              else: 0,
+            },
+          },
+        },
+      },
+      ...(rating
+        ? [
+            {
+              $match: {
+                'sellers.averageRating': { $gte: Number(rating) },
+              },
+            },
+          ]
+        : []),
+      {
+        $addFields: {
+          'sellers.effectivePrice': {
+            $cond: {
+              if: {
+                $and: [
+                  { $eq: ['$sellers.activePromotion', null] },
+                  { $eq: [{ $size: '$sellers.promotions' }, 0] },
+                ],
+              },
+              then: '$sellers.price',
+              else: {
+                $min: [
+                  '$sellers.price',
+                  {
+                    $ifNull: [
+                      {
+                        $arrayElemAt: [
+                          '$sellers.promotions.newPrice',
+                          {
+                            $indexOfArray: ['$sellers.promotions.isActive', true],
+                          },
+                        ],
+                      },
+                      '$sellers.price',
+                    ],
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      ...(minPrice || maxPrice
+        ? [
+            {
+              $match: {
+                'sellers.effectivePrice': {
+                  ...(minPrice ? { $gte: Number(minPrice) } : {}),
+                  ...(maxPrice ? { $lte: Number(maxPrice) } : {}),
+                },
+              },
+            },
+          ]
+        : []),
+      { $group: { _id: '$_id' } },
+      { $count: 'total' },
+    ];
+
+    const countResult = await Product.aggregate(countPipeline);
+    const totalProducts = countResult.length > 0 ? countResult[0].total : 0;
+
+    res.status(200).json({
+      products,
+      total: totalProducts,
+      page: Number(page),
+      limit: Number(limit),
+      totalPages: Math.ceil(totalProducts / Number(limit)),
     });
-
-    const transformedProducts = products.map(transformProductData);
-    res.status(200).json(transformedProducts);
   } catch (error) {
-    console.error('Error in searchProducts:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    console.error('Search error:', error);
+    res.status(500).json({ message: 'Error performing search', error: error.message });
   }
 };
 

@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { FaCheckCircle, FaTruck, FaBoxOpen, FaHome, FaClock } from 'react-icons/fa';
+import { FaCheckCircle, FaTruck, FaBoxOpen, FaHome, FaClock, FaSyncAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
 const OrderTrackingPage = () => {
@@ -13,49 +13,49 @@ const OrderTrackingPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchOrder = async () => {
-      try {
-        setLoading(true);
-        const response = await axios.get(`http://localhost:8000/api/orders/${id}`);
-        setOrder(response.data.order);
-      } catch (err) {
-        setError(err.response?.data?.message || t('orderTracking.errors.fetchError'));
-        toast.error(t('orderTracking.errors.fetchError'));
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchOrder = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`http://localhost:8000/api/orders/${id}`);
+      setOrder(response.data.order);
+    } catch (err) {
+      setError(err.response?.data?.message || t('orderTracking.errors.fetchError'));
+      toast.error(t('orderTracking.errors.fetchError'));
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchOrder();
   }, [id, t]);
 
   // Order status steps
   const statusSteps = [
-    { 
+    {
       id: 'pending',
       title: t('orderTracking.status.pending'),
       icon: <FaClock className="text-yellow-500" />,
-      description: t('orderTracking.status.pendingDescription')
+      description: t('orderTracking.status.pendingDescription'),
     },
-    { 
+    {
       id: 'processing',
       title: t('orderTracking.status.processing'),
       icon: <FaBoxOpen className="text-blue-500" />,
-      description: t('orderTracking.status.processingDescription')
+      description: t('orderTracking.status.processingDescription'),
     },
-    { 
+    {
       id: 'shipped',
       title: t('orderTracking.status.shipped'),
       icon: <FaTruck className="text-purple-500" />,
-      description: t('orderTracking.status.shippedDescription')
+      description: t('orderTracking.status.shippedDescription'),
     },
-    { 
+    {
       id: 'delivered',
       title: t('orderTracking.status.delivered'),
       icon: <FaHome className="text-green-500" />,
-      description: t('orderTracking.status.deliveredDescription')
-    }
+      description: t('orderTracking.status.deliveredDescription'),
+    },
   ];
 
   if (loading) {
@@ -93,7 +93,7 @@ const OrderTrackingPage = () => {
   }
 
   // Find current status index
-  const currentStatusIndex = statusSteps.findIndex(step => step.id === order.status);
+  const currentStatusIndex = statusSteps.findIndex((step) => step.id === order.status);
 
   return (
     <motion.div
@@ -116,21 +116,32 @@ const OrderTrackingPage = () => {
           {/* Order Status */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">
-                {t('orderTracking.orderStatus')}
-              </h2>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-gray-800">
+                  {t('orderTracking.orderStatus')}
+                </h2>
+                <button
+                  onClick={fetchOrder}
+                  className="btn btn-outline btn-primary btn-sm flex items-center gap-2"
+                >
+                  <FaSyncAlt />
+                  {t('orderTracking.buttons.refreshStatus')}
+                </button>
+              </div>
 
               {/* Status Timeline */}
               <div className="relative">
                 {/* Timeline line */}
                 <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
-                
+
                 {statusSteps.map((step, index) => (
                   <div key={step.id} className="relative pl-12 pb-6 last:pb-0">
                     {/* Timeline dot */}
-                    <div className={`absolute left-0 top-0 w-8 h-8 rounded-full flex items-center justify-center ${
-                      index <= currentStatusIndex ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400'
-                    }`}>
+                    <div
+                      className={`absolute left-0 top-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                        index <= currentStatusIndex ? 'bg-purple-100 text-purple-600' : 'bg-gray-100 text-gray-400'
+                      }`}
+                    >
                       {index < currentStatusIndex ? (
                         <FaCheckCircle className="text-lg" />
                       ) : (
@@ -165,7 +176,9 @@ const OrderTrackingPage = () => {
                     {t('orderTracking.shippingInfo')}
                   </h3>
                   <div className="text-sm text-gray-600 space-y-1">
-                    <p>{order.shippingInfo.firstName} {order.shippingInfo.lastName}</p>
+                    <p>
+                      {order.shippingInfo.firstName} {order.shippingInfo.lastName}
+                    </p>
                     <p>{order.shippingInfo.address.street}</p>
                     {order.shippingInfo.address.apartment && (
                       <p>{order.shippingInfo.address.apartment}</p>
@@ -180,7 +193,8 @@ const OrderTrackingPage = () => {
                     <p>{order.shippingInfo.email}</p>
                     {order.shippingInfo.address.deliveryInstructions && (
                       <p className="mt-2">
-                        <span className="font-medium">{t('orderTracking.deliveryInstructions')}:</span> {order.shippingInfo.address.deliveryInstructions}
+                        <span className="font-medium">{t('orderTracking.deliveryInstructions')}:</span>{' '}
+                        {order.shippingInfo.address.deliveryInstructions}
                       </p>
                     )}
                   </div>
@@ -193,16 +207,19 @@ const OrderTrackingPage = () => {
                   </h3>
                   <div className="text-sm text-gray-600 space-y-1">
                     <p>
-                      <span className="font-medium">{t('orderTracking.paymentMethod')}:</span> {t(`orderTracking.paymentMethods.${order.paymentMethod}`)}
+                      <span className="font-medium">{t('orderTracking.paymentMethod')}:</span>{' '}
+                      {t(`orderTracking.paymentMethods.${order.paymentMethod}`)}
                     </p>
                     <p>
-                      <span className="font-medium">{t('orderTracking.deliveryMethod')}:</span> {t(`orderTracking.deliveryMethods.${order.deliveryMethod}`)}
+                      <span className="font-medium">{t('orderTracking.deliveryMethod')}:</span>{' '}
+                      {t(`orderTracking.deliveryMethods.${order.deliveryMethod}`)}
                     </p>
                     <p>
                       <span className="font-medium">{t('orderTracking.orderTotal')}:</span> ${order.total}
                     </p>
                     <p>
-                      <span className="font-medium">{t('orderTracking.paymentStatus')}:</span> {t(`orderTracking.paymentStatuses.${order.paymentStatus || 'pending'}`)}
+                      <span className="font-medium">{t('orderTracking.paymentStatus')}:</span>{' '}
+                      {t(`orderTracking.paymentStatuses.${order.paymentStatus || 'pending'}`)}
                     </p>
                   </div>
                 </div>
@@ -276,10 +293,7 @@ const OrderTrackingPage = () => {
 
               {/* Actions */}
               <div className="mt-6 space-y-2">
-                <Link
-                  to="/"
-                  className="btn btn-outline btn-primary w-full"
-                >
+                <Link to="/" className="btn btn-outline btn-primary w-full">
                   {t('orderTracking.buttons.continueShopping')}
                 </Link>
                 {order.status === 'delivered' && (
