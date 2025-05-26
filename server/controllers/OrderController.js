@@ -3,7 +3,7 @@ const Product = require('../models/Product');
 const Cart = require('../models/Cart'); // Import the Cart model
 const { User } = require("../models/User");
 const { sendOrderConfirmationEmail } = require('../services/emailService');
-
+const mongoose = require('mongoose');
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -34,7 +34,6 @@ const createOrder = async (req, res) => {
           });
         }
   
-        // Find the seller-specific data for the product
         const sellerData = product.sellers.find(
           (seller) => seller.sellerId.toString() === item.sellerId.toString()
         );
@@ -57,10 +56,32 @@ const createOrder = async (req, res) => {
         return res.status(404).json({ message: 'User not found' });
       }
   
+      // Group items by seller for suborders
+      const suborders = [];
+      const sellerMap = new Map();
+  
+      for (const item of items) {
+        const sellerId = item.sellerId.toString();
+        if (!sellerMap.has(sellerId)) {
+          sellerMap.set(sellerId, {
+            sellerId: item.sellerId,
+            items: [],
+            subtotal: 0,
+            status: 'pending' // Initialize suborder status
+          });
+        }
+        const suborder = sellerMap.get(sellerId);
+        suborder.items.push(item);
+        suborder.subtotal += item.price * item.quantity;
+      }
+  
+      sellerMap.forEach((suborder) => suborders.push(suborder));
+  
       // Create the order
       const order = new Order({
         userId,
         items,
+        suborders,
         shippingInfo,
         deliveryMethod,
         paymentMethod,
@@ -81,9 +102,7 @@ const createOrder = async (req, res) => {
           { new: true }
         );
   
-        // Check if the update was successful
         if (!updateResult) {
-          // Rollback the order if stock update fails
           await Order.deleteOne({ _id: savedOrder._id });
           return res.status(500).json({
             message: `Failed to update stock for product ID ${item.productId}`
@@ -110,7 +129,7 @@ const createOrder = async (req, res) => {
         }
       }
   
-      // Populate the saved order with product and seller details
+      // Populate the saved order
       const populatedOrder = await Order.findById(savedOrder._id)
         .populate({
           path: 'userId',
@@ -122,6 +141,10 @@ const createOrder = async (req, res) => {
         })
         .populate({
           path: 'items.sellerId',
+          select: 'name email'
+        })
+        .populate({
+          path: 'suborders.sellerId',
           select: 'name email'
         });
   
@@ -141,6 +164,81 @@ const createOrder = async (req, res) => {
       });
     }
   };
+  
+  const getSellerSuborders = async (req, res) => {
+    try {
+      const { sellerId } = req.params;
+  
+      // Validate sellerId
+      if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+        return res.status(400).json({ message: 'Invalid sellerId' });
+      }
+  
+      // Convert sellerId to ObjectId
+      const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
+  
+      // Find orders with suborders for the seller
+      const orders = await Order.find({ 'suborders.sellerId': sellerObjectId })
+        .populate({
+          path: 'userId',
+          select: 'name email',
+        })
+        .populate({
+          path: 'suborders.items.productId',
+          select: 'name images',
+        })
+        .populate({
+          path: 'suborders.sellerId',
+          select: 'name email',
+        })
+        .lean();
+  
+      // Extract seller's suborders
+      const sellerSuborders = orders.flatMap((order) =>
+        order.suborders
+          .filter((suborder) => suborder.sellerId._id.toString() === sellerId)
+          .map((suborder) => ({
+            orderId: order._id,
+            buyer: {
+              userId: order.userId._id,
+              name: order.userId.name,
+              email: order.userId.email,
+            },
+            shippingInfo: order.shippingInfo,
+            deliveryMethod: order.deliveryMethod,
+            paymentMethod: order.paymentMethod,
+            orderStatus: order.status,
+            paymentStatus: order.paymentStatus,
+            suborder: {
+              sellerId: suborder.sellerId,
+              items: suborder.items,
+              subtotal: suborder.subtotal,
+              status: suborder.status,
+            },
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+          }))
+      );
+  
+      if (!sellerSuborders.length) {
+        return res.status(404).json({ message: 'No suborders found for this seller' });
+      }
+  
+      res.status(200).json({
+        message: 'Suborders retrieved successfully',
+        suborders: sellerSuborders,
+      });
+    } catch (error) {
+      console.error('Error fetching seller suborders:', error);
+      res.status(500).json({
+        message: 'Failed to fetch suborders',
+        error: error.message,
+      });
+    }
+  };
+  
+
+
 
 // Get order by ID
 const getOrderById = async (req, res) => {
@@ -284,148 +382,7 @@ const updateOrderStatus = async (req, res) => {
     }
   };
 
-// Split an order into separate orders based on sellers
-const splitOrderBySeller = async (req, res) => {
-    try {
-      const { orderId, preview } = req.query; 
-      // Validate orderId
-      if (!orderId) {
-        return res.status(400).json({ message: 'orderId is required in query parameters' });
-      }
-  
-      // Find the original order and populate necessary fields
-      const originalOrder = await Order.findById(orderId)
-        .populate({
-          path: 'userId',
-          select: 'name email',
-        })
-        .populate({
-          path: 'items.productId',
-          select: 'name images price description',
-        })
-        .populate({
-          path: 'items.sellerId',
-          select: 'name email',
-        })
-        .populate({
-          path: 'items.promotion',
-          select: 'name discount',
-        });
-  
-      if (!originalOrder) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-  
-      // Group items by sellerId
-      const itemsBySeller = {};
-      for (const item of originalOrder.items) {
-        const sellerId = item.sellerId._id.toString();
-        if (!itemsBySeller[sellerId]) {
-          itemsBySeller[sellerId] = {
-            seller: item.sellerId,
-            items: [],
-            subtotal: 0,
-          };
-        }
-        itemsBySeller[sellerId].items.push(item);
-        itemsBySeller[sellerId].subtotal += item.price * item.quantity;
-      }
-  
-      // Prepare split orders
-      const splitOrders = [];
-      for (const sellerId in itemsBySeller) {
-        const { items, subtotal, seller } = itemsBySeller[sellerId];
-  
-        // Calculate shipping and tax (proportionally based on subtotal)
-        const sellerSubtotalRatio = subtotal / originalOrder.subtotal;
-        const shipping = originalOrder.shipping * sellerSubtotalRatio;
-        const tax = originalOrder.tax * sellerSubtotalRatio;
-        const total = subtotal + shipping + tax;
-  
-        // Create order object (not saved yet)
-        const newOrder = {
-          userId: originalOrder.userId._id,
-          items: items,
-          shippingInfo: originalOrder.shippingInfo,
-          deliveryMethod: originalOrder.deliveryMethod,
-          paymentMethod: originalOrder.paymentMethod,
-          subtotal: subtotal,
-          shipping: shipping,
-          tax: tax,
-          total: total,
-          status: 'pending',
-          paymentStatus: originalOrder.paymentStatus,
-          statusUpdatedAt: new Date(),
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        };
-  
-        if (preview === 'true') {
-          // For preview, add populated data without saving
-          splitOrders.push({
-            ...newOrder,
-            userId: originalOrder.userId,
-            items: items.map(item => ({
-              ...item.toObject(),
-              productId: item.productId,
-              sellerId: item.sellerId,
-              promotion: item.promotion,
-            })),
-          });
-        } else {
-          // Save the new order
-          const savedOrder = await new Order(newOrder).save();
-  
-          // Populate the saved order
-          const populatedOrder = await Order.findById(savedOrder._id)
-            .populate({
-              path: 'userId',
-              select: 'name email',
-            })
-            .populate({
-              path: 'items.productId',
-              select: 'name images price description',
-            })
-            .populate({
-              path: 'items.sellerId',
-              select: 'name email',
-            })
-            .populate({
-              path: 'items.promotion',
-              select: 'name discount',
-            });
-  
-          // Send order confirmation email to user
-          sendOrderConfirmationEmail(
-            originalOrder.userId.email,
-            populatedOrder,
-            originalOrder.userId,
-            `Order Split for Seller: ${seller.name}`
-          ).catch((err) => console.error('Error sending split order email:', err));
-  
-          splitOrders.push(populatedOrder);
-        }
-      }
-  
-      // If not in preview mode, mark the original order as cancelled
-      if (preview !== 'true') {
-        originalOrder.status = 'cancelled';
-        originalOrder.statusUpdatedAt = new Date();
-        await originalOrder.save();
-      }
-  
-      res.status(200).json({
-        message: preview === 'true' ? 'Order split preview generated successfully' : 'Order split successfully by seller',
-        orders: splitOrders,
-      });
-    } catch (error) {
-      console.error('Error splitting order by seller:', error);
-      res.status(500).json({
-        message: 'Failed to split order',
-        error: error.message,
-      });
-    }
-  };
+
   
   
   // Export the new function along with existing ones
@@ -434,5 +391,5 @@ const splitOrderBySeller = async (req, res) => {
     getOrderById,
     getUserOrders,
     updateOrderStatus,
-    splitOrderBySeller,
+    getSellerSuborders
   };

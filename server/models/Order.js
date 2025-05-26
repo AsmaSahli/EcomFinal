@@ -8,7 +8,7 @@ const orderItemSchema = new mongoose.Schema({
   },
   sellerId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // References the base User model
+    ref: 'User',
     required: true
   },
   quantity: {
@@ -28,54 +28,50 @@ const orderItemSchema = new mongoose.Schema({
   }
 }, { _id: false });
 
+const suborderSchema = new mongoose.Schema({
+    sellerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    items: [orderItemSchema], 
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    status: {
+        type: String,
+        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+        default: 'pending'
+      }
+  }, { _id: false });
+
 const addressSchema = new mongoose.Schema({
-  street: {
-    type: String,
-    required: true
-  },
+  street: { type: String, required: true },
   apartment: String,
-  city: {
-    type: String,
-    required: true
-  },
+  city: { type: String, required: true },
   postalCode: String,
-  governorate: {
-    type: String,
-    required: true
-  },
+  governorate: { type: String, required: true },
   deliveryInstructions: String
 }, { _id: false });
 
 const shippingInfoSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
-    required: true
-  },
-  lastName: {
-    type: String,
-    required: true
-  },
-  phone: {
-    type: String,
-    required: true
-  },
-  email: {
-    type: String,
-    required: true
-  },
-  address: {
-    type: addressSchema,
-    required: true
-  }
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  phone: { type: String, required: true },
+  email: { type: String, required: true },
+  address: { type: addressSchema, required: true }
 }, { _id: false });
 
 const orderSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User', // References the base User model
+    ref: 'User',
     required: true
   },
-  items: [orderItemSchema],
+  suborders: [suborderSchema], 
+  items: [orderItemSchema], 
   shippingInfo: shippingInfoSchema,
   deliveryMethod: {
     type: String,
@@ -119,7 +115,7 @@ const orderSchema = new mongoose.Schema({
   },
   statusUpdatedAt: {
     type: Date,
-    default: Date.now, 
+    default: Date.now
   },
   createdAt: {
     type: Date,
@@ -129,6 +125,6 @@ const orderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   }
-}, { timestamps: true }); // Automatically manages createdAt and updatedAt
+}, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);
