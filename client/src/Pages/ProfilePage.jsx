@@ -6,7 +6,6 @@ import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import ProfileOrders from '../components/Profile/ProfileOrders';
-import ProfileTrackOrder from '../components/Profile/ProfileTrackOrder';
 import ProfileMessages from '../components/Profile/ProfileMessages';
 import ProfilePayments from '../components/Profile/ProfilePayments';
 import ProfileWishlist from '../components/Profile/ProfileWishlist';
@@ -21,7 +20,7 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const currentUser = useSelector((state) => state.user?.currentUser);
-  const [activeComponent, setActiveComponent] = useState('orders'); // Default component
+  const [activeComponent, setActiveComponent] = useState('orders'); 
 
   const signOut = async () => {
     try {
@@ -38,7 +37,6 @@ const ProfilePage = () => {
 
   const navItems = [
     { id: 'orders', icon: <FaBox />, label: t('profile.myOrders'), component: <ProfileOrders /> },
-    { id: 'track-order', icon: <FaTruck />, label: t('profile.trackOrder'), component: <ProfileTrackOrder /> },
     { id: 'messages', icon: <FaEnvelope />, label: t('profile.requestsMessages'), component: <ProfileMessages /> },
     { id: 'payments', icon: <FaCreditCard />, label: t('profile.payments'), component: <ProfilePayments /> },
     { id: 'wishlist', icon: <FaHeart />, label: t('profile.wishlist'), component: <ProfileWishlist /> },

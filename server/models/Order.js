@@ -45,7 +45,7 @@ const suborderSchema = new mongoose.Schema({
         enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
         default: 'pending'
       }
-  }, { _id: false });
+  }, { _id: true });
 
 const addressSchema = new mongoose.Schema({
   street: { type: String, required: true },

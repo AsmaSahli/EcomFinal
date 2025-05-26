@@ -647,7 +647,70 @@
     "wishlist": "قائمة الرغبات",
     "personalInfo": "المعلومات الشخصية",
     "accountSettings": "إعدادات الحساب",
-    "logout": "تسجيل الخروج"
+    "logout": "تسجيل الخروج",
+    "orderTracking": {
+        "title": "تتبع الطلب",
+        "placedOn": "تم الطلب في",
+        "orderStatus": "حالة الطلب",
+        "orderDetails": "تفاصيل الطلب",
+        "orderSummary": "ملخص الطلب",
+        "shippingInfo": "معلومات الشحن",
+        "paymentInfo": "معلومات الدفع",
+        "deliveryInstructions": "تعليمات التوصيل",
+        "paymentMethod": "طريقة الدفع",
+        "deliveryMethod": "طريقة التوصيل",
+        "orderTotal": "إجمالي الطلب",
+        "paymentStatus": "حالة الدفع",
+        "quantity": "الكمية",
+        "subtotal": "المجموع الفرعي",
+        "shipping": "الشحن",
+        "tax": "الضريبة",
+        "total": "الإجمالي",
+        "free": "مجاني",
+        "status": {
+          "pending": "تم استلام الطلب",
+          "pendingDescription": "لقد استلمنا طلبك",
+          "processing": "قيد المعالجة",
+          "processingDescription": "طلبك قيد التحضير",
+          "shipped": "تم الشحن",
+          "shippedDescription": "طلبك في طريقه إليك",
+          "delivered": "تم التوصيل",
+          "deliveredDescription": "وصل طلبك"
+        },
+        "paymentMethods": {
+          "cod": "الدفع عند الاستلام",
+          "credit": "بطاقة ائتمان",
+          "paypal": "باي بال"
+        },
+        "deliveryMethods": {
+          "standard": "توصيل عادي",
+          "express": "توصيل سريع",
+          "pickup": "استلام من المتجر"
+        },
+        "paymentStatuses": {
+          "pending": "قيد الانتظار",
+          "paid": "تم الدفع",
+          "failed": "فشل الدفع"
+        },
+        "buttons": {
+          "continueShopping": "مواصلة التسوق",
+          "leaveReview": "ترك تقييم",
+          "backToHome": "العودة للصفحة الرئيسية",
+          "refreshStatus": "تحديث الحالة"
+        },
+        "errors": {
+          "fetchError": "فشل تحميل تفاصيل الطلب",
+          "orderNotFound": "الطلب غير موجود"
+        },
+        "yourPurchases": "مشترياتك",
+        "items": "عناصر",
+        "seller": "البائع",
+        "suborderStatus": "حالة الطرد",
+        "suborderSummary": "ملخص الطرد",
+        "viewProduct": "عرض المنتج",
+        "leaveReview": "ترك تقييم",
+        "orderProgress": "تقدم الطلب"
+      }
   },
   "search": {
     "filters": "الفلاتر",

@@ -653,7 +653,70 @@
     "wishlist": "Liste de Souhaits",
     "personalInfo": "Informations Personnelles",
     "accountSettings": "Paramètres du Compte",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "orderTracking": {
+        "title": "Suivi de commande",
+        "placedOn": "Passée le",
+        "orderStatus": "Statut de la commande",
+        "orderDetails": "Détails de la commande",
+        "orderSummary": "Résumé de la commande",
+        "shippingInfo": "Informations de livraison",
+        "paymentInfo": "Informations de paiement",
+        "deliveryInstructions": "Instructions de livraison",
+        "paymentMethod": "Méthode de paiement",
+        "deliveryMethod": "Méthode de livraison",
+        "orderTotal": "Total de la commande",
+        "paymentStatus": "Statut du paiement",
+        "quantity": "Quantité",
+        "subtotal": "Sous-total",
+        "shipping": "Livraison",
+        "tax": "Taxe",
+        "total": "Total",
+        "free": "Gratuit",
+        "status": {
+          "pending": "Commande passée",
+          "pendingDescription": "Nous avons reçu votre commande",
+          "processing": "En traitement",
+          "processingDescription": "Votre commande est en préparation",
+          "shipped": "Expédiée",
+          "shippedDescription": "Votre commande est en route",
+          "delivered": "Livrée",
+          "deliveredDescription": "Votre commande est arrivée"
+        },
+        "paymentMethods": {
+          "cod": "Paiement à la livraison",
+          "credit": "Carte de crédit",
+          "paypal": "PayPal"
+        },
+        "deliveryMethods": {
+          "standard": "Livraison standard",
+          "express": "Livraison express",
+          "pickup": "Retrait en magasin"
+        },
+        "paymentStatuses": {
+          "pending": "En attente",
+          "paid": "Payé",
+          "failed": "Échoué"
+        },
+        "buttons": {
+          "continueShopping": "Continuer vos achats",
+          "leaveReview": "Laisser un avis",
+          "backToHome": "Retour à l'accueil",
+          "refreshStatus": "Actualiser le statut"
+        },
+        "errors": {
+          "fetchError": "Échec du chargement des détails de la commande",
+          "orderNotFound": "Commande introuvable"
+        },
+        "yourPurchases": "Vos achats",
+        "items": "articles",
+        "seller": "Vendeur",
+        "suborderStatus": "Statut du colis",
+        "suborderSummary": "Résumé du colis",
+        "viewProduct": "Voir le produit",
+        "leaveReview": "Donner un avis",
+        "orderProgress": "Progression de la commande"
+      }
   },
 "search": {
     "filters": "Filtres",

@@ -592,60 +592,70 @@
       "orderPlaced": "Your order has been successfully placed!"
     }
     
-  },"orderTracking": {
-  "title": "Order Tracking",
-  "placedOn": "Placed on",
-  "orderStatus": "Order Status",
-  "orderDetails": "Order Details",
-  "orderSummary": "Order Summary",
-  "shippingInfo": "Shipping Information",
-  "paymentInfo": "Payment Information",
-  "deliveryInstructions": "Delivery Instructions",
-  "paymentMethod": "Payment Method",
-  "deliveryMethod": "Delivery Method",
-  "orderTotal": "Order Total",
-  "paymentStatus": "Payment Status",
-  "quantity": "Quantity",
-  "subtotal": "Subtotal",
-  "shipping": "Shipping",
-  "tax": "Tax",
-  "total": "Total",
-  "free": "Free",
-  "status": {
-    "pending": "Order Placed",
-    "pendingDescription": "We've received your order",
-    "processing": "Processing",
-    "processingDescription": "Your order is being prepared",
-    "shipped": "Shipped",
-    "shippedDescription": "Your order is on its way",
-    "delivered": "Delivered",
-    "deliveredDescription": "Your order has arrived"
   },
-  "paymentMethods": {
-    "cod": "Cash on Delivery",
-    "credit": "Credit Card"
+  "orderTracking": {
+    "title": "Order Tracking",
+    "placedOn": "Placed on",
+    "orderStatus": "Order Status",
+    "orderDetails": "Order Details",
+    "orderSummary": "Order Summary",
+    "shippingInfo": "Shipping Information",
+    "paymentInfo": "Payment Information",
+    "deliveryInstructions": "Delivery Instructions",
+    "paymentMethod": "Payment Method",
+    "deliveryMethod": "Delivery Method",
+    "orderTotal": "Order Total",
+    "paymentStatus": "Payment Status",
+    "quantity": "Quantity",
+    "subtotal": "Subtotal",
+    "shipping": "Shipping",
+    "tax": "Tax",
+    "total": "Total",
+    "free": "Free",
+    "status": {
+      "pending": "Order Placed",
+      "pendingDescription": "We've received your order",
+      "processing": "Processing",
+      "processingDescription": "Your order is being prepared",
+      "shipped": "Shipped",
+      "shippedDescription": "Your order is on its way",
+      "delivered": "Delivered",
+      "deliveredDescription": "Your order has arrived"
+    },
+    "paymentMethods": {
+      "cod": "Cash on Delivery",
+      "credit": "Credit Card",
+      "paypal": "PayPal"
+    },
+    "deliveryMethods": {
+      "standard": "Standard Delivery",
+      "express": "Express Delivery",
+      "pickup": "Store Pickup"
+    },
+    "paymentStatuses": {
+      "pending": "Pending",
+      "paid": "Paid",
+      "failed": "Failed"
+    },
+    "buttons": {
+      "continueShopping": "Continue Shopping",
+      "leaveReview": "Leave a Review",
+      "backToHome": "Back to Home",
+      "refreshStatus": "Refresh Status"
+    },
+    "errors": {
+      "fetchError": "Failed to load order details",
+      "orderNotFound": "Order not found"
+    },
+    "yourPurchases": "Your Purchases",
+    "items": "items",
+    "seller": "Seller",
+    "suborderStatus": "Package Status",
+    "suborderSummary": "Package Summary",
+    "viewProduct": "View Product",
+    "leaveReview": "Leave Review",
+    "orderProgress": "Order Progress"
   },
-  "deliveryMethods": {
-    "standard": "Standard Delivery",
-    "express": "Express Delivery",
-    "pickup": "Store Pickup"
-  },
-  "paymentStatuses": {
-    "pending": "Pending",
-    "paid": "Paid",
-    "failed": "Failed"
-  },
-  "buttons": {
-    "continueShopping": "Continue Shopping",
-    "leaveReview": "Leave a Review",
-    "backToHome": "Back to Home",
-    "refreshStatus": "Refresh Status"
-  },
-  "errors": {
-    "fetchError": "Failed to load order details",
-    "orderNotFound": "Order not found"
-  }
-},
 "profile": {
     "myOrders": "My Orders",
     "trackOrder": "Track Recent Order",
@@ -654,7 +664,31 @@
     "wishlist": "Wishlist",
     "personalInfo": "Personal Information",
     "accountSettings": "Account Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "orders": {
+        "fetchError": "Failed to fetch orders",
+        "noOrders": "No Orders Found",
+        "noOrdersDesc": "You haven't placed any orders yet",
+        "shopNow": "Shop Now",
+        "order": "Order",
+        "delivered": "Delivered",
+        "pending":"Pending",
+        "shipped": "Shipped",
+        "cancelled": "Cancelled",
+        "processing": "Processing",
+        "items": "Items",
+        "promoApplied": "Promotion Applied",
+        "summary": "Order Summary",
+        "subtotal": "Subtotal",
+        "shipping": "Shipping",
+        "tax": "Tax",
+        "total": "Total",
+        "shippingInfo": "Shipping Information",
+        "trackOrder": "Track Order",
+        "viewInvoice": "View Invoice",
+        "cancelOrder": "Cancel Order",
+        "leaveReview": "Leave a Review"
+      }
   },
 "search": {
     "filters": "Filters",
@@ -676,5 +710,6 @@
     "next": "Next",
     "showing": "Showing  products"
   }
+
   
 }

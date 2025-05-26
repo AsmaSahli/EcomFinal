@@ -243,107 +243,15 @@ const createOrder = async (req, res) => {
 // Get order by ID
 const getOrderById = async (req, res) => {
     try {
-        const { orderId } = req.params;
-
-        // Find the order and populate relevant fields
-        const order = await Order.findById(orderId)
-            .populate({
-                path: 'userId',
-                select: 'name email' // Populate user details
-            })
-            .populate({
-                path: 'items.productId',
-                select: 'name images price description' // Populate product details
-            })
-            .populate({
-                path: 'items.sellerId',
-                select: 'name email' // Populate seller details
-            })
-            .populate({
-                path: 'items.promotion',
-                select: 'name discount' // Populate promotion details if applicable
-            });
-
-        if (!order) {
-            return res.status(404).json({ message: 'Order not found' });
-        }
-
-        res.status(200).json({
-            message: 'Order retrieved successfully',
-            order
-        });
-    } catch (error) {
-        console.error('Error retrieving order:', error);
-        res.status(500).json({
-            message: 'Failed to retrieve order',
-            error: error.message
-        });
-    }
-};
-// Get orders for a user
-const getUserOrders = async (req, res) => {
-  try {
-    const orders = await Order.find({ userId: req.params.userId })
-      .sort({ createdAt: -1 })
-      .populate('items.productId', 'name images');
-
-    res.status(200).json(orders);
-  } catch (error) {
-    res.status(500).json({
-      message: 'Failed to fetch user orders',
-      error: error.message
-    });
-  }
-};
-
-// Update order status
-// Update order status
-const updateOrderStatus = async (req, res) => {
-    try {
-      const { orderId } = req.params;
-      const { status, paymentStatus } = req.body;
+      const { orderId  } = req.params;
   
-      // Validate input
-      if (!status && !paymentStatus) {
-        return res.status(400).json({ message: 'At least one of status or paymentStatus is required' });
+      // Validate orderId
+      if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json({ message: 'Invalid orderId' });
       }
   
-      // Define valid statuses
-      const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
-      const validPaymentStatuses = ['pending', 'paid', 'failed', 'refunded'];
-  
-      // Validate status if provided
-      if (status && !validStatuses.includes(status)) {
-        return res.status(400).json({ message: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
-      }
-  
-      // Validate paymentStatus if provided
-      if (paymentStatus && !validPaymentStatuses.includes(paymentStatus)) {
-        return res.status(400).json({ message: `Invalid payment status. Must be one of: ${validPaymentStatuses.join(', ')}` });
-      }
-  
-      // Find the order
-      const order = await Order.findById(orderId);
-      if (!order) {
-        return res.status(404).json({ message: 'Order not found' });
-      }
-  
-      // Update fields if provided
-      if (status) {
-        order.status = status;
-      }
-      if (paymentStatus) {
-        order.paymentStatus = paymentStatus;
-      }
-  
-      // Update statusUpdatedAt to track when the status was last changed
-      order.statusUpdatedAt = new Date();
-  
-      // Save the updated order
-      const updatedOrder = await order.save();
-  
-      // Populate the updated order with product and seller details
-      const populatedOrder = await Order.findById(updatedOrder._id)
+      // Find the order and populate relevant fields
+      const order = await Order.findById(orderId)
         .populate({
           path: 'userId',
           select: 'name email',
@@ -359,18 +267,192 @@ const updateOrderStatus = async (req, res) => {
         .populate({
           path: 'items.promotion',
           select: 'name discount',
+        })
+        .populate({
+          path: 'suborders.sellerId',
+          select: 'name email shopName',
+        })
+        .populate({
+          path: 'suborders.items.productId',
+          select: 'name images price description',
         });
   
-      // Optionally send notification (e.g., email) for status change
-      sendOrderConfirmationEmail(
-        populatedOrder.userId.email,
-        populatedOrder,
-        populatedOrder.userId,
-        `Order Status Updated: ${status || paymentStatus}`
-      ).catch((err) => console.error('Error sending status update email:', err));
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
   
       res.status(200).json({
-        message: 'Order status updated successfully',
+        message: 'Order retrieved successfully',
+        order,
+      });
+    } catch (error) {
+      console.error('Error retrieving order:', error);
+      res.status(500).json({
+        message: 'Failed to retrieve order',
+        error: error.message,
+      });
+    }
+  };
+  const getUserOrders = async (req, res) => {
+    try {
+        const { userId } =req.params; 
+  
+      // Validate userId
+      if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: 'Invalid userId' });
+      }
+  
+      // Find all orders for the user
+      const orders = await Order.find({ userId })
+        .populate({
+          path: 'userId',
+          select: 'name email',
+        })
+        .populate({
+          path: 'items.productId',
+          select: 'name images price description',
+        })
+        .populate({
+          path: 'items.sellerId',
+          select: 'name email',
+        })
+        .populate({
+          path: 'items.promotion',
+          select: 'name discount',
+        })
+        .populate({
+          path: 'suborders.sellerId',
+          select: 'name email',
+        })
+        .populate({
+          path: 'suborders.items.productId',
+          select: 'name images price description',
+        })
+        .sort({ createdAt: -1 }); // Sort by creation date, newest first
+  
+      if (!orders || orders.length === 0) {
+        return res.status(404).json({ message: 'No orders found for this user' });
+      }
+  
+      res.status(200).json({
+        message: 'Orders retrieved successfully',
+        orders,
+      });
+    } catch (error) {
+      console.error('Error retrieving user orders:', error);
+      res.status(500).json({
+        message: 'Failed to retrieve orders',
+        error: error.message,
+      });
+    }
+  };
+
+// Update order status
+
+const updateOrderStatus = async (req, res) => {
+    try {
+      const { orderId, suborderId, status } = req.body;
+  
+      // Validate input
+      if (!mongoose.Types.ObjectId.isValid(orderId)) {
+        return res.status(400).json({ message: 'Invalid orderId' });
+      }
+      if (!mongoose.Types.ObjectId.isValid(suborderId)) {
+        return res.status(400).json({ message: 'Invalid suborderId' });
+      }
+      if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+  
+      // Find the order
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+  
+      // Find the suborder
+      const suborder = order.suborders.find(
+        (sub) => sub._id.toString() === suborderId
+      );
+      if (!suborder) {
+        return res.status(404).json({ message: 'Suborder not found' });
+      }
+  
+      // Update suborder status
+      suborder.status = status;
+      suborder.statusUpdatedAt = Date.now();
+  
+      // Update parent order status based on logic
+      if (order.suborders.length === 1) {
+        // Single suborder: Parent order status matches suborder status
+        order.status = status;
+        if (status === 'delivered') {
+          order.paymentStatus = 'paid';
+        }
+      } else {
+        // Multiple suborders
+        // Check the statuses of all suborders
+        const suborderStatuses = order.suborders.map(sub => sub.status);
+        const hasProcessing = suborderStatuses.includes('processing');
+        const hasShipped = suborderStatuses.includes('shipped');
+        const hasDelivered = suborderStatuses.includes('delivered');
+        const allCancelled = suborderStatuses.every(status => status === 'cancelled');
+        const allDelivered = suborderStatuses.every(status => status === 'delivered');
+  
+        if (hasProcessing) {
+          // If any suborder is processing, parent order is processing
+          order.status = 'processing';
+        } else if (allDelivered) {
+          // If all suborders are delivered, parent order is delivered
+          order.status = 'delivered';
+          order.paymentStatus = 'paid';
+        } else if (allCancelled) {
+          // If all suborders are cancelled, parent order is cancelled
+          order.status = 'cancelled';
+        } else if (hasShipped || (hasDelivered && suborderStatuses.some(status => status !== 'delivered'))) {
+          // If any suborder is shipped or there's a mix of delivered and non-delivered (but not processing), parent order is shipped
+          order.status = 'shipped';
+        } else {
+          // Default to processing if none of the above conditions are met
+          order.status = 'processing';
+        }
+      }
+  
+      // Update the statusUpdatedAt timestamp
+      order.statusUpdatedAt = Date.now();
+  
+      // Save the order
+      await order.save();
+  
+      // Populate the updated order
+      const populatedOrder = await Order.findById(orderId)
+        .populate({
+          path: 'userId',
+          select: 'name email',
+        })
+        .populate({
+          path: 'items.productId',
+          select: 'name images price description',
+        })
+        .populate({
+          path: 'items.sellerId',
+          select: 'name email',
+        })
+        .populate({
+          path: 'items.promotion',
+          select: 'name discount',
+        })
+        .populate({
+          path: 'suborders.sellerId',
+          select: 'name email',
+        })
+        .populate({
+          path: 'suborders.items.productId',
+          select: 'name images price description',
+        });
+  
+      res.status(200).json({
+        message: 'Order and suborder status updated successfully',
         order: populatedOrder,
       });
     } catch (error) {
@@ -380,9 +462,7 @@ const updateOrderStatus = async (req, res) => {
         error: error.message,
       });
     }
-  };
-
-
+};
   
   
   // Export the new function along with existing ones
