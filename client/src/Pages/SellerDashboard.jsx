@@ -126,7 +126,7 @@ const SellerDashboard = () => {
             onClick={toggleSidebar}
             className="text-purple-200 hover:text-white transition-colors"
           >
-            {sidebarOpen ? <FaTimes /> : <FaBars />}
+            {sidebarOpen ? <FaTimes /> : ""}
           </button>
         </div>
         
@@ -151,9 +151,7 @@ const SellerDashboard = () => {
                 {sidebarOpen && (
                   <>
                     {t('sellerDashboard.sidebar.products')}
-                    <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
-                      {stats.products}
-                    </span>
+
                   </>
                 )}
               </Link>
@@ -185,9 +183,7 @@ const SellerDashboard = () => {
                 {sidebarOpen && (
                   <>
                     {t('sellerDashboard.sidebar.orders')}
-                    <span className="ml-auto bg-[#4A12C4] text-xs font-semibold px-2 py-1 rounded-full">
-                      {stats.orders}
-                    </span>
+
                   </>
                 )}
               </Link>

@@ -2,14 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { 
-  FiPackage, FiCheckCircle, FiTruck, FiDollarSign, 
-  FiClock, FiFilter, FiSearch, FiRefreshCw 
+  FiPackage, FiCheckCircle, FiTruck, FiClock, FiFilter, FiSearch, FiRefreshCw 
 } from 'react-icons/fi';
 import { 
-  FaBoxOpen, FaMoneyBillWave, FaExchangeAlt, 
-  FaTimes, FaChevronDown, FaChevronUp 
+  FaBoxOpen, FaExchangeAlt, FaTimes, FaChevronDown, FaChevronUp 
 } from 'react-icons/fa';
-import { BsBoxSeam, BsCreditCard } from 'react-icons/bs';
+import { BsBoxSeam } from 'react-icons/bs';
 import { format } from 'date-fns';
 
 const API_BASE_URL = 'http://localhost:8000/api';
@@ -38,6 +36,45 @@ const paymentStatusColors = {
   failed: 'bg-red-100 text-red-800',
   refunded: 'bg-purple-100 text-purple-800'
 };
+
+// Dynamic stats configuration
+const statsConfig = [
+  {
+    key: 'totalOrders',
+    label: 'Total Orders',
+    icon: <FiPackage className="w-6 h-6" />,
+    bgColor: 'bg-indigo-100',
+    textColor: 'text-indigo-600'
+  },
+  {
+    key: 'pending',
+    label: 'Pending',
+    icon: <FiClock className="w-6 h-6" />,
+    bgColor: 'bg-yellow-100',
+    textColor: 'text-yellow-600'
+  },
+  {
+    key: 'processing',
+    label: 'Processing',
+    icon: <FiRefreshCw className="w-6 h-6" />,
+    bgColor: 'bg-blue-100',
+    textColor: 'text-blue-600'
+  },
+  {
+    key: 'shipped',
+    label: 'Shipped',
+    icon: <FiTruck className="w-6 h-6" />,
+    bgColor: 'bg-indigo-100',
+    textColor: 'text-indigo-600'
+  },
+  {
+    key: 'delivered',
+    label: 'Delivered',
+    icon: <FiCheckCircle className="w-6 h-6" />,
+    bgColor: 'bg-green-100',
+    textColor: 'text-green-600'
+  }
+];
 
 const DashOrders = () => {
   const currentUser = useSelector((state) => state.user?.currentUser);
@@ -83,8 +120,10 @@ const DashOrders = () => {
   const fetchStats = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/orders/seller/${currentUser.id}/stats`);
-      setStats(response.data);
+      setStats(response.data.stats); // Correctly access the stats object from the response
+      setError(null);
     } catch (err) {
+      setError(err.response?.data?.message || 'Failed to fetch stats');
       console.error('Failed to fetch stats:', err);
     }
   };
@@ -111,21 +150,15 @@ const DashOrders = () => {
   };
 
   const filteredOrders = orders.filter(order => {
-    // Search filter
     const matchesSearch = 
       order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.buyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.buyer.email.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Status filter
     const matchesStatus = filters.status ? order.suborder.status === filters.status : true;
-    
-    // Payment status filter
     const matchesPaymentStatus = filters.paymentStatus ? 
       order.paymentStatus === filters.paymentStatus : true;
-    
-    // Date range filter (simplified)
-    const matchesDate = true; // Implement date filtering logic as needed
+    const matchesDate = true; // Implement date filtering logic if needed
 
     return matchesSearch && matchesStatus && matchesPaymentStatus && matchesDate;
   });
@@ -134,15 +167,26 @@ const DashOrders = () => {
     setShowFilters(!showFilters);
   };
 
-  const updateOrderStatus = async (orderId, newStatus) => {
+  const updateOrderStatus = async (orderId, suborderId, newStatus) => {
     try {
-      await axios.put(`${API_BASE_URL}/orders/${orderId}/suborder/status`, {
-        sellerId: currentUser.id,
+      const response = await axios.put(`${API_BASE_URL}/orders/${orderId}/status`, {
+        orderId,
+        suborderId,
         status: newStatus
       });
-      fetchOrders();
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.orderId === orderId && order.suborderId === suborderId
+            ? { ...order, suborder: { ...order.suborder, status: newStatus } }
+            : order
+        )
+      );
+      await fetchStats(); // Refresh stats after status update
+      setError(null);
+      return response.data;
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update order status');
+      throw err;
     }
   };
 
@@ -164,67 +208,21 @@ const DashOrders = () => {
         <p className="text-gray-500 mt-1">Manage and track your customer orders</p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Dynamic Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Total Orders</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.totalOrders}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-indigo-100 text-indigo-600">
-              <FiPackage className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Pending</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.pending}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-yellow-100 text-yellow-600">
-              <FiClock className="w-6 h-6" />
+        {statsConfig.map(({ key, label, icon, bgColor, textColor }) => (
+          <div key={key} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">{label}</p>
+                <p className="text-2xl font-bold text-gray-800 mt-1">{stats[key] || 0}</p>
+              </div>
+              <div className={`p-3 rounded-lg ${bgColor} ${textColor}`}>
+                {icon}
+              </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Processing</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.processing}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-blue-100 text-blue-600">
-              <FiRefreshCw className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Shipped</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.shipped}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-indigo-100 text-indigo-600">
-              <FiTruck className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Delivered</p>
-              <p className="text-2xl font-bold text-gray-800 mt-1">{stats.delivered}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-green-100 text-green-600">
-              <FiCheckCircle className="w-6 h-6" />
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Error Message */}
@@ -263,11 +261,62 @@ const DashOrders = () => {
                 onChange={handleSearchChange}
               />
             </div>
-
-
+            <button
+              onClick={toggleFilters}
+              className="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200"
+            >
+              <FiFilter className="mr-2" />
+              Filters
+              {showFilters ? <FaChevronUp className="ml-2" /> : <FaChevronDown className="ml-2" />}
+            </button>
           </div>
-
-
+          {showFilters && (
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <select
+                name="status"
+                value={filters.status}
+                onChange={handleFilterChange}
+                className="border border-gray-200 rounded-lg p-2"
+              >
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+                <option value="returned">Returned</option>
+              </select>
+              <select
+                name="paymentStatus"
+                value={filters.paymentStatus}
+                onChange={handleFilterChange}
+                className="border border-gray-200 rounded-lg p-2"
+              >
+                <option value="">All Payment Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="failed">Failed</option>
+                <option value="refunded">Refunded</option>
+              </select>
+              <select
+                name="dateRange"
+                value={filters.dateRange}
+                onChange={handleFilterChange}
+                className="border border-gray-200 rounded-lg p-2"
+              >
+                <option value="">All Dates</option>
+                <option value="last7days">Last 7 Days</option>
+                <option value="last30days">Last 30 Days</option>
+                <option value="last90days">Last 90 Days</option>
+              </select>
+              <button
+                onClick={resetFilters}
+                className="bg-red-100 text-red-700 px-4 py-2 rounded-lg hover:bg-red-200"
+              >
+                Reset Filters
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Orders Table */}
@@ -357,7 +406,7 @@ const DashOrders = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end space-x-2">
                         <button
-                          onClick={() => updateOrderStatus(order.orderId, 'processing')}
+                          onClick={() => updateOrderStatus(order.orderId, order.suborderId, 'processing')}
                           disabled={order.suborder.status !== 'pending'}
                           className={`p-1.5 rounded-md ${order.suborder.status === 'pending' ? 'bg-blue-100 text-blue-600 hover:bg-blue-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                           title="Mark as Processing"
@@ -365,7 +414,7 @@ const DashOrders = () => {
                           <FiRefreshCw className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => updateOrderStatus(order.orderId, 'shipped')}
+                          onClick={() => updateOrderStatus(order.orderId, order.suborderId, 'shipped')}
                           disabled={order.suborder.status !== 'processing'}
                           className={`p-1.5 rounded-md ${order.suborder.status === 'processing' ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                           title="Mark as Shipped"
@@ -373,7 +422,7 @@ const DashOrders = () => {
                           <FiTruck className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => updateOrderStatus(order.orderId, 'delivered')}
+                          onClick={() => updateOrderStatus(order.orderId, order.suborderId, 'delivered')}
                           disabled={order.suborder.status !== 'shipped'}
                           className={`p-1.5 rounded-md ${order.suborder.status === 'shipped' ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
                           title="Mark as Delivered"

@@ -199,6 +199,7 @@ const createOrder = async (req, res) => {
           .filter((suborder) => suborder.sellerId._id.toString() === sellerId)
           .map((suborder) => ({
             orderId: order._id,
+            suborderId: suborder._id,
             buyer: {
               userId: order.userId._id,
               name: order.userId.name,
@@ -347,8 +348,6 @@ const getOrderById = async (req, res) => {
     }
   };
 
-// Update order status
-
 const updateOrderStatus = async (req, res) => {
     try {
       const { orderId, suborderId, status } = req.body;
@@ -463,13 +462,66 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 };
+const getSellerStats = async (req, res) => {
+    try {
+      const { sellerId } = req.params;
   
+      // Validate sellerId
+      if (!mongoose.Types.ObjectId.isValid(sellerId)) {
+        return res.status(400).json({ message: 'Invalid sellerId' });
+      }
   
+      // Convert sellerId to ObjectId
+      const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
+  
+      // Aggregate suborder stats for the seller
+      const orders = await Order.find({ 'suborders.sellerId': sellerObjectId }).lean();
+  
+      // Initialize stats object
+      const stats = {
+        totalOrders: 0,
+        pending: 0,
+        processing: 0,
+        shipped: 0,
+        delivered: 0,
+      };
+  
+      // Process suborders to calculate stats
+      orders.forEach((order) => {
+        const sellerSuborders = order.suborders.filter(
+          (suborder) => suborder.sellerId.toString() === sellerId
+        );
+        stats.totalOrders += sellerSuborders.length;
+  
+        sellerSuborders.forEach((suborder) => {
+          if (suborder.status === 'pending') stats.pending += 1;
+          else if (suborder.status === 'processing') stats.processing += 1;
+          else if (suborder.status === 'shipped') stats.shipped += 1;
+          else if (suborder.status === 'delivered') stats.delivered += 1;
+        });
+      });
+  
+      res.status(200).json({
+        message: 'Stats retrieved successfully',
+        stats,
+      });
+    } catch (error) {
+      console.error('Error fetching seller stats:', error);
+      res.status(500).json({
+        message: 'Failed to fetch stats',
+        error: error.message,
+      });
+    }
+  };
+
+
   // Export the new function along with existing ones
   module.exports = {
     createOrder,
     getOrderById,
     getUserOrders,
     updateOrderStatus,
-    getSellerSuborders
+    getSellerSuborders,
+    getSellerStats,
+
   };
