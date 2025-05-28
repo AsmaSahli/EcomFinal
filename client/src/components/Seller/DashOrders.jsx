@@ -15,6 +15,7 @@ const API_BASE_URL = 'http://localhost:8000/api';
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
   processing: 'bg-blue-100 text-blue-800',
+  waiting_for_pickup: 'bg-orange-100 text-orange-800',
   shipped: 'bg-indigo-100 text-indigo-800',
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
@@ -24,6 +25,7 @@ const statusColors = {
 const statusIcons = {
   pending: <FiClock className="mr-1" />,
   processing: <FiRefreshCw className="mr-1" />,
+  waiting_for_pickup: <FiClock className="mr-1" />,
   shipped: <FiTruck className="mr-1" />,
   delivered: <FiCheckCircle className="mr-1" />,
   cancelled: <FaTimes className="mr-1" />,
@@ -37,7 +39,6 @@ const paymentStatusColors = {
   refunded: 'bg-purple-100 text-purple-800'
 };
 
-// Dynamic stats configuration
 const statsConfig = [
   {
     key: 'totalOrders',
@@ -81,6 +82,7 @@ const DashOrders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [filters, setFilters] = useState({
     status: '',
@@ -107,7 +109,15 @@ const DashOrders = () => {
     try {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/orders/seller/${currentUser.id}/suborders`);
-      setOrders(response.data.suborders);
+      // Initialize with uiStatus if not present
+      const ordersWithUiStatus = response.data.suborders.map(order => ({
+        ...order,
+        suborder: {
+          ...order.suborder,
+          uiStatus: order.suborder.uiStatus || order.suborder.status
+        }
+      }));
+      setOrders(ordersWithUiStatus);
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch orders');
@@ -120,7 +130,7 @@ const DashOrders = () => {
   const fetchStats = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/orders/seller/${currentUser.id}/stats`);
-      setStats(response.data.stats); // Correctly access the stats object from the response
+      setStats(response.data.stats);
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch stats');
@@ -149,24 +159,6 @@ const DashOrders = () => {
     setSearchTerm('');
   };
 
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.buyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.buyer.email.toLowerCase().includes(searchTerm.toLowerCase());
-
-    const matchesStatus = filters.status ? order.suborder.status === filters.status : true;
-    const matchesPaymentStatus = filters.paymentStatus ? 
-      order.paymentStatus === filters.paymentStatus : true;
-    const matchesDate = true; // Implement date filtering logic if needed
-
-    return matchesSearch && matchesStatus && matchesPaymentStatus && matchesDate;
-  });
-
-  const toggleFilters = () => {
-    setShowFilters(!showFilters);
-  };
-
   const updateOrderStatus = async (orderId, suborderId, newStatus) => {
     try {
       const response = await axios.put(`${API_BASE_URL}/orders/${orderId}/status`, {
@@ -177,17 +169,86 @@ const DashOrders = () => {
       setOrders(prevOrders =>
         prevOrders.map(order =>
           order.orderId === orderId && order.suborderId === suborderId
-            ? { ...order, suborder: { ...order.suborder, status: newStatus } }
+            ? { 
+                ...order, 
+                suborder: { 
+                  ...order.suborder, 
+                  status: newStatus,
+                  uiStatus: newStatus // Update both status and uiStatus
+                } 
+              }
             : order
         )
       );
-      await fetchStats(); // Refresh stats after status update
+      await fetchStats();
       setError(null);
       return response.data;
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to update order status');
       throw err;
     }
+  };
+
+  const requestPickup = async (orderId, suborderId) => {
+    try {
+      const requestBody = {
+        orderId,
+        suborderId,
+        sellerId: currentUser.id,
+        pickupAddress: currentUser.headquartersAddress
+      };
+  
+      console.log('Sending request with body:', JSON.stringify(requestBody, null, 2));
+  
+      const response = await axios.post(`${API_BASE_URL}/delivery/create`, requestBody);
+      
+      // Update only the UI status to 'waiting_for_pickup' without changing the actual status
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order.orderId === orderId && order.suborderId === suborderId
+            ? { 
+                ...order, 
+                suborder: { 
+                  ...order.suborder, 
+                  uiStatus: 'waiting_for_pickup' 
+                } 
+              }
+            : order
+        )
+      );
+      
+      setSuccessMessage('Pickup requested successfully! Waiting for delivery person assignment.');
+      setError(null);
+      setTimeout(() => setSuccessMessage(''), 5000);
+      return response.data;
+    } catch (err) {
+      console.error('Error in requestPickup:', err);
+      setError(err.response?.data?.message || 'Failed to request pickup');
+      throw err;
+    }
+  };
+
+  const filteredOrders = orders
+    .map(order => ({
+      ...order,
+      displayStatus: order.suborder.uiStatus // Use uiStatus for display
+    }))
+    .filter(order => {
+      const matchesSearch = 
+        order.orderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.buyer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.buyer.email.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus = filters.status ? order.suborder.status === filters.status : true;
+      const matchesPaymentStatus = filters.paymentStatus ? 
+        order.paymentStatus === filters.paymentStatus : true;
+      const matchesDate = true;
+
+      return matchesSearch && matchesStatus && matchesPaymentStatus && matchesDate;
+    });
+
+  const toggleFilters = () => {
+    setShowFilters(!showFilters);
   };
 
   if (loading && orders.length === 0) {
@@ -208,7 +269,7 @@ const DashOrders = () => {
         <p className="text-gray-500 mt-1">Manage and track your customer orders</p>
       </div>
 
-      {/* Dynamic Stats Cards */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {statsConfig.map(({ key, label, icon, bgColor, textColor }) => (
           <div key={key} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -224,6 +285,26 @@ const DashOrders = () => {
           </div>
         ))}
       </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-md shadow-sm mb-6">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span>{successMessage}</span>
+            <button 
+              onClick={() => setSuccessMessage('')} 
+              className="ml-auto text-green-700 hover:text-green-900"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -371,7 +452,7 @@ const DashOrders = () => {
                     <td className="px-6 py-4">
                       <div className="flex items-center">
                         {order.suborder.items.slice(0, 3).map((item, index) => (
-                          <div key={index} className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden border border-gray-200 -ml-2 first:ml-0">
+                          <div key={index} className="flex-shrink-0 h-10 w-10 rounded-md overflow-hidden border border-gray-200 -ml-2 first:ml-0 relative">
                             <img 
                               className="h-full w-full object-cover" 
                               src={item.productId.images?.[0]?.url || '/placeholder-product.jpg'} 
@@ -390,9 +471,9 @@ const DashOrders = () => {
                       <div className="text-sm font-medium text-gray-900">${order.suborder.subtotal.toFixed(2)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[order.suborder.status]}`}>
-                        {statusIcons[order.suborder.status]}
-                        {order.suborder.status.charAt(0).toUpperCase() + order.suborder.status.slice(1)}
+                      <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusColors[order.displayStatus]}`}>
+                        {statusIcons[order.displayStatus]}
+                        {order.displayStatus.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -414,20 +495,12 @@ const DashOrders = () => {
                           <FiRefreshCw className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => updateOrderStatus(order.orderId, order.suborderId, 'shipped')}
+                          onClick={() => requestPickup(order.orderId, order.suborderId)}
                           disabled={order.suborder.status !== 'processing'}
-                          className={`p-1.5 rounded-md ${order.suborder.status === 'processing' ? 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                          title="Mark as Shipped"
+                          className={`p-1.5 rounded-md ${order.suborder.status === 'processing' ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
+                          title="Request Pickup"
                         >
                           <FiTruck className="h-4 w-4" />
-                        </button>
-                        <button
-                          onClick={() => updateOrderStatus(order.orderId, order.suborderId, 'delivered')}
-                          disabled={order.suborder.status !== 'shipped'}
-                          className={`p-1.5 rounded-md ${order.suborder.status === 'shipped' ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-gray-100 text-gray-400 cursor-not-allowed'}`}
-                          title="Mark as Delivered"
-                        >
-                          <FiCheckCircle className="h-4 w-4" />
                         </button>
                       </div>
                     </td>

@@ -132,6 +132,17 @@ module.exports = {
                 createdAt: user.createdAt
             };
     
+            // Include additional fields based on role
+            if (user.role === 'seller') {
+                userData.shopName = user.shopName;
+                userData.headquartersAddress = user.headquartersAddress;
+            } else if (user.role === 'delivery') {
+                userData.vehicleType = user.vehicleType;
+                userData.vehicleNumber = user.vehicleNumber;
+                userData.deliveryArea = user.deliveryArea;
+                userData.contactNumber = user.contactNumber;
+            }
+    
             // Successful response
             res.status(200).json({
                 success: true,
@@ -145,7 +156,6 @@ module.exports = {
             next(e.errorHandler(500, "Internal server error during authentication"));
         }
     },
-
     // 🔹 GOOGLE AUTH
     google: async (req, res, next) => {
         const { email, name, googlePhotoUrl } = req.body;

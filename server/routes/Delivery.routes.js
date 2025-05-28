@@ -9,6 +9,14 @@ router.post("/register", upload.fields([{ name: "cv", maxCount: 1 }]), deliveryC
 router.get('/pending-count', deliveryController.getPendingDeliveriesCount);
 
 router.get('/:orderId', getDeliveryStatus);
+
+router.post("/create",deliveryController.createDelivery)
+router.get("/",deliveryController.getAllDeliveries)
+
+
+
+
+
 module.exports = (app) => {
   app.use("/api/delivery", router);
 };
