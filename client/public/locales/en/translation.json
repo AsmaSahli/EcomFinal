@@ -413,7 +413,7 @@
     "sidebar": {
       "dashboard": "Dashboard",
       "deliveries": "Deliveries",
-      "map": "Delivery Map",
+      "assigned": "Assigned Deliveries",
       "history": "Delivery History",
       "settings": "Settings",
       "signOut": "Sign Out"

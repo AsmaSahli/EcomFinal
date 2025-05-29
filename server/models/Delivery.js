@@ -2,47 +2,46 @@ const mongoose = require('mongoose');
 
 const deliverySchema = new mongoose.Schema({
     suborderId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Order.suborders',
+        type: mongoose.Schema.Types.ObjectId, // Reference to suborder _id, no ref needed
         required: true,
         unique: true
-      },
-      orderId: {
+    },
+    orderId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Order',
         required: true
-      },
-      sellerId: {
+    },
+    sellerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
-      },
-      deliveryPersonId: {
+    },
+    deliveryPersonId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         default: null
-      },
-      pickupAddress: {
+    },
+    pickupAddress: {
         type: String, 
         required: true
-      },
-      dropoffAddress: {
+    },
+    dropoffAddress: {
         type: String, 
         required: true
-      },
-      status: {
+    },
+    status: {
         type: String,
         enum: ['pending', 'assigned', 'in_progress', 'completed', 'cancelled'],
         default: 'pending'
-      },
-      createdAt: {
+    },
+    createdAt: {
         type: Date,
         default: Date.now
-      },
-      updatedAt: {
+    },
+    updatedAt: {
         type: Date,
         default: Date.now
-      }
-    }, { timestamps: true });
-    
+    }
+}, { timestamps: true });
+
 module.exports = mongoose.model('Delivery', deliverySchema);

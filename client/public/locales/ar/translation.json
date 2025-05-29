@@ -408,8 +408,8 @@
       "role": "شريك توصيل",
       "sidebar": {
         "dashboard": "لوحة التحكم",
-        "deliveries": "توصيلاتي",
-        "map": "خريطة التوصيل",
+        "deliveries": "توصيلات",
+        "assigned": "خريطة التوصيل",
         "history": "سجل التوصيل",
         "settings": "الإعدادات",
         "signOut": "تسجيل الخروج"

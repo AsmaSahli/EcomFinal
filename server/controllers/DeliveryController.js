@@ -174,11 +174,17 @@ exports.getAllDeliveries = async (req, res) => {
     const deliveries = await Delivery.find(query)
       .populate({
         path: 'orderId',
-        select: 'userId shippingInfo total',
-        populate: {
-          path: 'userId',
-          select: 'firstName lastName email'
-        }
+        select: 'userId shippingInfo deliveryMethod total', // Include deliveryMethod
+        populate: [
+          {
+            path: 'userId',
+            select: 'firstName lastName email'
+          },
+          {
+            path: 'shippingInfo.address', // Ensure address is populated if needed
+            model: 'Order' // Address is embedded, so no separate model population
+          }
+        ]
       })
       .populate({
         path: 'sellerId',
@@ -187,6 +193,14 @@ exports.getAllDeliveries = async (req, res) => {
       .populate({
         path: 'deliveryPersonId',
         select: 'firstName lastName email'
+      })
+      .populate({
+        path: 'suborderId',
+        select: 'sellerId items subtotal status', // Populate suborder details
+        populate: {
+          path: 'items.productId',
+          select: 'name price' // Populate product details in suborder items
+        }
       })
       .sort({ [sortField]: sortDirection })
       .skip(skip)
@@ -210,6 +224,81 @@ exports.getAllDeliveries = async (req, res) => {
 
   } catch (error) {
     console.error('Get All Deliveries Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.updateDeliveryStatus = async (req, res) => {
+  try {
+    const { deliveryId, deliveryPersonId, status } = req.body;
+
+    // Basic validation
+    if (!deliveryId || !status) {
+      return res.status(400).json({ message: 'Delivery ID and status are required.' });
+    }
+
+    // Validate status
+    const validStatuses = ['pending', 'assigned', 'in_progress', 'completed', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: 'Invalid status provided.' });
+    }
+
+    // Check if delivery exists
+    const delivery = await Delivery.findById(deliveryId);
+    if (!delivery) {
+      return res.status(404).json({ message: 'Delivery not found.' });
+    }
+
+    // Update fields
+    delivery.status = status;
+    if (deliveryPersonId) {
+      delivery.deliveryPersonId = deliveryPersonId;
+    }
+
+    await delivery.save();
+
+    res.status(200).json({
+      message: 'Delivery status updated successfully',
+      delivery
+    });
+
+  } catch (error) {
+    console.error('Update Delivery Status Error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+exports.getDeliveriesByDeliveryPersonId = async (req, res) => {
+  try {
+    const { deliveryPersonId } = req.params; // Assuming deliveryPersonId is passed as a URL parameter
+
+    // Basic validation
+    if (!deliveryPersonId) {
+      return res.status(400).json({ message: 'Delivery Person ID is required.' });
+    }
+
+    // Check if deliveryPersonId is a valid ObjectId
+    if (!mongoose.isValidObjectId(deliveryPersonId)) {
+      return res.status(400).json({ message: 'Invalid Delivery Person ID.' });
+    }
+
+    // Find deliveries by deliveryPersonId
+    const deliveries = await Delivery.find({ deliveryPersonId })
+      .populate('orderId', 'orderNumber shippingInfo') // Optional: Populate order details
+      .populate('sellerId', 'name email') // Optional: Populate seller details
+      .select('-__v'); // Exclude version key
+
+    if (!deliveries || deliveries.length === 0) {
+      return res.status(404).json({ message: 'No deliveries found for this delivery person.' });
+    }
+
+    res.status(200).json({
+      message: 'Deliveries retrieved successfully',
+      deliveries
+    });
+
+  } catch (error) {
+    console.error('Get Deliveries By Delivery Person Error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };

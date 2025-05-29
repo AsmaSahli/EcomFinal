@@ -3,16 +3,16 @@ const router = express.Router();
 const deliveryController = require("../controllers/DeliveryController");
 const upload = require("../utils/upload"); 
 
-const { getDeliveryStatus } = require('../controllers/DeliveryController');
 
 router.post("/register", upload.fields([{ name: "cv", maxCount: 1 }]), deliveryController.registerDeliveryPerson);
 router.get('/pending-count', deliveryController.getPendingDeliveriesCount);
 
-router.get('/:orderId', getDeliveryStatus);
+router.get('/:orderId',deliveryController.getDeliveryStatus);
 
 router.post("/create",deliveryController.createDelivery)
 router.get("/",deliveryController.getAllDeliveries)
-
+router.put("/status",deliveryController.updateDeliveryStatus)
+router.get('/person/:deliveryPersonId', deliveryController.getDeliveriesByDeliveryPersonId);
 
 
 

@@ -18,7 +18,7 @@ import { signoutSuccess } from '../redux/user/userSlice';
 import { useTranslation } from 'react-i18next';
 import DashOverview from "../components/Delivery/DashOverview";
 import DashMyDeliveries from "../components/Delivery/DashMyDeliveries";
-import DashDelivreyMap from "../components/Delivery/DashDelivreyMap";
+import DashAssignedDeliveries from "../components/Delivery/DashAssignedDeliveries";
 import DashDelivreyHistory from "../components/Delivery/DashDelivreyHistory";
 import DashSettings from "../components/Delivery/DashSettings";
 
@@ -115,11 +115,11 @@ const DeliveryDashboard = () => {
             </li>
             <li>
               <Link 
-                to="/delivery-dashboard?tab=map" 
-                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'map' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
+                to="/delivery-dashboard?tab=assigned" 
+                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'assigned' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
               >
                 <FaMapMarkerAlt className="mr-3 text-purple-200" />
-                {t('deliveryDashboard.sidebar.map')}
+                {t('deliveryDashboard.sidebar.assigned')}
               </Link>
             </li>
             <li>
@@ -246,7 +246,7 @@ const DeliveryDashboard = () => {
         <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
           {activeTab === 'dashboard' && <DashOverview deliveryData={deliveryData} />}
           {activeTab === 'deliveries' && <DashMyDeliveries deliveries={deliveryData.currentDeliveries} />}
-          {activeTab === 'map' && <DashDelivreyMap />}
+          {activeTab === 'assigned' && <DashAssignedDeliveries />}
           {activeTab === 'history' && <DashDelivreyHistory deliveries={deliveryData.recentDeliveries} />}
           {activeTab === 'settings' && <DashSettings />}
         </main>

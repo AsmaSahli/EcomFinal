@@ -413,8 +413,8 @@
     "role": "Livreur",
     "sidebar": {
       "dashboard": "Tableau de bord",
-      "deliveries": "Mes Livraisons",
-      "map": "Carte de Livraison",
+      "deliveries": "Livraisons en attentes",
+      "assigned": "Mes Livraison",
       "history": "Historique",
       "settings": "Paramètres",
       "signOut": "Déconnexion"

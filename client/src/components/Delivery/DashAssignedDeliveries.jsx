@@ -2,21 +2,29 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { 
-  FiTruck, FiClock, FiCheck, FiSearch, 
+  FiTruck, FiClock, FiCheck, FiX, FiSearch, 
   FiRefreshCw, FiChevronLeft, FiChevronRight, FiPackage,
-  FiDollarSign, FiUser, FiMapPin, FiCalendar,
-  FiMail, FiHome, FiNavigation
+  FiDollarSign, FiUser, FiMapPin, FiPhone, FiCalendar,
+  FiMail, FiCreditCard, FiHome, FiNavigation, FiInfo
 } from 'react-icons/fi';
 import { FaBoxOpen, FaMapMarkerAlt, FaTimes, FaShippingFast } from 'react-icons/fa';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
 const statusColors = {
-  completed: 'bg-green-100 text-green-800'
+  pending: 'bg-yellow-100 text-yellow-800',
+  assigned: 'bg-blue-100 text-blue-800',
+  in_progress: 'bg-indigo-100 text-indigo-800',
+  completed: 'bg-green-100 text-green-800',
+  cancelled: 'bg-red-100 text-red-800'
 };
 
 const statusIcons = {
-  completed: <FiCheck className="mr-1" />
+  pending: <FiClock className="mr-1" />,
+  assigned: <FiTruck className="mr-1" />,
+  in_progress: <FiRefreshCw className="mr-1" />,
+  completed: <FiCheck className="mr-1" />,
+  cancelled: <FiX className="mr-1" />
 };
 
 const deliveryMethodColors = {
@@ -46,10 +54,12 @@ const deliveryMethodDetails = {
   }
 };
 
+
 const getGoogleMapsUrl = (address) => {
-  const encodedAddress = encodeURIComponent(address);
-  return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
-};
+    const encodedAddress = encodeURIComponent(address);
+    return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+  };
+
 
 const getGoogleMapsDirectionsUrl = (pickup, dropoff) => {
   const encodedPickup = encodeURIComponent(pickup);
@@ -57,10 +67,11 @@ const getGoogleMapsDirectionsUrl = (pickup, dropoff) => {
   return `https://www.google.com/maps/dir/?api=1&origin=${encodedPickup}&destination=${encodedDropoff}&travelmode=driving`;
 };
 
-const DashDeliveryHistory = () => {
+const DashAssignedDeliveries = () => {
   const [deliveries, setDeliveries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState('');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -80,7 +91,7 @@ const DashDeliveryHistory = () => {
       const response = await axios.get(`${API_BASE_URL}/delivery`, {
         params: {
           deliveryPersonId: currentUser.id,
-          status: 'completed',
+          status: ['assigned', 'in_progress'], // Modified to fetch both assigned and in_progress
           page: pagination.page,
           limit: pagination.limit
         }
@@ -93,10 +104,66 @@ const DashDeliveryHistory = () => {
       }));
       setError(null);
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to fetch delivery history');
+      setError(err.response?.data?.message || 'Failed to fetch deliveries');
       setDeliveries([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateOrderStatus = async (orderId, suborderId, newStatus) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/orders/${orderId}/status`, {
+        orderId,
+        suborderId,
+        status: newStatus
+      });
+      setDeliveries(prevDeliveries =>
+        prevDeliveries.map(delivery =>
+          delivery.orderId?._id === orderId && delivery.suborderId === suborderId
+            ? {
+                ...delivery,
+                orderId: {
+                  ...delivery.orderId,
+                  status: newStatus
+                }
+              }
+            : delivery
+        )
+      );
+      setError(null);
+      return response.data;
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update order status');
+      throw err;
+    }
+  };
+
+  const handleStatusUpdate = async (deliveryId, status) => {
+    try {
+      // Update delivery status
+      const deliveryResponse = await axios.put(`${API_BASE_URL}/delivery/status`, {
+        deliveryId,
+        deliveryPersonId: currentUser.id,
+        status
+      });
+
+      // Update suborder status based on delivery status
+      const delivery = deliveries.find(d => d._id === deliveryId);
+      if (delivery?.orderId?._id && delivery.suborderId) {
+        if (status === 'in_progress') {
+          await updateOrderStatus(delivery.orderId._id, delivery.suborderId, 'shipped');
+        } else if (status === 'completed') {
+          await updateOrderStatus(delivery.orderId._id, delivery.suborderId, 'delivered');
+        }
+      }
+
+      setSuccessMessage(`Delivery ${status} successfully`);
+      setError(null);
+      await fetchDeliveries();
+    } catch (err) {
+      setError(err.response?.data?.message || `Failed to update delivery status`);
+      setSuccessMessage('');
     }
   };
 
@@ -121,7 +188,7 @@ const DashDeliveryHistory = () => {
       <div className="flex justify-center items-center min-h-[400px]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading delivery history...</p>
+          <p className="text-gray-600">Loading deliveries...</p>
         </div>
       </div>
     );
@@ -130,9 +197,25 @@ const DashDeliveryHistory = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Delivery History</h1>
-        <p className="text-gray-500 mt-1">View your completed delivery assignments</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Assigned Deliveries</h1>
+        <p className="text-gray-500 mt-1">Manage and track your assigned and in-progress delivery assignments</p>
       </div>
+
+      {/* Success Message */}
+      {successMessage && (
+        <div className="p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded-md shadow-sm mb-6">
+          <div className="flex items-center">
+            <FiCheck className="w-5 h-5 mr-3" />
+            <span>{successMessage}</span>
+            <button 
+              onClick={() => setSuccessMessage('')} 
+              className="ml-auto text-green-700 hover:text-green-900"
+            >
+              <FiX className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (
@@ -198,7 +281,7 @@ const DashDeliveryHistory = () => {
                         #{delivery.orderId?._id?.toString().substring(0, 8) || 'N/A'}
                       </button>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px Bland-6 py-4">
                       <div className="text-sm text-gray-900">
                         {delivery.orderId?.userId?.firstName || 'Customer'} {delivery.orderId?.userId?.lastName || ''}
                       </div>
@@ -239,6 +322,33 @@ const DashDeliveryHistory = () => {
                         >
                           <FiSearch className="h-4 w-4" />
                         </button>
+                        {delivery.status === 'assigned' && (
+                          <>
+                            <button
+                              onClick={() => handleStatusUpdate(delivery._id, 'in_progress')}
+                              className="p-1.5 bg-indigo-100 text-indigo-600 rounded-md hover:bg-indigo-200"
+                              title="Start Delivery"
+                            >
+                              <FiRefreshCw className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => handleStatusUpdate(delivery._id, 'cancelled')}
+                              className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
+                              title="Cancel Delivery"
+                            >
+                              <FiX className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
+                        {delivery.status === 'in_progress' && (
+                          <button
+                            onClick={() => handleStatusUpdate(delivery._id, 'completed')}
+                            className="p-1.5 bg-green-100 text-green-600 rounded-md hover:bg-green-200"
+                            title="Complete Delivery"
+                          >
+                            <FiCheck className="h-4 w-4" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -250,9 +360,9 @@ const DashDeliveryHistory = () => {
               <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
                 <FaBoxOpen className="w-12 h-12" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-1">No delivery history found</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-1">No assigned or in-progress deliveries found</h3>
               <p className="text-gray-500 max-w-md mx-auto">
-                You have no completed delivery assignments.
+                You currently have no assigned or in-progress delivery assignments.
               </p>
             </div>
           )}
@@ -495,6 +605,45 @@ const DashDeliveryHistory = () => {
                     <FiNavigation className="mr-2" />
                     Get Directions
                   </button>
+                  
+                  <div className="flex justify-end gap-3">
+                    {selectedDelivery.status === 'assigned' && (
+                      <>
+                        <button
+                          onClick={() => {
+                            handleStatusUpdate(selectedDelivery._id, 'in_progress');
+                            closeModal();
+                          }}
+                          className="p-2 bg-indigo-100 text-indigo-600 rounded-full hover:bg-indigo-200 transition-colors"
+                          title="Start Delivery"
+                        >
+                          <FiRefreshCw className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleStatusUpdate(selectedDelivery._id, 'cancelled');
+                            closeModal();
+                          }}
+                          className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors"
+                          title="Cancel Delivery"
+                        >
+                          <FiX className="h-5 w-5" />
+                        </button>
+                      </>
+                    )}
+                    {selectedDelivery.status === 'in_progress' && (
+                      <button
+                        onClick={() => {
+                          handleStatusUpdate(selectedDelivery._id, 'completed');
+                          closeModal();
+                        }}
+                        className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors"
+                        title="Complete Delivery"
+                      >
+                        <FiCheck className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
@@ -514,4 +663,4 @@ const DashDeliveryHistory = () => {
   );
 };
 
-export default DashDeliveryHistory;
+export default DashAssignedDeliveries;
