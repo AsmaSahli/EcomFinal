@@ -490,48 +490,56 @@ const DashMyDeliveries = () => {
                     </div>
                   </div>
 
-                  {/* Customer Information */}
-                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
-                      <FiUser className="mr-2 text-indigo-600" />
-                      Customer Information
-                    </h4>
-                    <div className="space-y-4">
-                      <div className="flex items-start">
-                        <span className="text-gray-500 w-32 flex-shrink-0 flex items-center">
-                          <FiUser className="mr-2" /> Name:
-                        </span>
+                {/* Customer Information */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h4 className="text-md font-medium text-gray-900 mb-4 flex items-center">
+                    <FiUser className="mr-2 text-indigo-600" />
+                    Customer Information
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-32 flex-shrink-0 flex items-center">
+                        <FiUser className="mr-2" /> Name:
+                      </span>
+                      <span className="text-gray-900">
+                        {selectedDelivery.orderId?.shippingInfo?.firstName || 'N/A'} {selectedDelivery.orderId?.shippingInfo?.lastName || ''}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-32 flex-shrink-0 flex items-center">
+                        <FiMail className="mr-2" /> Email:
+                      </span>
+                      <span className="text-gray-900">
+                        {selectedDelivery.orderId?.shippingInfo?.email || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-32 flex-shrink-0 flex items-center">
+                        <FiPhone className="mr-2" /> Phone:
+                      </span>
+                      <span className="text-gray-900">
+                        {selectedDelivery.orderId?.shippingInfo?.phone || 'N/A'}
+                      </span>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-gray-500 w-32 flex-shrink-0 flex items-center">
+                        <FiMapPin className="mr-2" /> Dropoff:
+                      </span>
+                      <div className="flex flex-col">
                         <span className="text-gray-900">
-                          {selectedDelivery.orderId?.shippingInfo?.firstName || 'N/A'} {selectedDelivery.orderId?.shippingInfo?.lastName || ''}
+                          {selectedDelivery.dropoffAddress}
                         </span>
-                      </div>
-                      <div className="flex items-start">
-                        <span className="text-gray-500 w-32 flex-shrink-0 flex items-center">
-                          <FiMail className="mr-2" /> Email:
-                        </span>
-                        <span className="text-gray-900">
-                          {selectedDelivery.orderId?.shippingInfo?.email || 'N/A'}
-                        </span>
-                      </div>
-                      <div className="flex items-start">
-                        <span className="text-gray-500 w-32 flex-shrink-0 flex items-center">
-                          <FiMapPin className="mr-2" /> Dropoff:
-                        </span>
-                        <div className="flex flex-col">
-                          <span className="text-gray-900">
-                            {selectedDelivery.dropoffAddress}
-                          </span>
-                          <button
-                            onClick={() => window.open(getGoogleMapsUrl(selectedDelivery.dropoffAddress), '_blank')}
-                            className="text-blue-600 hover:text-blue-800 flex items-center text-sm mt-1"
-                          >
-                            <FiMapPin className="h-3 w-3 mr-1" />
-                            View on Map
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => window.open(getGoogleMapsUrl(selectedDelivery.dropoffAddress), '_blank')}
+                          className="text-blue-600 hover:text-blue-800 flex items-center text-sm mt-1"
+                        >
+                          <FiMapPin className="h-3 w-3 mr-1" />
+                          View on Map
+                        </button>
                       </div>
                     </div>
                   </div>
+                </div>
                 </div>
 
                 {/* Action Buttons */}
