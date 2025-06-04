@@ -41,6 +41,23 @@ const DashUsers = () => {
     return () => clearTimeout(debounceTimer);
   }, [currentPage, searchTerm, usersPerPage]);
 
+  const toggleUserStatus = async (userId, currentStatus) => {
+    const action = currentStatus ? 'deactivate' : 'activate';
+    try {
+      const response = await axios.patch(`http://localhost:8000/status/${userId}`, {
+        action,
+      });
+
+      setUsers(users.map(user =>
+        user._id === userId ? { ...user, isActive: !currentStatus } : user
+      ));
+
+      toast.success(`User ${action}d successfully`);
+    } catch (error) {
+      console.error('Error toggling user status:', error);
+      toast.error(`Failed to ${action} user`);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -143,23 +160,21 @@ const DashUsers = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
-                        className={`px-3 py-1 text-xs rounded-full ${
-                          user.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
+                        className={`px-3 py-1 text-xs rounded-full ${user.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                          }`}
                       >
                         {user.isActive ? "active" : "inactive"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button
-                        
-                        className={`p-2 rounded ${
-                          user.isActive
-                            ? "text-red-600 hover:text-red-800 hover:bg-red-50"
-                            : "text-green-600 hover:text-green-800 hover:bg-green-50"
-                        }`}
+                        onClick={() => toggleUserStatus(user._id, user.isActive)}
+                        className={`p-2 rounded ${user.isActive
+                          ? "text-red-600 hover:text-red-800 hover:bg-red-50"
+                          : "text-green-600 hover:text-green-800 hover:bg-green-50"
+                          }`}
                         title={user.isActive ? "Deactivate account" : "Activate account"}
                       >
                         {user.isActive ? <FaUserTimes /> : <FaUserCheck />}
@@ -193,9 +208,8 @@ const DashUsers = () => {
             <button
               disabled={currentPage === 1}
               onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-              className={`p-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center ${
-                currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-              }`}
+              className={`p-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                }`}
               title="Previous page"
             >
               <FiChevronLeft className="w-4 h-4" />
@@ -223,11 +237,10 @@ const DashUsers = () => {
                   <button
                     key={pageNum}
                     onClick={() => setCurrentPage(pageNum)}
-                    className={`px-3 py-1 rounded ${
-                      currentPage === pageNum
-                        ? "bg-gray-800 text-white"
-                        : "border border-gray-300 text-gray-700 hover:bg-gray-100"
-                    }`}
+                    className={`px-3 py-1 rounded ${currentPage === pageNum
+                      ? "bg-gray-800 text-white"
+                      : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      }`}
                   >
                     {pageNum}
                   </button>
@@ -242,11 +255,10 @@ const DashUsers = () => {
                   Math.min(prev + 1, Math.ceil(totalUsers / usersPerPage))
                 )
               }
-              className={`p-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center ${
-                currentPage === Math.ceil(totalUsers / usersPerPage)
-                  ? "opacity-50 cursor-not-allowed"
-                  : ""
-              }`}
+              className={`p-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100 flex items-center ${currentPage === Math.ceil(totalUsers / usersPerPage)
+                ? "opacity-50 cursor-not-allowed"
+                : ""
+                }`}
               title="Next page"
             >
               <FiChevronRight className="w-4 h-4" />

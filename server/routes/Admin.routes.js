@@ -5,4 +5,5 @@ module.exports = (app) => {
     app.put("/reject/:userId", adminController.rejectApplication),
     app.delete("/delete/:userId", adminController.deleteUser),
     app.post("/generate-report", adminController.generateReport)
+    app.patch('/status/:userId', adminController.toggleUserStatus);
 };
