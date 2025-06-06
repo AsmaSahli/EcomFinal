@@ -37,6 +37,11 @@ const ProductCard = ({ product, sellerOffer }) => {
   const sellerId = sellerOffer?.sellerId?._id || product?.sellerId?._id;
   const shopName = sellerOffer?.sellerId?.shopName || product?.sellerId?.shopName || t('productCard.seller');
 
+  // Truncate product name to 50 characters
+  const truncatedName = product.name.length > 50 
+    ? `${product.name.substring(0, 50)}...` 
+    : product.name;
+
   // Promotion details
   useEffect(() => {
     if (sellerOffer?.activePromotion?._id) {
@@ -232,7 +237,7 @@ const ProductCard = ({ product, sellerOffer }) => {
 
   return (
     <div
-      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 relative group overflow-hidden"
+      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 relative group overflow-hidden flex flex-col h-full"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
@@ -367,18 +372,18 @@ const ProductCard = ({ product, sellerOffer }) => {
         </div>
       </div>
 
-      <div className="p-3">
+      <div className="p-3 flex-grow flex flex-col">
         <Link
           to={`/products/${product._id}${sellerId ? `?seller=${sellerId}` : ''}`}
-          className="block mb-1"
+          className="block mb-1 flex-grow"
         >
-          <h3 className="font-medium text-gray-900 line-clamp-2 hover:text-[#4C0ADA] transition-colors text-sm">
-            {product.name}
+          <h3 className="font-medium text-gray-900 line-clamp-2 hover:text-[#4C0ADA] transition-colors text-sm h-10 flex items-center">
+            {truncatedName}
           </h3>
         </Link>
 
         {sellerId && (
-          <p className="text-xs text-gray-500 mb-1">
+          <p className="text-xs text-gray-500 mb-1 truncate">
             {t('productCard.soldBy')}:{' '}
             <Link
               to={`/sellers/${sellerId}/products`}
@@ -397,7 +402,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           </span>
         </div>
 
-        <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center justify-between mt-auto">
           <div className="flex items-baseline gap-1.5">
             <div className="text-base font-bold text-gray-900">
               ${newPrice}
@@ -408,7 +413,7 @@ const ProductCard = ({ product, sellerOffer }) => {
           </div>
           <button
             onClick={handleAddToCart}
-            className={`px-3 py-2 rounded-md text-xs flex items-center gap-1.5 transition-all duration-200 ${
+            className={`px-2 py-1.5 rounded-md text-xs flex items-center gap-1 transition-all duration-200 ${
               stock > 0
                 ? 'bg-[#4C0ADA] text-white hover:bg-[#3A0AA5] shadow-md hover:shadow-lg active:scale-95'
                 : 'bg-gray-200 text-gray-500 cursor-not-allowed'
@@ -417,7 +422,7 @@ const ProductCard = ({ product, sellerOffer }) => {
             aria-label={t('productCard.cart.add')}
           >
             <FaShoppingCart className="w-3 h-3" />
-            <span>{stock > 0 ? t('productCard.cart.add') : t('productCard.cart.soldOut')}</span>
+            <span className="hidden sm:inline">{stock > 0 ? t('productCard.cart.add') : t('productCard.cart.soldOut')}</span>
           </button>
         </div>
       </div>

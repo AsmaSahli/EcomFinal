@@ -8,7 +8,7 @@ import { signoutSuccess } from '../redux/user/userSlice';
 import { toast } from 'react-toastify';
 import AllCategories from './AllCategories';
 import { useTranslation } from 'react-i18next';
-
+import SearchBar from './SearchBar';
 const Header = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -63,16 +63,8 @@ const Header = () => {
         </button>
         <AllCategories />
       </div>
-
       <div className="flex-1 flex justify-center">
-        <div className="form-control relative w-full max-w-md">
-          <input
-            type="text"
-            placeholder={t('header.searchPlaceholder')}
-            className="input input-bordered w-full bg-white focus:ring-2 focus:ring-primary focus:border-primary pl-10 pr-4 py-2"
-          />
-          <FaSearch className="absolute left-3 top-3.5 text-gray-400" />
-        </div>
+        <SearchBar />
       </div>
 
       <div className="flex-1 flex items-center justify-end gap-4 sm:gap-6">

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -9,12 +10,18 @@ import ProductCard from '../components/ProductCard';
 const SearchPage = () => {
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useSelector((state) => state.user);
   const wishlistItems = useSelector((state) => state.wishlist.items || []);
 
+  // Initialize search query from URL
+  const queryParams = new URLSearchParams(location.search);
+  const initialQuery = queryParams.get('q') || '';
+
   // State for search parameters
   const [searchParams, setSearchParams] = useState({
-    q: '',
+    q: initialQuery,
     category: '',
     minPrice: '',
     maxPrice: '',
@@ -36,6 +43,13 @@ const SearchPage = () => {
   const [error, setError] = useState(null);
 
   const API_URL = 'http://localhost:8000/api/wishlist';
+
+  // Update URL when searchParams.q changes
+  useEffect(() => {
+    if (searchParams.q !== initialQuery) {
+      navigate(`/search?q=${encodeURIComponent(searchParams.q)}`, { replace: true });
+    }
+  }, [searchParams.q, navigate, initialQuery]);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -86,6 +100,7 @@ const SearchPage = () => {
         const response = await axios.get('http://localhost:8000/api/products/search', {
           params: searchParams,
         });
+        console.log('API Response:', response.data.products);
         setProducts(response.data.products);
         setTotalPages(response.data.totalPages);
         setTotalProducts(response.data.total);

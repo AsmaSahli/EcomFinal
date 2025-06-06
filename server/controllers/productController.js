@@ -929,6 +929,37 @@ exports.searchProducts = async (req, res) => {
     res.status(500).json({ message: 'Error performing search', error: error.message });
   }
 };
+exports.getSuggestions = async (req, res) => {
+  try {
+    const { q = '' } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.status(200).json({ suggestions: [] });
+    }
+
+    // Build query for suggestions
+    const query = {
+      $or: [
+        { name: { $regex: q, $options: 'i' } },
+        { description: { $regex: q, $options: 'i' } },
+        { reference: { $regex: q, $options: 'i' } },
+      ],
+    };
+
+    // Fetch products with matching names, descriptions, or references
+    const products = await Product.find(query, { name: 1 })
+      .limit(10)
+      .lean();
+
+    // Extract unique product names as suggestions
+    const suggestions = [...new Set(products.map((product) => product.name))];
+
+    res.status(200).json({ suggestions });
+  } catch (error) {
+    console.error('Suggestions error:', error);
+    res.status(500).json({ message: 'Error fetching suggestions', error: error.message });
+  }
+};
 
 // Get products by seller ID
 exports.getProductsBySellers = async (req, res) => {
