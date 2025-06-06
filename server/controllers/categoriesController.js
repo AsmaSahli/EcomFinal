@@ -48,7 +48,7 @@ exports.updateCategory = async (req, res) => {
     const updatedCategory = await Category.findByIdAndUpdate(
       categoryId,
       { name, subcategories },
-      { new: true, runValidators: true } // renvoie la catégorie mise à jour et applique les validateurs
+      { new: true, runValidators: true } 
     );
 
     if (!updatedCategory) {
@@ -56,6 +56,46 @@ exports.updateCategory = async (req, res) => {
     }
 
     res.json({ success: true, category: updatedCategory });
+  } catch (err) {
+    res.status(400).json({ success: false, message: err.message });
+  }
+};
+
+exports.addSubcategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { group, items } = req.body;
+
+    // Validate input
+    if (!group?.trim() || !items || !Array.isArray(items)) {
+      return res.status(400).json({ success: false, message: "Group and items are required" });
+    }
+
+    // Filter out empty strings and ensure items is non-empty
+    const validItems = items.filter(item => item?.trim());
+    if (validItems.length === 0) {
+      return res.status(400).json({ success: false, message: "At least one valid item is required" });
+    }
+
+    // Find the category
+    const category = await Category.findById(id);
+    if (!category) {
+      return res.status(404).json({ success: false, message: "Category not found" });
+    }
+
+    // Check if the group already exists
+    const existingGroup = category.subcategories.find(sub => sub.group === group);
+    if (existingGroup) {
+      // Add new items to the existing group's items array, avoiding duplicates
+      existingGroup.items = [...new Set([...existingGroup.items, ...validItems])];
+    } else {
+      // Add a new group with the provided items
+      category.subcategories.push({ group, items: validItems });
+    }
+
+    await category.save();
+
+    res.status(200).json({ success: true, category });
   } catch (err) {
     res.status(400).json({ success: false, message: err.message });
   }

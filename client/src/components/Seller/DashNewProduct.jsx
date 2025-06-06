@@ -253,22 +253,27 @@ const DashAddInventory = () => {
       }
     };
 
-    const handleAddSubcategoryToExisting = async (categoryId, subcategoryData) => {
-      try {
-        setLoading(prev => ({ ...prev, form: true }));
-        await axios.patch(`${API_BASE_URL}/categories/${categoryId}/subcategories`, {
-          group: subcategoryData.group,
-          items: [subcategoryData.item]
-        });
-        
-        const response = await axios.get(`${API_BASE_URL}/categories`);
-        setCategories(response.data || []);
-      } catch (err) {
-        setError(err.response?.data?.message || err.message);
-      } finally {
-        setLoading(prev => ({ ...prev, form: false }));
-      }
-    };
+const handleAddSubcategoryToExisting = async (categoryId, subcategoryData) => {
+  try {
+    setLoading(prev => ({ ...prev, form: true }));
+    console.log('Sending subcategory data:', {
+      group: subcategoryData.group,
+      items: subcategoryData.items
+    });
+    await axios.patch(`${API_BASE_URL}/categories/${categoryId}/subcategories`, {
+      group: subcategoryData.group,
+      items: subcategoryData.items
+    });
+    
+    const response = await axios.get(`${API_BASE_URL}/categories`);
+    setCategories(response.data || []);
+  } catch (err) {
+    console.error('Error adding subcategory:', err.response?.data || err.message);
+    setError(err.response?.data?.message || err.message);
+  } finally {
+    setLoading(prev => ({ ...prev, form: false }));
+  }
+};
 
     const handleSubmit = async (e) => {
       e.preventDefault();

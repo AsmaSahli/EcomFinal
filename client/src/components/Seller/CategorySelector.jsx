@@ -88,21 +88,23 @@ const CategorySelector = ({
     return category?.name || '';
   };
 
-  // Add subcategory to existing category
-  const handleAddSubcategory = async () => {
-    const { group, item } = newSubcategoryData;
-    if (!group || !item) return;
+const handleAddSubcategory = async () => {
+  const { group, item } = newSubcategoryData;
+  // Ensure group and item are non-empty strings
+  if (!group?.trim() || !item?.trim()) {
+    console.error('Group and item must be non-empty strings');
+    return;
+  }
 
-    try {
-      await onAddSubcategoryToExisting(selectedCategory, { group, items: [item] });
-      setNewSubcategoryData({ group: '', item: '' });
-      setShowAddSubcategory(false);
-      // Automatically select the newly added subcategory
-      handleSubcategorySelect({ group, item });
-    } catch (error) {
-      console.error('Failed to add subcategory:', error);
-    }
-  };
+  try {
+    await onAddSubcategoryToExisting(selectedCategory, { group: group.trim(), items: [item.trim()] });
+    setNewSubcategoryData({ group: '', item: '' });
+    setShowAddSubcategory(false);
+    handleSubcategorySelect({ group: group.trim(), item: item.trim() });
+  } catch (error) {
+    console.error('Failed to add subcategory:', error);
+  }
+};
 
   // Rest of the component remains exactly the same
   return (

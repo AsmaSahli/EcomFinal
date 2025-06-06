@@ -47,12 +47,17 @@ exports.getAllProducts = async (req, res) => {
       .populate("sellers.sellerId")
       .populate("sellers.tags")
       .populate({
+        path: "sellers.activePromotion",
+        select: "name discountRate startDate endDate isActive image",
+      })
+      .populate({
         path: "categoryDetails.category",
         select: "name"
       })
       .populate("sellers.reviews")
-      .populate("createdBy");
-      
+      .populate("createdBy")
+      .lean();
+
     const transformedProducts = products.map(transformProductData);
     res.status(200).json(transformedProducts);
   } catch (error) {

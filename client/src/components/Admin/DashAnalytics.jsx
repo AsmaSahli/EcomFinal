@@ -13,7 +13,7 @@ const DashAnalytics = () => {
               </div>
 
             </div>
-      <MetabaseDashboard dashboardId="2" /> 
+              <MetabaseDashboard dashboardId="2" /> 
           </div>
 
 
