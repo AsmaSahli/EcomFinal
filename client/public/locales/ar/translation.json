@@ -21,6 +21,92 @@
       "signoutSuccess": "تم تسجيل الخروج بنجاح",
       "signoutError": "فشل تسجيل الخروج"
     },
+      "home": {
+    "carousel": {
+      "smartphones": {
+        "title": "هواتف ذكية من الجيل القادم",
+        "subtitle": "استمتع بأداء 5G فائق السرعة",
+        "buttonText": "استكشف",
+        "badgeText": "الوافدون الجدد"
+      },
+      "laptops": {
+        "title": "حواسيب محمولة متميزة",
+        "subtitle": "تصاميم فائقة النحافة مع أداء قوي",
+        "buttonText": "تسوق الآن",
+        "badgeText": "مخزون محدود"
+      },
+      "audio": {
+        "title": "صوت غامر",
+        "subtitle": "جودة صوت استوديو لعشاق الموسيقى",
+        "buttonText": "تصفح",
+        "badgeText": "الأكثر مبيعًا"
+      }
+    },
+    "squarePromotions": {
+      "gaming": {
+        "title": "عرض خاص للألعاب",
+        "subtitle": "معدات عالية الأداء",
+        "buttonText": "عرض الصفقات"
+      },
+      "audio": {
+        "title": "أسبوع الصوتيات",
+        "subtitle": "أنظمة صوت متميزة",
+        "buttonText": "تصفح"
+      },
+      "mobile": {
+        "title": "جنون الهواتف",
+        "subtitle": "أحدث الهواتف الذكية",
+        "buttonText": "تصفح"
+      }
+    },
+    "footer": {
+      "companyName": "إلكتسي",
+      "description": "متجرك الشامل لأحدث الإلكترونيات والأجهزة.",
+      "sections": {
+        "shop": "التسوق",
+        "customerService": "خدمة العملاء",
+        "aboutUs": "معلومات عنا"
+      },
+      "shopLinks": {
+        "laptops": "حواسيب محمولة",
+        "smartphones": "هواتف ذكية",
+        "tablets": "أجهزة لوحية",
+        "accessories": "إكسسوارات",
+        "gaming": "ألعاب"
+      },
+      "customerServiceLinks": {
+        "contactUs": "اتصل بنا",
+        "faqs": "الأسئلة الشائعة",
+        "shippingPolicy": "سياسة الشحن",
+        "returnsRefunds": "الإرجاع والاسترداد",
+        "trackOrder": "تتبع الطلب"
+      },
+      "aboutUsLinks": {
+        "ourStory": "قصتنا",
+        "careers": "وظائف",
+        "privacyPolicy": "سياسة الخصوصية",
+        "termsOfService": "شروط الخدمة",
+        "blog": "مدونة"
+      },
+      "copyright": "© 2025 إلكتسي. جميع الحقوق محفوظة."
+    }
+  },
+    "featuredProducts": {
+    "flashSale": {
+      "title": "تخفيضات سريعة",
+      "subtitle": "عروض محدودة المدة لا تريد تفويتها!",
+      "empty": "لا توجد منتجات تخفيضات سريعة متاحة"
+    },
+    "featured": {
+      "title": "منتجات مميزة",
+      "subtitle": "اكتشف أفضل اختياراتنا المختارة خصيصًا لك",
+      "empty": "لا توجد منتجات مميزة متاحة"
+    },
+    "error": {
+      "load": "فشل تحميل المنتجات المميزة",
+      "wishlist": "فشل تحميل قائمة الأمنيات"
+    }
+  },
     "categories": {
       "title": "جميع الفئات",
       "loading": "جاري التحميل...",

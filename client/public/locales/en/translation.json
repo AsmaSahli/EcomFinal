@@ -22,6 +22,93 @@
         "signoutSuccess": "Signed out successfully",
         "signoutError": "Failed to sign out"
       },
+      "home": {
+    "carousel": {
+      "smartphones": {
+        "title": "Next-Gen Smartphones",
+        "subtitle": "Experience lightning-fast 5G performance",
+        "buttonText": "Explore",
+        "badgeText": "NEW ARRIVALS"
+      },
+      "laptops": {
+        "title": "Premium Laptops",
+        "subtitle": "Ultra-thin designs with powerhouse performance",
+        "buttonText": "Shop Now",
+        "badgeText": "LIMITED STOCK"
+      },
+      "audio": {
+        "title": "Immersive Audio",
+        "subtitle": "Studio-quality sound for audiophiles",
+        "buttonText": "Browse",
+        "badgeText": "BESTSELLERS"
+      }
+    },
+    "squarePromotions": {
+      "gaming": {
+        "title": "Gaming Special",
+        "subtitle": "High-performance gear",
+        "buttonText": "View Deals"
+      },
+      "audio": {
+        "title": "Audio Week",
+        "subtitle": "Premium sound systems",
+        "buttonText": "Browse"
+      },
+      "mobile": {
+        "title": "Mobile Madness",
+        "subtitle": "Latest smartphones",
+        "buttonText": "Browse"
+      }
+    },
+    "footer": {
+      "companyName": "Electsy",
+      "description": "Your one-stop shop for all the latest electronics and gadgets.",
+      "sections": {
+        "shop": "Shop",
+        "customerService": "Customer Service",
+        "aboutUs": "About Us"
+      },
+      "shopLinks": {
+        "laptops": "Laptops",
+        "smartphones": "Smartphones",
+        "tablets": "Tablets",
+        "accessories": "Accessories",
+        "gaming": "Gaming"
+      },
+      "customerServiceLinks": {
+        "contactUs": "Contact Us",
+        "faqs": "FAQs",
+        "shippingPolicy": "Shipping Policy",
+        "returnsRefunds": "Returns & Refunds",
+        "trackOrder": "Track Order"
+      },
+      "aboutUsLinks": {
+        "ourStory": "Our Story",
+        "careers": "Careers",
+        "privacyPolicy": "Privacy Policy",
+        "termsOfService": "Terms of Service",
+        "blog": "Blog"
+      },
+      "copyright": "© 2025 Electsy. All rights reserved."
+    }
+  },
+    "featuredProducts": {
+    "flashSale": {
+      "title": "Flash Sale",
+      "subtitle": "Limited time offers you don't want to miss!",
+      "empty": "No flash sale products available"
+    },
+    "featured": {
+      "title": "Featured Products",
+      "subtitle": "Discover our top picks curated just for you",
+      "empty": "No featured products available"
+    },
+    "error": {
+      "load": "Failed to load featured products",
+      "wishlist": "Failed to load wishlist"
+    }
+  },
+
     "categories": {
     "title": "All Categories",
     "loading": "Loading...",

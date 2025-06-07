@@ -22,7 +22,7 @@ const ProfilePage = () => {
   const currentUser = useSelector((state) => state.user?.currentUser);
   const [activeComponent, setActiveComponent] = useState('orders'); 
 
-  const signOut = async () => {
+  const signOut = async () => { 
     try {
       await axios.post('http://localhost:8000/signout');
       dispatch(signoutSuccess());

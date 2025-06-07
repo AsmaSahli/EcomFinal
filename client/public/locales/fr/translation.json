@@ -696,6 +696,92 @@
     }
   }
 ,
+  "home": {
+    "carousel": {
+      "smartphones": {
+        "title": "Smartphones de nouvelle génération",
+        "subtitle": "Découvrez des performances 5G ultra-rapides",
+        "buttonText": "Explorer",
+        "badgeText": "NOUVELLES ARRIVÉES"
+      },
+      "laptops": {
+        "title": "Ordinateurs portables premium",
+        "subtitle": "Designs ultra-fins avec des performances puissantes",
+        "buttonText": "Acheter maintenant",
+        "badgeText": "STOCK LIMITÉ"
+      },
+      "audio": {
+        "title": "Audio immersif",
+        "subtitle": "Qualité sonore de studio pour les audiophiles",
+        "buttonText": "Parcourir",
+        "badgeText": "MEILLEURES VENTES"
+      }
+    },
+    "squarePromotions": {
+      "gaming": {
+        "title": "Spécial gaming",
+        "subtitle": "Équipements haute performance",
+        "buttonText": "Voir les offres"
+      },
+      "audio": {
+        "title": "Semaine de l'audio",
+        "subtitle": "Systèmes audio premium",
+        "buttonText": "Parcourir"
+      },
+      "mobile": {
+        "title": "Folie mobile",
+        "subtitle": "Derniers smartphones",
+        "buttonText": "Parcourir"
+      }
+    },
+    "footer": {
+      "companyName": "Electsy",
+      "description": "Votre guichet unique pour les derniers appareils électroniques et gadgets.",
+      "sections": {
+        "shop": "Boutique",
+        "customerService": "Service client",
+        "aboutUs": "À propos de nous"
+      },
+      "shopLinks": {
+        "laptops": "Ordinateurs portables",
+        "smartphones": "Smartphones",
+        "tablets": "Tablettes",
+        "accessories": "Accessoires",
+        "gaming": "Jeux"
+      },
+      "customerServiceLinks": {
+        "contactUs": "Nous contacter",
+        "faqs": "FAQ",
+        "shippingPolicy": "Politique d'expédition",
+        "returnsRefunds": "Retours et remboursements",
+        "trackOrder": "Suivre la commande"
+      },
+      "aboutUsLinks": {
+        "ourStory": "Notre histoire",
+        "careers": "Carrières",
+        "privacyPolicy": "Politique de confidentialité",
+        "termsOfService": "Conditions de service",
+        "blog": "Blog"
+      },
+      "copyright": "© 2025 Electsy. Tous droits réservés."
+    }
+  },
+    "featuredProducts": {
+    "flashSale": {
+      "title": "Vente flash",
+      "subtitle": "Offres à durée limitée à ne pas manquer !",
+      "empty": "Aucun produit en vente flash disponible"
+    },
+    "featured": {
+      "title": "Produits en vedette",
+      "subtitle": "Découvrez nos meilleurs choix sélectionnés pour vous",
+      "empty": "Aucun produit en vedette disponible"
+    },
+    "error": {
+      "load": "Échec du chargement des produits en vedette",
+      "wishlist": "Échec du chargement de la liste de souhaits"
+    }
+  },
 "search": {
     "filters": "Filtres",
     "search": "Rechercher",

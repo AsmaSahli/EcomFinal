@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import axios from 'axios';
@@ -9,8 +10,10 @@ import { Pagination, Navigation } from 'swiper/modules';
 import { IoMdFlash } from 'react-icons/io';
 import ProductCard from './ProductCard';
 import { toast } from 'react-toastify';
+import { useTranslation } from 'react-i18next';
 
 const FeaturedProducts = () => {
+  const { t } = useTranslation();
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -29,7 +32,7 @@ const FeaturedProducts = () => {
         setFeaturedProducts(productsWithOffers);
       } catch (err) {
         console.error('Error fetching featured products:', err);
-        setError('Failed to load featured products');
+        setError(t('featuredProducts.error.load'));
       } finally {
         setLoading(false);
       }
@@ -53,14 +56,14 @@ const FeaturedProducts = () => {
             }))
           });
         } catch (err) {
-          toast.error('Failed to load wishlist');
+          toast.error(t('featuredProducts.error.wishlist'));
         }
       }
     };
 
     fetchFeaturedProducts();
     fetchWishlist();
-  }, [currentUser, dispatch]);
+  }, [currentUser, dispatch, t]);
 
   const chunkArray = (arr, size) => {
     return Array.from({ length: Math.ceil(arr.length / size) }, (v, i) =>
@@ -101,8 +104,8 @@ const FeaturedProducts = () => {
                 <div className="absolute -inset-2 bg-white/20 rounded-full animate-ping"></div>
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-white">Flash Sale</h2>
-                <p className="text-white/90">Limited time offers you don't want to miss!</p>
+                <h2 className="text-3xl font-bold text-white">{t('featuredProducts.flashSale.title')}</h2>
+                <p className="text-white/90">{t('featuredProducts.flashSale.subtitle')}</p>
               </div>
             </div>
           </div>
@@ -144,7 +147,7 @@ const FeaturedProducts = () => {
             </Swiper>
           ) : (
             <div className="text-center py-8 text-white/90">
-              No flash sale products available
+              {t('featuredProducts.flashSale.empty')}
             </div>
           )}
         </div>
@@ -153,9 +156,9 @@ const FeaturedProducts = () => {
       {/* Featured Products Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">Featured Products</h2>
+          <h2 className="text-4xl font-bold mb-4">{t('featuredProducts.featured.title')}</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Discover our top picks curated just for you
+            {t('featuredProducts.featured.subtitle')}
           </p>
         </div>
 
@@ -196,7 +199,7 @@ const FeaturedProducts = () => {
           </Swiper>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            No featured products available
+            {t('featuredProducts.featured.empty')}
           </div>
         )}
       </section>

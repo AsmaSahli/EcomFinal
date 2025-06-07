@@ -1,3 +1,4 @@
+
 import React, { useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import 'swiper/css';
@@ -11,83 +12,78 @@ import { RiGamepadLine } from 'react-icons/ri';
 import { GiSmartphone } from 'react-icons/gi';
 import { useNavigate } from 'react-router-dom';
 import { EffectCreative } from 'swiper/modules';
+import { useTranslation } from 'react-i18next';
 import laptopVideo from '../assets/mixkit-hands-of-a-girl-working-on-a-computer-4938-4k.mp4';
 import audio from '../assets/mixkit-woman-takes-her-headphones-to-listen-to-music-51134-full-hd.mp4';
 import smartphone from '../assets/mixkit-black-phone-on-laptop-247-hd-ready.mp4';
 import FeaturedProducts from '../components/FeaturedProducts';
 
 export const Home = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const videoRefs = useRef([]);
+
+  // Map numeric IDs to translation keys for carousel
+  const idToTranslationKey = {
+    1: 'smartphones',
+    2: 'laptops',
+    3: 'audio'
+  };
+
+  // Map numeric IDs to translation keys for square promotions
+  const squareIdToTranslationKey = {
+    1: 'gaming',
+    2: 'audio',
+    3: 'mobile'
+  };
 
   const mainPromotions = [
     {
       id: 1,
-      title: "Next-Gen Smartphones",
-      subtitle: "Experience lightning-fast 5G performance",
       video: smartphone,
-      buttonText: "Explore",
-      badgeText: "NEW ARRIVALS",
-      bgGradient: "from-indigo-900 to-purple-900",
-      category: "Phones & Smartwatches",
-      group: "Smartphones"
+      bgGradient: 'from-indigo-900 to-purple-900',
+      category: 'Phones & Smartwatches',
+      group: 'Smartphones'
     },
     {
       id: 2,
-      title: "Premium Laptops",
-      subtitle: "Ultra-thin designs with powerhouse performance",
       video: laptopVideo,
-      buttonText: "Shop Now",
-      badgeText: "LIMITED STOCK",
-      bgGradient: "from-rose-900 to-amber-900",
-      category: "Computers & IT",
-      group: "Laptops"
+      bgGradient: 'from-rose-900 to-amber-900',
+      category: 'Computers & IT',
+      group: 'Laptops'
     },
     {
       id: 3,
-      title: "Immersive Audio",
-      subtitle: "Studio-quality sound for audiophiles",
       video: audio,
-      buttonText: "Browse",
-      badgeText: "BESTSELLERS",
-      bgGradient: "from-emerald-900 to-teal-900",
-      category: "Photo & Audio",
-      group: "Audio"
+      bgGradient: 'from-emerald-900 to-teal-900',
+      category: 'Photo & Audio',
+      group: 'Audio'
     }
   ];
 
   const squarePromotions = [
     {
       id: 1,
-      title: "Gaming Special",
-      subtitle: "High-performance gear",
-      image: "https://images.unsplash.com/photo-1593508512255-86ab42a8e620?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=878&q=80",
-      buttonText: "View Deals",
-      bgColor: "bg-gradient-to-br from-purple-600 to-indigo-800",
+      image: 'https://images.unsplash.com/photo-1593508512255-86ab42a8e620?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=878&q=80',
+      bgColor: 'bg-gradient-to-br from-purple-600 to-indigo-800',
       icon: <RiGamepadLine className="text-4xl text-white" />,
-      category: "Gaming"
+      category: 'Gaming'
     },
     {
       id: 2,
-      title: "Audio Week",
-      subtitle: "Premium sound systems",
-      image: "https://images.unsplash.com/photo-1546054454-aa26e2b734c7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=880&q=80",
-      buttonText: "Browse",
-      bgColor: "bg-gradient-to-br from-red-500 to-amber-600",
+      image: 'https://images.unsplash.com/photo-1546054454-aa26e2b734c7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=880&q=80',
+      bgColor: 'bg-gradient-to-br from-red-500 to-amber-600',
       icon: <BsHeadphones className="text-4xl text-white" />,
-      category: "Photo & Audio",
-      group: "Audio"
+      category: 'Photo & Audio',
+      group: 'Audio'
     },
     {
       id: 3,
-      title: "Mobile Madness",
-      subtitle: "Latest smartphones",
-      image: "https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=967&q=80",
-      buttonText: "Browse",
-      bgColor: "bg-gradient-to-br from-blue-500 to-cyan-600",
+      image: 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=967&q=80',
+      bgColor: 'bg-gradient-to-br from-blue-500 to-cyan-600',
       icon: <GiSmartphone className="text-4xl text-white" />,
-      category: "Phones & Smartwatches",
-      group: "Smartphones"
+      category: 'Phones & Smartwatches',
+      group: 'Smartphones'
     }
   ];
 
@@ -109,12 +105,12 @@ export const Home = () => {
           creativeEffect={{
             prev: {
               shadow: true,
-              translate: ["-20%", 0, -400],
+              translate: ['-20%', 0, -400],
               opacity: 0
             },
             next: {
               shadow: true,
-              translate: ["20%", 0, -400],
+              translate: ['20%', 0, -400],
               opacity: 0
             }
           }}
@@ -139,7 +135,7 @@ export const Home = () => {
             >
               <div className="absolute inset-0 overflow-hidden">
                 <video
-                  ref={el => videoRefs.current[index] = el}
+                  ref={(el) => (videoRefs.current[index] = el)}
                   src={promo.video}
                   muted
                   loop
@@ -158,7 +154,7 @@ export const Home = () => {
                     transition={{ duration: 0.6, delay: 0.2 }}
                     className="inline-block mb-6 px-4 py-2 bg-white text-gray-900 text-sm font-bold rounded-full shadow-lg"
                   >
-                    {promo.badgeText}
+                    {t(`home.carousel.${idToTranslationKey[promo.id]}.badgeText`)}
                   </motion.div>
                   <motion.h2
                     className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight"
@@ -166,7 +162,7 @@ export const Home = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
                   >
-                    {promo.title}
+                    {t(`home.carousel.${idToTranslationKey[promo.id]}.title`)}
                   </motion.h2>
                   <motion.p
                     className="text-xl md:text-2xl text-white/90 mb-8 max-w-2xl"
@@ -174,7 +170,7 @@ export const Home = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.6 }}
                   >
-                    {promo.subtitle}
+                    {t(`home.carousel.${idToTranslationKey[promo.id]}.subtitle`)}
                   </motion.p>
                   <motion.div
                     className="flex flex-wrap gap-4"
@@ -183,7 +179,7 @@ export const Home = () => {
                     transition={{ duration: 0.6, delay: 0.8 }}
                   >
                     <button className="px-8 py-4 bg-white text-gray-900 font-bold rounded-lg hover:bg-gray-100 transition-all duration-300 flex items-center shadow-lg">
-                      {promo.buttonText} <FaArrowRight className="ml-3" />
+                      {t(`home.carousel.${idToTranslationKey[promo.id]}.buttonText`)} <FaArrowRight className="ml-3" />
                     </button>
                   </motion.div>
                 </div>
@@ -207,7 +203,7 @@ export const Home = () => {
             >
               <img
                 src={promo.image}
-                alt={promo.title}
+                alt={t(`home.squarePromotions.${squareIdToTranslationKey[promo.id]}.title`)}
                 className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-70"
               />
               <div className="absolute inset-0 p-8 flex flex-col justify-between">
@@ -215,11 +211,15 @@ export const Home = () => {
                   <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
                     {promo.icon}
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">{promo.title}</h3>
-                  <p className="text-white/90">{promo.subtitle}</p>
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    {t(`home.squarePromotions.${squareIdToTranslationKey[promo.id]}.title`)}
+                  </h3>
+                  <p className="text-white/90">
+                    {t(`home.squarePromotions.${squareIdToTranslationKey[promo.id]}.subtitle`)}
+                  </p>
                 </div>
                 <button className="px-6 py-2 bg-white text-gray-900 font-semibold rounded-full hover:bg-gray-100 transition-all duration-300 w-fit">
-                  {promo.buttonText}
+                  {t(`home.squarePromotions.${squareIdToTranslationKey[promo.id]}.buttonText`)}
                 </button>
               </div>
               <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10"></div>
@@ -232,14 +232,13 @@ export const Home = () => {
       {/* Featured Products and Flash Sale */}
       <FeaturedProducts />
 
-
       {/* Footer */}
       <footer className="bg-gray-900 text-white pt-12 pb-6">
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="text-xl font-bold mb-4">Electsy</h3>
-              <p className="text-gray-400 mb-4">Your one-stop shop for all the latest electronics and gadgets.</p>
+              <h3 className="text-xl font-bold mb-4">{t('home.footer.companyName')}</h3>
+              <p className="text-gray-400 mb-4">{t('home.footer.description')}</p>
               <div className="flex space-x-4">
                 <a href="#" className="text-gray-400 hover:text-white transition-colors">
                   <FaFacebook className="text-xl" />
@@ -259,38 +258,38 @@ export const Home = () => {
               </div>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4">Shop</h4>
+              <h4 className="font-bold text-lg mb-4">{t('home.footer.sections.shop')}</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Laptops</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Smartphones</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Tablets</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Accessories</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Gaming</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.shopLinks.laptops')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.shopLinks.smartphones')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.shopLinks.tablets')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.shopLinks.accessories')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.shopLinks.gaming')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4">Customer Service</h4>
+              <h4 className="font-bold text-lg mb-4">{t('home.footer.sections.customerService')}</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">FAQs</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Shipping Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Returns & Refunds</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Track Order</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.customerServiceLinks.contactUs')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.customerServiceLinks.faqs')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.customerServiceLinks.shippingPolicy')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.customerServiceLinks.returnsRefunds')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.customerServiceLinks.trackOrder')}</a></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold text-lg mb-4">About Us</h4>
+              <h4 className="font-bold text-lg mb-4">{t('home.footer.sections.aboutUs')}</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Our Story</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.aboutUsLinks.ourStory')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.aboutUsLinks.careers')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.aboutUsLinks.privacyPolicy')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.aboutUsLinks.termsOfService')}</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">{t('home.footer.aboutUsLinks.blog')}</a></li>
               </ul>
             </div>
           </div>
           <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 mb-4 md:mb-0">© 2025 Electsy. All rights reserved.</p>
+            <p className="text-gray-400 mb-4 md:mb-0">{t('home.footer.copyright')}</p>
           </div>
         </div>
       </footer>
