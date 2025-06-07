@@ -21,7 +21,7 @@ const CheckoutPage = () => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    phone: '',
+    phone: currentUser?.phoneNumber ||'',
     email: currentUser?.email || '',
     street: '',
     apartment: '',
