@@ -16,79 +16,6 @@ module.exports = {
         }
     },
 
-    updateUser: async (req, res, next) => {
-        const { id } = req.params;
-        const {
-            name, email, password, newPassword,
-            address, phoneNumber, // buyer
-            shopName, headquartersAddress, fiscalIdentificationCard, tradeRegister, businessDescription, logo, // seller
-            vehicleType, vehicleNumber, deliveryArea, contactNumber, cv, // delivery
-        } = req.body;
-
-        const { role, userId } = req.user;
-
-        try {
-            const user = await User.findById(id);
-            if (!user) {
-                return next(e.errorHandler(404, "User not found"));
-            }
-
-            if (userId !== id && role !== 'admin') {
-                return next(e.errorHandler(403, "You can only update your own profile"));
-            }
-
-            if (email) {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                if (!emailRegex.test(email)) {
-                    return next(e.errorHandler(400, "Invalid email format"));
-                }
-                const existingUser = await User.findOne({ email });
-                if (existingUser && existingUser._id.toString() !== id) {
-                    return next(e.errorHandler(400, "Email already in use"));
-                }
-                user.email = email;
-            }
-
-            if (password && newPassword) {
-                const isMatch = await bcrypt.compare(password, user.password);
-                if (!isMatch) {
-                    return next(e.errorHandler(400, "Current password is incorrect"));
-                }
-                if (newPassword.length < 6) {
-                    return next(e.errorHandler(400, "Password must be at least 6 characters"));
-                }
-                user.password = await bcrypt.hash(newPassword, 10);
-            }
-
-            if (name) user.name = name;
-
-            // Role-based fields
-            if (user.role === 'buyer') {
-                if (address) user.address = address;
-                if (phoneNumber) user.phoneNumber = phoneNumber;
-            } else if (user.role === 'seller') {
-                if (shopName) user.shopName = shopName;
-                if (headquartersAddress) user.headquartersAddress = headquartersAddress;
-                if (fiscalIdentificationCard) user.fiscalIdentificationCard = fiscalIdentificationCard;
-                if (tradeRegister) user.tradeRegister = tradeRegister;
-                if (businessDescription) user.businessDescription = businessDescription;
-                if (logo) user.logo = logo;
-            } else if (user.role === 'delivery') {
-                if (vehicleType) user.vehicleType = vehicleType;
-                if (vehicleNumber) user.vehicleNumber = vehicleNumber;
-                if (deliveryArea) user.deliveryArea = deliveryArea;
-                if (contactNumber) user.contactNumber = contactNumber;
-                if (cv) user.cv = cv;
-            }
-
-            await user.save();
-
-            res.status(200).json({ message: "User updated successfully", user });
-        } catch (error) {
-            next(error);
-        }
-    },
-
 
     // New method to get user by ID
     getUserById: async (req, res, next) => {
@@ -123,6 +50,52 @@ module.exports = {
             next(error);
         }
     },
+      updateUser: async (req, res, next) => {
+    try {
+      const userId = req.params.id;
+      const { name, email, phoneNumber, address, password, newPassword } = req.body;
+
+      // Find user by ID
+      const user = await User.findById(userId);
+      if (!user) {
+        return next(e.errorHandler(404, "User not found"));
+      }
+
+      // Verify current password if newPassword is provided
+      if (newPassword && password) {
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+          return next(e.errorHandler(401, "Current password is incorrect"));
+        }
+        user.password = await bcrypt.hash(newPassword, 10);
+      }
+
+      // Update fields based on role
+      if (user.role === "buyer") {
+        if (name) user.name = name;
+        if (email) user.email = email;
+        if (phoneNumber) user.phoneNumber = phoneNumber;
+        if (address) user.address = address;
+      } else if (user.role === "seller") {
+        if (name) user.name = name;
+        if (email) user.email = email;
+        // Seller-specific fields like shopName, headquartersAddress, etc., are not updated here
+      } else if (user.role === "delivery") {
+        if (name) user.name = name;
+        if (email) user.email = email;
+        // Delivery-specific fields like vehicleType, etc., are not updated here
+      } else if (user.role === "admin") {
+        if (name) user.name = name;
+        if (email) user.email = email;
+      }
+
+      // Save updated user
+      await user.save();
+      res.status(200).json({ message: "Profile updated successfully" });
+    } catch (error) {
+      next(error);
+    }
+  },
     getUsers: async (req, res, next) => {
         try {
             let { page = 1, limit = 10, role } = req.query;

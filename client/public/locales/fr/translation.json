@@ -645,79 +645,57 @@
     "orderNotFound": "Commande non trouvée"
   }
 },
-"profile": {
+
+  "profile": {
     "myOrders": "Mes Commandes",
-    "trackOrder": "Suivi de Commande",
+    "trackOrder": "Suivre la Commande Récente",
     "requestsMessages": "Demandes & Messages",
     "payments": "Paiements",
     "wishlist": "Liste de Souhaits",
     "personalInfo": "Informations Personnelles",
     "accountSettings": "Paramètres du Compte",
     "logout": "Déconnexion",
-    "orderTracking": {
-        "title": "Suivi de commande",
-        "placedOn": "Passée le",
-        "orderStatus": "Statut de la commande",
-        "orderDetails": "Détails de la commande",
-        "orderSummary": "Résumé de la commande",
-        "shippingInfo": "Informations de livraison",
-        "paymentInfo": "Informations de paiement",
-        "deliveryInstructions": "Instructions de livraison",
-        "paymentMethod": "Méthode de paiement",
-        "deliveryMethod": "Méthode de livraison",
-        "orderTotal": "Total de la commande",
-        "paymentStatus": "Statut du paiement",
-        "quantity": "Quantité",
-        "subtotal": "Sous-total",
-        "shipping": "Livraison",
-        "tax": "Taxe",
-        "total": "Total",
-        "free": "Gratuit",
-        "status": {
-          "pending": "Commande passée",
-          "pendingDescription": "Nous avons reçu votre commande",
-          "processing": "En traitement",
-          "processingDescription": "Votre commande est en préparation",
-          "shipped": "Expédiée",
-          "shippedDescription": "Votre commande est en route",
-          "delivered": "Livrée",
-          "deliveredDescription": "Votre commande est arrivée"
-        },
-        "paymentMethods": {
-          "cod": "Paiement à la livraison",
-          "credit": "Carte de crédit",
-          "paypal": "PayPal"
-        },
-        "deliveryMethods": {
-          "standard": "Livraison standard",
-          "express": "Livraison express",
-          "pickup": "Retrait en magasin"
-        },
-        "paymentStatuses": {
-          "pending": "En attente",
-          "paid": "Payé",
-          "failed": "Échoué"
-        },
-        "buttons": {
-          "continueShopping": "Continuer vos achats",
-          "leaveReview": "Laisser un avis",
-          "backToHome": "Retour à l'accueil",
-          "refreshStatus": "Actualiser le statut"
-        },
-        "errors": {
-          "fetchError": "Échec du chargement des détails de la commande",
-          "orderNotFound": "Commande introuvable"
-        },
-        "yourPurchases": "Vos achats",
-        "items": "articles",
-        "seller": "Vendeur",
-        "suborderStatus": "Statut du colis",
-        "suborderSummary": "Résumé du colis",
-        "viewProduct": "Voir le produit",
-        "leaveReview": "Donner un avis",
-        "orderProgress": "Progression de la commande"
-      }
-  },
+    "orders": {
+      "fetchError": "Échec de la récupération des commandes",
+      "noOrders": "Aucune Commande Trouvée",
+      "noOrdersDesc": "Vous n'avez pas encore passé de commande",
+      "shopNow": "Acheter Maintenant",
+      "order": "Commande",
+      "delivered": "Livré",
+      "pending": "En Attente",
+      "shipped": "Expédié",
+      "cancelled": "Annulé",
+      "processing": "En Traitement",
+      "items": "Articles",
+      "promoApplied": "Promotion Appliquée",
+      "summary": "Résumé de la Commande",
+      "subtotal": "Sous-total",
+      "shipping": "Livraison",
+      "tax": "Taxe",
+      "total": "Total",
+      "shippingInfo": "Informations de Livraison",
+      "trackOrder": "Suivre la Commande",
+      "viewInvoice": "Voir la Facture",
+      "cancelOrder": "Annuler la Commande",
+      "leaveReview": "Laisser un Avis"
+    },
+    "messages": {
+      "serviceUnavailable": "Service de Messagerie Indisponible",
+      "serviceUnavailableDesc": "Notre système de messagerie est en maintenance",
+      "underMaintenance": "En Maintenance",
+      "underMaintenanceDesc": "Nous améliorons notre service de messagerie pour mieux vous servir",
+      "emailUs": "Envoyez-nous un Email",
+      "emailUsDesc": "Pour toute question ou problème, veuillez contacter notre équipe d'assistance",
+      "callUs": "Appelez-nous",
+      "callUsDesc": "Notre équipe de service client est disponible pour vous aider",
+      "deliveryInfo": "Informations de Livraison",
+      "deliveryInfoDesc": "Notre équipe de livraison vous contactera pour confirmer votre emplacement exact",
+      "locationVerification": "L'appel de vérification de l'emplacement viendra du +1 (234) 567-890",
+      "supportTeam": "Notre Équipe de Support",
+      "supportTeamDesc": "Disponible 24/7 pour résoudre tout problème que vous pourriez avoir"
+    }
+  }
+,
 "search": {
     "filters": "Filtres",
     "search": "Rechercher",

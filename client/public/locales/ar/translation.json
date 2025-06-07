@@ -639,7 +639,8 @@
     "orderNotFound": "الطلب غير موجود"
   }
 },
-"profile": {
+
+  "profile": {
     "myOrders": "طلباتي",
     "trackOrder": "تتبع الطلب الأخير",
     "requestsMessages": "الطلبات والرسائل",
@@ -648,70 +649,47 @@
     "personalInfo": "المعلومات الشخصية",
     "accountSettings": "إعدادات الحساب",
     "logout": "تسجيل الخروج",
-    "orderTracking": {
-        "title": "تتبع الطلب",
-        "placedOn": "تم الطلب في",
-        "orderStatus": "حالة الطلب",
-        "orderDetails": "تفاصيل الطلب",
-        "orderSummary": "ملخص الطلب",
-        "shippingInfo": "معلومات الشحن",
-        "paymentInfo": "معلومات الدفع",
-        "deliveryInstructions": "تعليمات التوصيل",
-        "paymentMethod": "طريقة الدفع",
-        "deliveryMethod": "طريقة التوصيل",
-        "orderTotal": "إجمالي الطلب",
-        "paymentStatus": "حالة الدفع",
-        "quantity": "الكمية",
-        "subtotal": "المجموع الفرعي",
-        "shipping": "الشحن",
-        "tax": "الضريبة",
-        "total": "الإجمالي",
-        "free": "مجاني",
-        "status": {
-          "pending": "تم استلام الطلب",
-          "pendingDescription": "لقد استلمنا طلبك",
-          "processing": "قيد المعالجة",
-          "processingDescription": "طلبك قيد التحضير",
-          "shipped": "تم الشحن",
-          "shippedDescription": "طلبك في طريقه إليك",
-          "delivered": "تم التوصيل",
-          "deliveredDescription": "وصل طلبك"
-        },
-        "paymentMethods": {
-          "cod": "الدفع عند الاستلام",
-          "credit": "بطاقة ائتمان",
-          "paypal": "باي بال"
-        },
-        "deliveryMethods": {
-          "standard": "توصيل عادي",
-          "express": "توصيل سريع",
-          "pickup": "استلام من المتجر"
-        },
-        "paymentStatuses": {
-          "pending": "قيد الانتظار",
-          "paid": "تم الدفع",
-          "failed": "فشل الدفع"
-        },
-        "buttons": {
-          "continueShopping": "مواصلة التسوق",
-          "leaveReview": "ترك تقييم",
-          "backToHome": "العودة للصفحة الرئيسية",
-          "refreshStatus": "تحديث الحالة"
-        },
-        "errors": {
-          "fetchError": "فشل تحميل تفاصيل الطلب",
-          "orderNotFound": "الطلب غير موجود"
-        },
-        "yourPurchases": "مشترياتك",
-        "items": "عناصر",
-        "seller": "البائع",
-        "suborderStatus": "حالة الطرد",
-        "suborderSummary": "ملخص الطرد",
-        "viewProduct": "عرض المنتج",
-        "leaveReview": "ترك تقييم",
-        "orderProgress": "تقدم الطلب"
-      }
-  },
+    "orders": {
+      "fetchError": "فشل في جلب الطلبات",
+      "noOrders": "لا توجد طلبات",
+      "noOrdersDesc": "لم تقم بإجراء أي طلبات بعد",
+      "shopNow": "تسوق الآن",
+      "order": "الطلب",
+      "delivered": "تم التوصيل",
+      "pending": "قيد الانتظار",
+      "shipped": "تم الشحن",
+      "cancelled": "ملغى",
+      "processing": "قيد المعالجة",
+      "items": "العناصر",
+      "promoApplied": "تم تطبيق العرض",
+      "summary": "ملخص الطلب",
+      "subtotal": "المجموع الفرعي",
+      "shipping": "الشحن",
+      "tax": "الضريبة",
+      "total": "المجموع",
+      "shippingInfo": "معلومات الشحن",
+      "trackOrder": "تتبع الطلب",
+      "viewInvoice": "عرض الفاتورة",
+      "cancelOrder": "إلغاء الطلب",
+      "leaveReview": "كتابة تقييم"
+    },
+    "messages": {
+      "serviceUnavailable": "خدمة الرسائل غير متوفرة",
+      "serviceUnavailableDesc": "نظام الرسائل لدينا قيد الصيانة حاليًا",
+      "underMaintenance": "قيد الصيانة",
+      "underMaintenanceDesc": "نحن نقوم بتحسين خدمة الرسائل لخدمتك بشكل أفضل",
+      "emailUs": "راسلنا عبر البريد",
+      "emailUsDesc": "لأي استفسارات أو مشاكل، يرجى الاتصال بفريق الدعم لدينا",
+      "callUs": "اتصل بنا",
+      "callUsDesc": "فريق خدمة العملاء لدينا متاح لمساعدتك",
+      "deliveryInfo": "معلومات التوصيل",
+      "deliveryInfoDesc": "سيتصل بك فريق التوصيل الخاص بنا لتأكيد موقعك بالضبط",
+      "locationVerification": "سيأتي مكالمة التحقق من الموقع من +1 (234) 567-890",
+      "supportTeam": "فريق الدعم لدينا",
+      "supportTeamDesc": "متاح على مدار الساعة لحل أي مشاكل قد تواجهها"
+    }
+  }
+,
   "search": {
     "filters": "الفلاتر",
     "search": "بحث",

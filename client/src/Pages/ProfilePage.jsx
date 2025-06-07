@@ -39,7 +39,7 @@ const ProfilePage = () => {
     { id: 'orders', icon: <FaBox />, label: t('profile.myOrders'), component: <ProfileOrders /> },
     { id: 'messages', icon: <FaEnvelope />, label: t('profile.requestsMessages'), component: <ProfileMessages /> },
     { id: 'payments', icon: <FaCreditCard />, label: t('profile.payments'), component: <ProfilePayments /> },
-    { id: 'wishlist', icon: <FaHeart />, label: t('profile.wishlist'), component: <ProfileWishlist /> },
+    { id: 'wishlist', icon: <FaHeart />, label: t('profile.wishlist.wishlist'), component: <ProfileWishlist /> },
     { id: 'personal-info', icon: <FaUser />, label: t('profile.personalInfo'), component: <ProfilePersonalInfo /> },
     { id: 'settings', icon: <FaCog />, label: t('profile.accountSettings'), component: <ProfileSettings /> },
   ];

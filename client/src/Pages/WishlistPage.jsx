@@ -137,15 +137,24 @@ const WishlistPage = () => {
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
           <div className="flex items-center gap-4">
-            <motion.div 
-              animate={{ scale: [1, 1.1, 1] }}
-              transition={{ duration: 1.5, repeat: Infinity }}
-              className="text-purple-600"
+            <motion.div
+              animate={{ 
+                scale: [1, 1.2, 1],
+                rotate: [0, 15, -15, 0]
+              }}
+              transition={{ 
+                duration: 2,
+                repeat: Infinity,
+                repeatDelay: 3
+              }}
+              className="p-3 rounded-full bg-gradient-to-br from-pink-200 to-purple-200 shadow-lg"
             >
-              <FaHeart className="text-4xl" />
+              <FaHeart className="text-xl text-pink-600" />
             </motion.div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">{t('wishlist.title')}</h1>
+                            <h2 className="text-2xl font-bold text-gray-800">
+                {t('profile.wishlist.title')}
+              </h2>
               <p className="text-gray-500">
                 {wishlistItems.length} {wishlistItems.length === 1 ? t('wishlist.item') : t('wishlist.items')}
               </p>
@@ -184,26 +193,28 @@ const WishlistPage = () => {
             </div>
           </div>
         ) : wishlistItems.length === 0 ? (
-          <motion.div 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="bg-white rounded-xl shadow-sm border p-8 text-center max-w-2xl mx-auto"
-          >
-            <div className="mx-auto w-48 h-48 relative mb-6">
-              <div className="absolute inset-0 bg-purple-100 rounded-full opacity-20"></div>
-              <FaHeart className="h-full w-full text-purple-200" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-800 mb-2">{t('wishlist.emptyWishlist.title')}</h3>
-            <p className="text-gray-500 mb-6">
-              {t('wishlist.emptyWishlist.description')}
-            </p>
-            <button
-              onClick={() => navigate("/")}
-              className="btn btn-primary gap-2"
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-white rounded-2xl shadow-sm p-8 text-center max-w-md mx-auto"
             >
-              <FaShoppingBag /> {t('wishlist.emptyWishlist.button')}
-            </button>
-          </motion.div>
+              <div className="w-32 h-32 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <FaHeart className="text-4xl text-pink-500" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-800 mb-3">
+                {t('wishlist.emptyWishlist.title')}
+              </h3>
+              <p className="text-gray-500 mb-6">
+                {t('wishlist.emptyWishlist.description')}
+              </p>
+              <button
+                onClick={() => navigate("/products")}
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-500 text-white rounded-lg hover:shadow-lg transition-all"
+              >
+                <FaShoppingBag />
+                <span>{t('wishlist.emptyWishlist.button')}</span>
+              </button>
+            </motion.div>
         ) : (
           <AnimatePresence>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">

@@ -141,7 +141,11 @@ module.exports = {
                 userData.vehicleNumber = user.vehicleNumber;
                 userData.deliveryArea = user.deliveryArea;
                 userData.contactNumber = user.contactNumber;
+            } else if (user.role === 'buyer') {
+                userData.address = user.address;
+                userData.phoneNumber = user.phoneNumber;
             }
+
     
             // Successful response
             res.status(200).json({
