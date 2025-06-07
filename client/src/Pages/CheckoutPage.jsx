@@ -12,7 +12,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
 // Initialize Stripe with publishable key
-const stripePromise = loadStripe("pk_test_51RXB8eR0JuzwW2NjHpnGlvorMUFn3PHqq57fFASeLWm7jL4oT4CdvOYRfVJdEgNNscQmkwXA0TXAAOA14ifTEfzn00FulqPdkB");
+const stripePromise = loadStripe(import.meta.env.VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY);
 
 const CheckoutPage = () => {
 
