@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
+    "@stripe/stripe-js": "^7.3.1",
     "axios": "^1.8.4",
     "bcrypt": "^5.1.1",
     "cloudinary": "^1.21.0",
@@ -27,6 +28,7 @@
     "node-cron": "^4.0.6",
     "nodemailer": "^6.10.0",
     "nodemon": "^3.1.9",
+    "stripe": "^18.2.1",
     "validator": "^13.12.0"
   }
 }

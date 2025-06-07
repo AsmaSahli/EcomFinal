@@ -29,23 +29,23 @@ const orderItemSchema = new mongoose.Schema({
 }, { _id: false });
 
 const suborderSchema = new mongoose.Schema({
-    sellerId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    items: [orderItemSchema], 
-    subtotal: {
-      type: Number,
-      required: true,
-      min: 0
-    },
-    status: {
-        type: String,
-        enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
-        default: 'pending'
-      }
-  }, { _id: true });
+  sellerId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  items: [orderItemSchema],
+  subtotal: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending'
+  }
+}, { _id: true });
 
 const addressSchema = new mongoose.Schema({
   street: { type: String, required: true },
@@ -70,8 +70,8 @@ const orderSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  suborders: [suborderSchema], 
-  items: [orderItemSchema], 
+  suborders: [suborderSchema],
+  items: [orderItemSchema],
   shippingInfo: shippingInfoSchema,
   deliveryMethod: {
     type: String,
@@ -80,7 +80,7 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['cod', 'credit'],
+    enum: ['cod', 'credit', 'stripe'],
     default: 'cod'
   },
   subtotal: {
@@ -112,6 +112,10 @@ const orderSchema = new mongoose.Schema({
     type: String,
     enum: ['pending', 'paid', 'failed', 'refunded'],
     default: 'pending'
+  },
+  stripePaymentIntentId: { 
+    type: String,
+    default: null
   },
   statusUpdatedAt: {
     type: Date,
