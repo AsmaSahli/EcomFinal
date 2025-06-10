@@ -498,6 +498,70 @@ const getSellerStats = async (req, res) => {
     });
   }
 };
+const deleteOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({ message: 'Invalid orderId' });
+    }
+
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Check if order can be deleted (e.g., only allow deletion for pending orders)
+    if (order.status !== 'pending') {
+      return res.status(400).json({ 
+        message: 'Cannot delete order that is not in pending status' 
+      });
+    }
+
+    // Restore product stock
+    for (const item of order.items) {
+      const updateResult = await Product.findOneAndUpdate(
+        { _id: item.productId, 'sellers.sellerId': item.sellerId },
+        { $inc: { 'sellers.$.stock': item.quantity } },
+        { new: true }
+      );
+
+      if (!updateResult) {
+        return res.status(500).json({
+          message: `Failed to restore stock for product ID ${item.productId}`
+        });
+      }
+    }
+
+    // If the order was paid via Stripe, issue a refund
+    if (order.paymentMethod === 'stripe' && order.stripePaymentIntentId) {
+      try {
+        await stripe.refunds.create({
+          payment_intent: order.stripePaymentIntentId,
+        });
+      } catch (stripeError) {
+        console.error('Error processing Stripe refund:', stripeError);
+        return res.status(500).json({
+          message: 'Failed to process refund',
+          error: stripeError.message,
+        });
+      }
+    }
+
+    // Delete the order
+    await Order.deleteOne({ _id: orderId });
+
+    res.status(200).json({
+      message: 'Order deleted successfully',
+    });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    res.status(500).json({
+      message: 'Failed to delete order',
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   createOrder,
@@ -506,4 +570,5 @@ module.exports = {
   updateOrderStatus,
   getSellerSuborders,
   getSellerStats,
+  deleteOrder,
 };

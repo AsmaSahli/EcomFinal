@@ -34,6 +34,29 @@ const ProfileOrders = () => {
     fetchOrders();
   }, [currentUser, t]);
 
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm(t('profile.orders.confirmCancel'))) {
+      return;
+    }
+
+    try {
+      const response = await axios.delete(`http://localhost:8000/api/orders/${orderId}`);
+      toast.success(t('profile.orders.cancelSuccess'));
+      
+      // Update the orders state by removing the cancelled order
+      setOrders(orders.filter(order => order._id !== orderId));
+      setFilteredOrders(filteredOrders.filter(order => order._id !== orderId));
+      
+      // Close expanded view if the cancelled order was expanded
+      if (expandedOrder === orderId) {
+        setExpandedOrder(null);
+      }
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error(error.response?.data?.message || t('profile.orders.cancelError'));
+    }
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'delivered': return <FaCheckCircle className="text-green-500" />;
@@ -251,11 +274,15 @@ const ProfileOrders = () => {
                             <FaTruck />
                             <span>{t('profile.orders.trackOrder')}</span>
                           </button>
-                          {order.status === 'processing' || order.status === 'pending' ? (
-                            <button className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors">
-                              {t('profile.orders.cancelOrder')}
+                          {(order.status === 'processing' || order.status === 'pending') && (
+                            <button 
+                              onClick={() => handleCancelOrder(order._id)}
+                              className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2"
+                            >
+                              <FaTimesCircle />
+                              <span>{t('profile.orders.cancelOrder')}</span>
                             </button>
-                          ) : null}
+                          )}
                         </div>
                       </div>
                     </div>

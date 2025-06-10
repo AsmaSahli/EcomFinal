@@ -761,6 +761,10 @@
     "newPassword" :"New Password",
     "personalInfo": "Personal Information",
     "accountSettings": "Account Settings",
+    "name" :"Name",
+    "address":"Address",
+    "email":"Email",
+    "phone":"Phone Number",
     "logout": "Logout",
     "orders": {
       "fetchError": "Failed to fetch orders",
