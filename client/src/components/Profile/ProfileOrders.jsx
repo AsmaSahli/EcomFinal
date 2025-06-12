@@ -1,11 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FaBoxOpen, FaCheckCircle, FaTruck, FaTimesCircle, FaHistory, FaSearch, FaChevronDown, FaChevronUp, FaFileInvoice, FaStar } from 'react-icons/fa';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FaBoxOpen,
+  FaCheckCircle,
+  FaTruck,
+  FaTimesCircle,
+  FaHistory,
+  FaSearch,
+  FaChevronDown,
+  FaChevronUp,
+  FaFileInvoice,
+  FaStar,
+} from "react-icons/fa";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const ProfileOrders = () => {
   const { t } = useTranslation();
@@ -19,14 +30,16 @@ const ProfileOrders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`http://localhost:8000/api/orders/user/${currentUser.id}`);
+        const response = await axios.get(
+          `http://localhost:8000/api/orders/user/${currentUser.id}`
+        );
         const ordersData = response.data.orders || [];
         setOrders(ordersData);
         setFilteredOrders(ordersData);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching orders:', error);
-        toast.error(t('profile.orders.fetchError'));
+        console.error("Error fetching orders:", error);
+        toast.error(t("profile.orders.fetchError"));
         setLoading(false);
       }
     };
@@ -35,46 +48,68 @@ const ProfileOrders = () => {
   }, [currentUser, t]);
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm(t('profile.orders.confirmCancel'))) {
+    if (!window.confirm(t("profile.orders.confirmCancel"))) {
       return;
     }
 
     try {
-      const response = await axios.delete(`http://localhost:8000/api/orders/${orderId}`);
-      toast.success(t('profile.orders.cancelSuccess'));
-      setOrders(orders.filter(order => order._id !== orderId));
-      setFilteredOrders(filteredOrders.filter(order => order._id !== orderId));
+      const response = await axios.delete(
+        `http://localhost:8000/api/orders/${orderId}`
+      );
+      toast.success(t("profile.orders.cancelSuccess"));
+      setOrders(orders.filter((order) => order._id !== orderId));
+      setFilteredOrders(
+        filteredOrders.filter((order) => order._id !== orderId)
+      );
       if (expandedOrder === orderId) {
         setExpandedOrder(null);
       }
     } catch (error) {
-      console.error('Error cancelling order:', error);
-      toast.error(error.response?.data?.message || t('profile.orders.cancelError'));
+      console.error("Error cancelling order:", error);
+      toast.error(
+        error.response?.data?.message || t("profile.orders.cancelError")
+      );
     }
   };
 
   const getStatusIcon = (status) => {
     switch (status) {
-      case 'delivered': return <FaCheckCircle className="text-green-500" />;
-      case 'shipped': return <FaTruck className="text-blue-500" />;
-      case 'cancelled': return <FaTimesCircle className="text-red-500" />;
-      case 'processing': return <FaHistory className="text-yellow-500" />;
-      default: return <FaBoxOpen className="text-gray-500" />;
+      case "delivered":
+        return <FaCheckCircle className="text-green-500" />;
+      case "shipped":
+        return <FaTruck className="text-blue-500" />;
+      case "cancelled":
+        return <FaTimesCircle className="text-red-500" />;
+      case "processing":
+        return <FaHistory className="text-yellow-500" />;
+      default:
+        return <FaBoxOpen className="text-gray-500" />;
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'delivered': return 'bg-green-100 text-green-800';
-      case 'shipped': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      case 'processing': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "delivered":
+        return "bg-green-100 text-green-800";
+      case "shipped":
+        return "bg-blue-100 text-blue-800";
+      case "cancelled":
+        return "bg-red-100 text-red-800";
+      case "processing":
+        return "bg-yellow-100 text-yellow-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+    const options = {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
@@ -88,8 +123,8 @@ const ProfileOrders = () => {
 
   const handleLeaveReview = (productId, sellerId) => {
     // Navigate to product details page with state to open reviews tab
-    navigate(`/products/${productId}${sellerId ? `?seller=${sellerId}` : ''}`, {
-      state: { openReviews: true }
+    navigate(`/products/${productId}${sellerId ? `?seller=${sellerId}` : ""}`, {
+      state: { openReviews: true },
     });
   };
 
@@ -103,21 +138,23 @@ const ProfileOrders = () => {
 
   if (filteredOrders.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex flex-col items-center justify-center py-12 px-4 text-center"
-      >
+        className="flex flex-col items-center justify-center py-12 px-4 text-center">
         <div className="bg-gray-100 p-6 rounded-full mb-4">
           <FaBoxOpen className="text-gray-400 text-4xl" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-800 mb-2">{t('profile.orders.noOrders')}</h3>
-        <p className="text-gray-500 max-w-md mb-6">{t('profile.orders.noOrdersDesc')}</p>
-        <button 
-          onClick={() => navigate('/products')}
-          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
-        >
-          {t('profile.orders.shopNow')}
+        <h3 className="text-xl font-semibold text-gray-800 mb-2">
+          {t("profile.orders.noOrders")}
+        </h3>
+        <p className="text-gray-500 max-w-md mb-6">
+          {t("profile.orders.noOrdersDesc")}
+        </p>
+        <button
+          onClick={() => navigate("/products")}
+          className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg">
+          {t("profile.orders.shopNow")}
         </button>
       </motion.div>
     );
@@ -127,45 +164,49 @@ const ProfileOrders = () => {
     <div className="container mx-auto px-4 py-8">
       <div className="space-y-6">
         {filteredOrders.map((order) => (
-          <motion.div 
+          <motion.div
             key={order._id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100"
-          >
+            className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow overflow-hidden border border-gray-100">
             {/* Order Summary */}
-            <div 
+            <div
               className="p-5 cursor-pointer flex justify-between items-center"
-              onClick={() => toggleOrderExpansion(order._id)}
-            >
+              onClick={() => toggleOrderExpansion(order._id)}>
               <div className="flex items-center space-x-4">
-                <div className="text-2xl">
-                  {getStatusIcon(order.status)}
-                </div>
+                <div className="text-2xl">{getStatusIcon(order.status)}</div>
                 <div>
                   <h3 className="font-semibold text-gray-900">
-                    {t('profile.orders.order')} #{order._id.slice(-6).toUpperCase()}
+                    {t("profile.orders.order")} #
+                    {order._id.slice(-6).toUpperCase()}
                   </h3>
                   <p className="text-sm text-gray-500">
                     {formatDate(order.createdAt)}
                   </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="text-right hidden md:block">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                      order.status
+                    )}`}>
                     {t(`profile.orders.${order.status}`)}
                   </span>
                 </div>
                 <div className="text-right">
                   <span className="text-lg font-bold text-gray-800">
-                    ${order.total ? order.total.toFixed(2) : '0.00'}
+                    ${order.total ? order.total.toFixed(2) : "0.00"}
                   </span>
                 </div>
                 <div className="text-gray-400">
-                  {expandedOrder === order._id ? <FaChevronUp /> : <FaChevronDown />}
+                  {expandedOrder === order._id ? (
+                    <FaChevronUp />
+                  ) : (
+                    <FaChevronDown />
+                  )}
                 </div>
               </div>
             </div>
@@ -173,21 +214,24 @@ const ProfileOrders = () => {
             {/* Expanded Order Details */}
             <AnimatePresence>
               {expandedOrder === order._id && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
+                  animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="border-t border-gray-100"
-                >
+                  className="border-t border-gray-100">
                   <div className="p-5 grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Order Items */}
                     <div className="lg:col-span-2">
-                      <h4 className="font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">{t('profile.orders.items')}</h4>
+                      <h4 className="font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">
+                        {t("profile.orders.items")}
+                      </h4>
                       <div className="space-y-4">
                         {order.items.map((item, index) => (
-                          <div key={index} className="flex space-x-4 p-3 bg-gray-50 rounded-lg">
-                            <img 
-                              src={item.productId.images[0]?.url} 
+                          <div
+                            key={index}
+                            className="flex space-x-4 p-3 bg-gray-50 rounded-lg">
+                            <img
+                              src={item.productId.images[0]?.url}
                               alt={item.productId.name}
                               className="w-20 h-20 object-contain rounded-lg border border-gray-200 bg-white"
                             />
@@ -195,22 +239,32 @@ const ProfileOrders = () => {
                               <h5 className="font-medium text-gray-900 hover:text-purple-600 transition-colors">
                                 {item.productId.name}
                               </h5>
-                              <p className="text-sm text-gray-500 mt-1">{item.quantity} × ${item.price.toFixed(2)}</p>
+                              <p className="text-sm text-gray-500 mt-1">
+                                {item.quantity} × ${item.price.toFixed(2)}
+                              </p>
                               {item.promotion && (
                                 <span className="inline-block bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded mt-2">
-                                  {t('profile.orders.promoApplied')}: {item.promotion.name} (-{item.promotion.discount}%)
+                                  {t("profile.orders.promoApplied")}:{" "}
+                                  {item.promotion.name} (-
+                                  {item.promotion.discount}%)
                                 </span>
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
-                              {order.status === 'delivered' && (
-                                <button 
-                                  onClick={() => handleLeaveReview(item.productId._id, item.sellerId?._id)}
-                                  className="mt-2 text-xs text-purple-600 hover:text-purple-800 flex items-center space-x-1"
-                                >
+                              <p className="font-semibold">
+                                ${(item.price * item.quantity).toFixed(2)}
+                              </p>
+                              {order.status === "delivered" && (
+                                <button
+                                  onClick={() =>
+                                    handleLeaveReview(
+                                      item.productId._id,
+                                      item.sellerId?._id
+                                    )
+                                  }
+                                  className="mt-2 text-xs text-purple-600 hover:text-purple-800 flex items-center space-x-1">
                                   <FaStar className="text-yellow-400" />
-                                  <span>{t('profile.orders.leaveReview')}</span>
+                                  <span>{t("profile.orders.leaveReview")}</span>
                                 </button>
                               )}
                             </div>
@@ -223,22 +277,36 @@ const ProfileOrders = () => {
                     <div className="space-y-6">
                       {/* Order Summary */}
                       <div>
-                        <h4 className="font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">{t('profile.orders.summary')}</h4>
+                        <h4 className="font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">
+                          {t("profile.orders.summary")}
+                        </h4>
                         <div className="space-y-3">
                           <div className="flex justify-between">
-                            <span className="text-gray-600">{t('profile.orders.subtotal')}</span>
-                            <span className="font-medium">${order.subtotal?.toFixed(2)}</span>
+                            <span className="text-gray-600">
+                              {t("profile.orders.subtotal")}
+                            </span>
+                            <span className="font-medium">
+                              ${order.subtotal?.toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">{t('profile.orders.shipping')}</span>
-                            <span className="font-medium">${order.shipping?.toFixed(2)}</span>
+                            <span className="text-gray-600">
+                              {t("profile.orders.shipping")}
+                            </span>
+                            <span className="font-medium">
+                              ${order.shipping?.toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-gray-600">{t('profile.orders.tax')}</span>
-                            <span className="font-medium">${order.tax?.toFixed(2)}</span>
+                            <span className="text-gray-600">
+                              {t("profile.orders.tax")}
+                            </span>
+                            <span className="font-medium">
+                              ${order.tax?.toFixed(2)}
+                            </span>
                           </div>
                           <div className="border-t border-gray-200 pt-3 mt-2 flex justify-between font-semibold text-gray-900">
-                            <span>{t('profile.orders.total')}</span>
+                            <span>{t("profile.orders.total")}</span>
                             <span>${order.total?.toFixed(2)}</span>
                           </div>
                         </div>
@@ -246,21 +314,34 @@ const ProfileOrders = () => {
 
                       {/* Shipping Info */}
                       <div>
-                        <h4 className="font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">{t('profile.orders.shippingInfo')}</h4>
+                        <h4 className="font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">
+                          {t("profile.orders.shippingInfo")}
+                        </h4>
                         <div className="space-y-2 text-sm">
-                          <p className="font-medium text-gray-900">{order.shippingInfo.firstName} {order.shippingInfo.lastName}</p>
-                          <p className="text-gray-600">{order.shippingInfo.address.street}</p>
+                          <p className="font-medium text-gray-900">
+                            {order.shippingInfo.firstName}{" "}
+                            {order.shippingInfo.lastName}
+                          </p>
+                          <p className="text-gray-600">
+                            {order.shippingInfo.address.street}
+                          </p>
                           {order.shippingInfo.address.apartment && (
-                            <p className="text-gray-600">{order.shippingInfo.address.apartment}</p>
+                            <p className="text-gray-600">
+                              {order.shippingInfo.address.apartment}
+                            </p>
                           )}
                           <p className="text-gray-600">
-                            {order.shippingInfo.address.city}, {order.shippingInfo.address.governorate} {order.shippingInfo.address.postalCode}
+                            {order.shippingInfo.address.city},{" "}
+                            {order.shippingInfo.address.governorate}{" "}
+                            {order.shippingInfo.address.postalCode}
                           </p>
                           <p className="text-gray-600 mt-2">
-                            <span className="font-medium">Phone:</span> {order.shippingInfo.phone}
+                            <span className="font-medium">Phone:</span>{" "}
+                            {order.shippingInfo.phone}
                           </p>
                           <p className="text-gray-600">
-                            <span className="font-medium">Email:</span> {order.shippingInfo.email}
+                            <span className="font-medium">Email:</span>{" "}
+                            {order.shippingInfo.email}
                           </p>
                         </div>
                       </div>
@@ -268,25 +349,23 @@ const ProfileOrders = () => {
                       {/* Order Actions */}
                       <div className="pt-4">
                         <div className="flex flex-wrap gap-3">
-                          <button 
+                          <button
                             onClick={() => handleTrackOrder(order._id)}
                             className={`px-4 py-2 rounded-lg transition-all flex items-center space-x-2 ${
-                              order.status === 'delivered' 
-                                ? 'bg-gray-100 text-gray-500 cursor-not-allowed' 
-                                : 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg'
+                              order.status === "delivered"
+                                ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                                : "bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg"
                             }`}
-                            disabled={order.status === 'delivered'}
-                          >
+                            disabled={order.status === "delivered"}>
                             <FaTruck />
-                            <span>{t('profile.orders.trackOrder')}</span>
+                            <span>{t("profile.orders.trackOrder")}</span>
                           </button>
-                          {(order.status === 'pending') && (
-                            <button 
+                          {order.status === "pending" && (
+                            <button
                               onClick={() => handleCancelOrder(order._id)}
-                              className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2"
-                            >
+                              className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2">
                               <FaTimesCircle />
-                              <span>{t('profile.orders.cancelOrder')}</span>
+                              <span>{t("profile.orders.cancelOrder")}</span>
                             </button>
                           )}
                         </div>

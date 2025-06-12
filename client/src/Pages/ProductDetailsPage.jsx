@@ -1,23 +1,34 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from "react";
+import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import {
-  FaStar, FaRegStar, FaShoppingCart, FaHome, FaCheck, FaFireAlt
-} from 'react-icons/fa';
-import { IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
+  FaStar,
+  FaRegStar,
+  FaShoppingCart,
+  FaHome,
+  FaCheck,
+  FaFireAlt,
+} from "react-icons/fa";
+import { IoMdHeart, IoMdHeartEmpty } from "react-icons/io";
 import {
-  RiTruckLine, RiShieldCheckLine, RiExchangeLine, RiLeafLine
-} from 'react-icons/ri';
-import { BsShieldCheck, BsBoxSeam, BsCheckCircleFill } from 'react-icons/bs';
-import axios from 'axios';
-import { toast } from 'react-toastify';
-import { useSelector, useDispatch } from 'react-redux';
-import { addItem as addWishlistItem, removeItem as removeWishlistItem } from '../redux/user/wishlistSlice';
-import { addItem as addCartItem } from '../redux/user/cartSlice';
-import ProductImageGallery from '../components/ProductImageGallery';
-import ProductReviews from '../components/ProductReviews';
-import BreadcrumbNav from '../components/BreadcrumbNav';
-import SimilarProducts from '../components/SimilarProducts';
-import { useTranslation } from 'react-i18next';
+  RiTruckLine,
+  RiShieldCheckLine,
+  RiExchangeLine,
+  RiLeafLine,
+} from "react-icons/ri";
+import { BsShieldCheck, BsBoxSeam, BsCheckCircleFill } from "react-icons/bs";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  addItem as addWishlistItem,
+  removeItem as removeWishlistItem,
+} from "../redux/user/wishlistSlice";
+import { addItem as addCartItem } from "../redux/user/cartSlice";
+import ProductImageGallery from "../components/ProductImageGallery";
+import ProductReviews from "../components/ProductReviews";
+import BreadcrumbNav from "../components/BreadcrumbNav";
+import SimilarProducts from "../components/SimilarProducts";
+import { useTranslation } from "react-i18next";
 
 const ProductDetailsPage = () => {
   const { t } = useTranslation();
@@ -31,7 +42,9 @@ const ProductDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState(location.state?.openReviews ? 'reviews' : 'description');
+  const [activeTab, setActiveTab] = useState(
+    location.state?.openReviews ? "reviews" : "description"
+  );
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -40,23 +53,27 @@ const ProductDetailsPage = () => {
   const [showPromotionModal, setShowPromotionModal] = useState(false);
   const reviewsRef = useRef(null);
 
-  const API_URL = 'http://localhost:8000/api';
+  const API_URL = "http://localhost:8000/api";
   const queryParams = new URLSearchParams(location.search);
-  const sellerId = queryParams.get('seller');
-  const currentSeller = product?.sellers?.find(s => s.sellerId._id === sellerId) || product?.sellers?.[0];
+  const sellerId = queryParams.get("seller");
+  const currentSeller =
+    product?.sellers?.find((s) => s.sellerId._id === sellerId) ||
+    product?.sellers?.[0];
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         setLoading(true);
-        const url = sellerId ? `${API_URL}/products/${id}?seller=${sellerId}` : `${API_URL}/products/${id}`;
+        const url = sellerId
+          ? `${API_URL}/products/${id}?seller=${sellerId}`
+          : `${API_URL}/products/${id}`;
         const response = await axios.get(url);
         setProduct(response.data.product);
         if (response.data.product.variants?.length > 0) {
           setSelectedVariant(response.data.product.variants[0]);
         }
       } catch (err) {
-        setError(err.response?.data?.message || t('product.fetchError'));
+        setError(err.response?.data?.message || t("product.fetchError"));
       } finally {
         setLoading(false);
       }
@@ -69,15 +86,23 @@ const ProductDetailsPage = () => {
     if (product && currentSeller?.sellerId._id) {
       const fetchReviews = async () => {
         try {
-          const response = await axios.get(`${API_URL}/reviews/${product._id}/${currentSeller.sellerId._id}`);
+          const response = await axios.get(
+            `${API_URL}/reviews/${product._id}/${currentSeller.sellerId._id}`
+          );
           const reviews = response.data;
-          const avgRating = reviews.length > 0
-            ? (reviews.reduce((sum, review) => sum + (review.rating || 0), 0) / reviews.length).toFixed(1)
-            : 0;
+          const avgRating =
+            reviews.length > 0
+              ? (
+                  reviews.reduce(
+                    (sum, review) => sum + (review.rating || 0),
+                    0
+                  ) / reviews.length
+                ).toFixed(1)
+              : 0;
           setAverageRating(parseFloat(avgRating));
           setReviewCount(reviews.length);
         } catch (err) {
-          console.error(t('product.reviewError'), err);
+          console.error(t("product.reviewError"), err);
           setAverageRating(0);
           setReviewCount(0);
         }
@@ -89,9 +114,10 @@ const ProductDetailsPage = () => {
   useEffect(() => {
     if (product && currentUser) {
       const wishlisted = wishlistItems.some(
-        item =>
+        (item) =>
           item.productId?._id === product._id &&
-          (item.sellerId?._id === currentSeller?.sellerId._id || (!item.sellerId && !currentSeller?.sellerId))
+          (item.sellerId?._id === currentSeller?.sellerId._id ||
+            (!item.sellerId && !currentSeller?.sellerId))
       );
       setIsWishlisted(wishlisted);
     }
@@ -100,31 +126,36 @@ const ProductDetailsPage = () => {
   useEffect(() => {
     if (location.state?.openReviews && reviewsRef.current && !loading) {
       // Scroll to reviews section smoothly
-      reviewsRef.current.scrollIntoView({ behavior: 'smooth' });
+      reviewsRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [location.state, loading]);
 
   const getKeyFeatures = () => {
     if (!product?.description) return [];
-    return product.description.split('\r\n')
-      .filter(line => line.trim() && !line.toLowerCase().includes('points forts'))
+    return product.description
+      .split("\r\n")
+      .filter(
+        (line) => line.trim() && !line.toLowerCase().includes("points forts")
+      )
       .slice(0, 5);
   };
 
   const handleAddToCart = async () => {
     if (!currentUser) {
-      toast.error(t('product.mustLogin'));
+      toast.error(t("product.mustLogin"));
       return;
     }
 
     if (!currentSeller?.stock || currentSeller.stock < quantity) {
-      toast.error(t('product.outOfStock'));
+      toast.error(t("product.outOfStock"));
       return;
     }
 
     try {
       const priceToUse = currentSeller.hasActivePromotion
-        ? currentSeller.promotions.find(p => p.promotionId._id === currentSeller.activePromotion._id)?.newPrice
+        ? currentSeller.promotions.find(
+            (p) => p.promotionId._id === currentSeller.activePromotion._id
+          )?.newPrice
         : currentSeller.price;
 
       const response = await axios.post(`${API_URL}/cart/add`, {
@@ -136,33 +167,36 @@ const ProductDetailsPage = () => {
         variantId: selectedVariant?._id,
       });
 
-      const newItem = response.data.cart.items[response.data.cart.items.length - 1];
-      dispatch(addCartItem({
-        ...newItem,
-        productId: {
-          ...product,
+      const newItem =
+        response.data.cart.items[response.data.cart.items.length - 1];
+      dispatch(
+        addCartItem({
+          ...newItem,
+          productId: {
+            ...product,
+            price: priceToUse,
+            stock: currentSeller?.stock || product.stock,
+          },
+          sellerId: currentSeller?.sellerId,
           price: priceToUse,
           stock: currentSeller?.stock || product.stock,
-        },
-        sellerId: currentSeller?.sellerId,
-        price: priceToUse,
-        stock: currentSeller?.stock || product.stock,
-        variantId: selectedVariant?._id,
-      }));
+          variantId: selectedVariant?._id,
+        })
+      );
 
-      toast.success(t('product.addedToCart'), {
+      toast.success(t("product.addedToCart"), {
         position: "bottom-right",
         className: "!bg-green-50 !text-green-700",
         icon: <BsCheckCircleFill className="text-green-500" />,
       });
     } catch (err) {
-      toast.error(err.response?.data?.message || t('product.cartError'));
+      toast.error(err.response?.data?.message || t("product.cartError"));
     }
   };
 
   const toggleWishlist = async () => {
     if (!currentUser) {
-      toast.error(t('product.mustLoginWishlist'));
+      toast.error(t("product.mustLoginWishlist"));
       return;
     }
 
@@ -171,21 +205,24 @@ const ProductDetailsPage = () => {
     setIsTogglingWishlist(true);
     try {
       const priceToUse = currentSeller.hasActivePromotion
-        ? currentSeller.promotions.find(p => p.promotionId._id === currentSeller.activePromotion._id)?.newPrice
+        ? currentSeller.promotions.find(
+            (p) => p.promotionId._id === currentSeller.activePromotion._id
+          )?.newPrice
         : currentSeller.price;
 
       if (isWishlisted) {
         const item = wishlistItems.find(
-          item =>
+          (item) =>
             item.productId?._id === product._id &&
-            (item.sellerId?._id === currentSeller?.sellerId._id || (!item.sellerId && !currentSeller?.sellerId))
+            (item.sellerId?._id === currentSeller?.sellerId._id ||
+              (!item.sellerId && !currentSeller?.sellerId))
         );
         if (item) {
           await axios.delete(`${API_URL}/wishlist/item`, {
             data: { userId: currentUser.id, itemId: item._id },
           });
           dispatch(removeWishlistItem(item._id));
-          toast.success(t('product.removedFromWishlist'), {
+          toast.success(t("product.removedFromWishlist"), {
             position: "bottom-right",
             className: "!bg-red-50 !text-red-700",
             icon: <IoMdHeartEmpty className="text-red-500" />,
@@ -202,21 +239,24 @@ const ProductDetailsPage = () => {
         });
 
         const newItem = response.data.wishlist.items.find(
-          item =>
+          (item) =>
             item.productId?._id === product._id &&
-            (item.sellerId?._id === currentSeller?.sellerId._id || (!item.sellerId && !currentSeller?.sellerId))
+            (item.sellerId?._id === currentSeller?.sellerId._id ||
+              (!item.sellerId && !currentSeller?.sellerId))
         );
 
         if (newItem) {
-          dispatch(addWishlistItem({
-            ...newItem,
-            productId: product,
-            sellerId: currentSeller?.sellerId,
-            price: priceToUse,
-            stock: currentSeller?.stock || product.stock || 0,
-            variantId: selectedVariant?._id,
-          }));
-          toast.success(t('product.addedToWishlist'), {
+          dispatch(
+            addWishlistItem({
+              ...newItem,
+              productId: product,
+              sellerId: currentSeller?.sellerId,
+              price: priceToUse,
+              stock: currentSeller?.stock || product.stock || 0,
+              variantId: selectedVariant?._id,
+            })
+          );
+          toast.success(t("product.addedToWishlist"), {
             position: "bottom-right",
             className: "!bg-pink-50 !text-pink-700",
             icon: <IoMdHeart className="text-pink-500" />,
@@ -225,53 +265,59 @@ const ProductDetailsPage = () => {
       }
       setIsWishlisted(!isWishlisted);
     } catch (err) {
-      toast.error(err.response?.data?.message || t('product.wishlistError'));
+      toast.error(err.response?.data?.message || t("product.wishlistError"));
     } finally {
       setIsTogglingWishlist(false);
     }
   };
 
   const renderStars = (rating) => {
-    return Array(5).fill(0).map((_, i) => (
-      i < Math.floor(rating) ?
-        <FaStar key={i} className="text-yellow-400" /> :
-        <FaRegStar key={i} className="text-gray-300" />
-    ));
+    return Array(5)
+      .fill(0)
+      .map((_, i) =>
+        i < Math.floor(rating) ? (
+          <FaStar key={i} className="text-yellow-400" />
+        ) : (
+          <FaRegStar key={i} className="text-gray-300" />
+        )
+      );
   };
 
-  if (loading) return (
-    <div className="bg-white py-3 px-6 border-b border-gray-100">
-      <div className="max-w-7xl mx-auto">
-        <nav className="flex items-center text-sm text-gray-600">
-          <span className="text-gray-500">{t('product.loading')}</span>
-        </nav>
-      </div>
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-xl shadow-sm max-w-md text-center">
-        <div className="text-red-400 text-5xl mb-4">⚠️</div>
-        <h2 className="text-xl font-semibold text-gray-800 mb-2">{t('product.notFound')}</h2>
-        <p className="text-gray-500 mb-5">{error}</p>
-        <div className="flex space-x-3 justify-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium"
-          >
-            {t('product.goBack')}
-          </button>
-          <button
-            onClick={() => navigate('/')}
-            className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium"
-          >
-            {t('product.home')}
-          </button>
+  if (loading)
+    return (
+      <div className="bg-white py-3 px-6 border-b border-gray-100">
+        <div className="max-w-7xl mx-auto">
+          <nav className="flex items-center text-sm text-gray-600">
+            <span className="text-gray-500">{t("product.loading")}</span>
+          </nav>
         </div>
       </div>
-    </div>
-  );
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-xl shadow-sm max-w-md text-center">
+          <div className="text-red-400 text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">
+            {t("product.notFound")}
+          </h2>
+          <p className="text-gray-500 mb-5">{error}</p>
+          <div className="flex space-x-3 justify-center">
+            <button
+              onClick={() => navigate(-1)}
+              className="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors font-medium">
+              {t("product.goBack")}
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors font-medium">
+              {t("product.home")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
 
   if (!product) return null;
 
@@ -279,19 +325,27 @@ const ProductDetailsPage = () => {
   const hasDiscount = currentSeller?.hasActivePromotion;
   const activePromotion = currentSeller?.activePromotion;
   const promotionDetails = hasDiscount
-    ? currentSeller.promotions.find(p => p.promotionId._id === activePromotion._id)
+    ? currentSeller.promotions.find(
+        (p) => p.promotionId._id === activePromotion._id
+      )
     : null;
-  const currentPrice = hasDiscount ? promotionDetails?.newPrice?.toFixed(2) : currentSeller?.price?.toFixed(2);
-  const originalPrice = hasDiscount ? promotionDetails?.oldPrice?.toFixed(2) : null;
+  const currentPrice = hasDiscount
+    ? promotionDetails?.newPrice?.toFixed(2)
+    : currentSeller?.price?.toFixed(2);
+  const originalPrice = hasDiscount
+    ? promotionDetails?.oldPrice?.toFixed(2)
+    : null;
   const discountRate = hasDiscount ? activePromotion.discountRate : 0;
-  const promotionName = hasDiscount ? activePromotion.name || t('product.specialOffer') : '';
+  const promotionName = hasDiscount
+    ? activePromotion.name || t("product.specialOffer")
+    : "";
   const promotionEndDate = hasDiscount
     ? new Date(activePromotion.endDate).toLocaleDateString(navigator.language, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       })
-    : '';
+    : "";
   const promotionImage = hasDiscount ? activePromotion.image?.url : null;
 
   return (
@@ -301,10 +355,9 @@ const ProductDetailsPage = () => {
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden relative">
           {hasDiscount && (
-            <div 
+            <div
               className="absolute top-4 left-4 z-10 transform -rotate-6 hover:rotate-0 transition-transform duration-300 cursor-pointer"
-              onClick={() => setShowPromotionModal(true)}
-            >
+              onClick={() => setShowPromotionModal(true)}>
               <div className="relative group">
                 <div className="bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-lg shadow-md flex items-stretch overflow-hidden min-w-[120px]">
                   {promotionImage ? (
@@ -321,7 +374,7 @@ const ProductDetailsPage = () => {
                           {promotionName}
                         </span>
                         <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
-                          {discountRate}% {t('product.off')}
+                          {discountRate}% {t("product.off")}
                         </span>
                       </div>
                     </div>
@@ -337,7 +390,7 @@ const ProductDetailsPage = () => {
                           {promotionName}
                         </span>
                         <span className="text-[10px] font-bold bg-white text-red-600 px-1 py-0.5 rounded-full mt-1 w-fit">
-                          {discountRate}% {t('product.off')}
+                          {discountRate}% {t("product.off")}
                         </span>
                       </div>
                     </div>
@@ -358,10 +411,10 @@ const ProductDetailsPage = () => {
                     <div>
                       <p className="font-bold text-sm">{promotionName}</p>
                       <p className="text-orange-300 font-medium text-xs">
-                        {discountRate}% {t('product.discount')}
+                        {discountRate}% {t("product.discount")}
                       </p>
                       <p className="text-[10px] text-gray-300 mt-0.5">
-                        {t('product.ends')} {promotionEndDate}
+                        {t("product.ends")} {promotionEndDate}
                       </p>
                     </div>
                   </div>
@@ -390,15 +443,20 @@ const ProductDetailsPage = () => {
                   <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
                     {product.name}
                   </h1>
-                  <p className="text-gray-500 text-sm mt-1">{product.shortDescription}</p>
+                  <p className="text-gray-500 text-sm mt-1">
+                    {product.shortDescription}
+                  </p>
                 </div>
                 <button
                   onClick={toggleWishlist}
                   disabled={isTogglingWishlist}
                   className={`p-2 rounded-full transition-colors ${
-                    isWishlisted ? 'text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-red-500 hover:bg-gray-100'
-                  } ${isTogglingWishlist ? 'opacity-50 cursor-not-allowed' : ''}`}
-                >
+                    isWishlisted
+                      ? "text-red-500 hover:bg-red-50"
+                      : "text-gray-400 hover:text-red-500 hover:bg-gray-100"
+                  } ${
+                    isTogglingWishlist ? "opacity-50 cursor-not-allowed" : ""
+                  }`}>
                   {isTogglingWishlist ? (
                     <span className="loading loading-spinner loading-xs"></span>
                   ) : isWishlisted ? (
@@ -410,18 +468,26 @@ const ProductDetailsPage = () => {
               </div>
 
               <div className="flex items-center mb-5">
-                <div className="flex mr-2">
-                  {renderStars(averageRating)}
-                </div>
+                <div className="flex mr-2">{renderStars(averageRating)}</div>
                 <span className="text-sm text-gray-500">
-                  {averageRating.toFixed(1)} ({reviewCount} {reviewCount === 1 ? t('product.review') : t('product.reviews')}) •{' '}
-                  <span className="text-green-600">{currentSeller?.stock > 0 ? t('product.inStock') : t('product.outOfStock')}</span>
+                  {averageRating.toFixed(1)} ({reviewCount}{" "}
+                  {reviewCount === 1
+                    ? t("product.review")
+                    : t("product.reviews")}
+                  ) •{" "}
+                  <span className="text-green-600">
+                    {currentSeller?.stock > 0
+                      ? t("product.inStock")
+                      : t("product.outOfStock")}
+                  </span>
                 </span>
               </div>
 
               {product.variants?.length > 0 && (
                 <div className="mb-5">
-                  <h3 className="text-sm font-medium text-gray-700 mb-2">{t('product.selectOption')}</h3>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    {t("product.selectOption")}
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {product.variants.map((variant, index) => (
                       <button
@@ -429,10 +495,9 @@ const ProductDetailsPage = () => {
                         onClick={() => setSelectedVariant(variant)}
                         className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
                           selectedVariant?._id === variant._id
-                            ? 'border-purple-600 bg-purple-50 text-purple-700'
-                            : 'border-gray-300 hover:border-gray-400'
-                        }`}
-                      >
+                            ? "border-purple-600 bg-purple-50 text-purple-700"
+                            : "border-gray-300 hover:border-gray-400"
+                        }`}>
                         {variant.name}
                       </button>
                     ))}
@@ -451,25 +516,30 @@ const ProductDetailsPage = () => {
                         ${originalPrice}
                       </span>
                       <span className="ml-2 text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
-                        {t('product.save')} ${(originalPrice - currentPrice).toFixed(2)} ({discountRate}% {t('product.off')})
+                        {t("product.save")} $
+                        {(originalPrice - currentPrice).toFixed(2)} (
+                        {discountRate}% {t("product.off")})
                       </span>
                     </div>
                   )}
                 </div>
                 {hasDiscount && (
                   <div className="mt-2 text-sm text-gray-600">
-                    <span className="font-medium">{promotionName}</span> • {t('product.ends')} {promotionEndDate}
+                    <span className="font-medium">{promotionName}</span> •{" "}
+                    {t("product.ends")} {promotionEndDate}
                   </div>
                 )}
                 <div className="mt-2 flex items-center text-sm text-gray-600">
                   <RiLeafLine className="text-green-500 mr-1" />
-                  {t('product.ecoFriendly')}
+                  {t("product.ecoFriendly")}
                 </div>
               </div>
 
               {keyFeatures.length > 0 && (
                 <div className="mb-6">
-                  <h3 className="font-medium text-lg text-gray-900 mb-3">{t('product.keyFeatures')}</h3>
+                  <h3 className="font-medium text-lg text-gray-900 mb-3">
+                    {t("product.keyFeatures")}
+                  </h3>
                   <ul className="space-y-3">
                     {keyFeatures.map((feature, index) => (
                       <li key={index} className="flex items-start">
@@ -485,23 +555,28 @@ const ProductDetailsPage = () => {
                 <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                   <div className="flex items-center mb-3">
                     <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-medium mr-3">
-                      {currentSeller.sellerId.shopName?.charAt(0) || 'S'}
+                      {currentSeller.sellerId.shopName?.charAt(0) || "S"}
                     </div>
                     <div>
                       <Link
                         to={`/sellers/${currentSeller.sellerId._id}/products`}
-                        className="font-medium text-gray-900 hover:text-purple-600"
-                      >
-                        {currentSeller.sellerId.shopName || t('product.unknownSeller')}
+                        className="font-medium text-gray-900 hover:text-purple-600">
+                        {currentSeller.sellerId.shopName ||
+                          t("product.unknownSeller")}
                       </Link>
                       <div className="flex items-center text-xs text-gray-500 mt-1">
                         <div className="flex items-center mr-3">
                           {renderStars(currentSeller.sellerId.rating || 4.8)}
-                          <span className="ml-1">{currentSeller.sellerId.rating?.toFixed(1) || '4.8'}</span>
+                          <span className="ml-1">
+                            {currentSeller.sellerId.rating?.toFixed(1) || "4.8"}
+                          </span>
                         </div>
                         <span>•</span>
                         <span className="ml-2">
-                          {currentSeller.sellerId.positiveFeedbackPercentage?.toFixed(0) || '90'}% {t('product.positive')}
+                          {currentSeller.sellerId.positiveFeedbackPercentage?.toFixed(
+                            0
+                          ) || "90"}
+                          % {t("product.positive")}
                         </span>
                       </div>
                     </div>
@@ -509,11 +584,11 @@ const ProductDetailsPage = () => {
                   <div className="grid grid-cols-2 gap-3 text-sm">
                     <div className="flex items-center text-gray-600 p-2 bg-white rounded-lg border border-gray-200">
                       <RiTruckLine className="text-purple-500 mr-2" />
-                      {t('product.freeShipping')}
+                      {t("product.freeShipping")}
                     </div>
                     <div className="flex items-center text-gray-600 p-2 bg-white rounded-lg border border-gray-200">
                       <RiShieldCheckLine className="text-purple-500 mr-2" />
-                      {t('product.warranty')}
+                      {t("product.warranty")}
                     </div>
                   </div>
                 </div>
@@ -521,21 +596,25 @@ const ProductDetailsPage = () => {
 
               <div className="mb-6">
                 <div className="flex items-center mb-4">
-                  <span className="mr-3 font-medium">{t('product.quantity')}:</span>
+                  <span className="mr-3 font-medium">
+                    {t("product.quantity")}:
+                  </span>
                   <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
                     <button
-                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors">
                       -
                     </button>
                     <span className="px-4 py-2 border-x border-gray-300 font-medium">
                       {quantity}
                     </span>
                     <button
-                      onClick={() => setQuantity(q => Math.min(currentSeller?.stock || 10, q + 1))}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors"
-                    >
+                      onClick={() =>
+                        setQuantity((q) =>
+                          Math.min(currentSeller?.stock || 10, q + 1)
+                        )
+                      }
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 transition-colors">
                       +
                     </button>
                   </div>
@@ -544,16 +623,16 @@ const ProductDetailsPage = () => {
                   <button
                     onClick={handleAddToCart}
                     className="w-full py-3 px-4 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center shadow-md hover:shadow-lg"
-                    disabled={currentSeller?.stock <= 0}
-                  >
+                    disabled={currentSeller?.stock <= 0}>
                     <FaShoppingCart className="mr-3" />
-                    {currentSeller?.stock > 0 ? t('product.addToCart') : t('product.soldOut')}
+                    {currentSeller?.stock > 0
+                      ? t("product.addToCart")
+                      : t("product.soldOut")}
                   </button>
                   <button
                     className="w-full py-3 px-4 bg-white border border-purple-600 text-purple-600 hover:bg-purple-50 rounded-lg font-medium transition-colors shadow-md hover:shadow-lg"
-                    disabled={currentSeller?.stock <= 0}
-                  >
-                    {t('product.buyNow')}
+                    disabled={currentSeller?.stock <= 0}>
+                    {t("product.buyNow")}
                   </button>
                 </div>
               </div>
@@ -561,15 +640,15 @@ const ProductDetailsPage = () => {
               <div className="flex flex-wrap justify-center gap-4 text-xs text-gray-500 border-t border-gray-200 pt-4">
                 <div className="flex items-center">
                   <BsShieldCheck className="text-green-500 mr-1" />
-                  {t('product.securePayment')}
+                  {t("product.securePayment")}
                 </div>
                 <div className="flex items-center">
                   <BsBoxSeam className="text-blue-500 mr-1" />
-                  {t('product.freeReturns')}
+                  {t("product.freeReturns")}
                 </div>
                 <div className="flex items-center">
                   <RiExchangeLine className="text-purple-500 mr-1" />
-                  {t('product.returnsPolicy')}
+                  {t("product.returnsPolicy")}
                 </div>
               </div>
             </div>
@@ -577,60 +656,73 @@ const ProductDetailsPage = () => {
 
           <div className="border-t border-gray-200" ref={reviewsRef}>
             <div className="flex border-b border-gray-200 overflow-x-auto">
-              {['description', 'specifications', 'reviews'].map((tab) => (
+              {["description", "specifications", "reviews"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-6 py-4 font-medium whitespace-nowrap transition-colors ${
                     activeTab === tab
-                      ? 'text-purple-600 border-b-2 border-purple-600'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
+                      ? "text-purple-600 border-b-2 border-purple-600"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                  }`}>
                   {t(`product.tabs.${tab}`)}
                 </button>
               ))}
             </div>
             <div className="p-6 md:p-8">
-              {activeTab === 'description' && (
+              {activeTab === "description" && (
                 <div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-4">{t('product.description')}</h3>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">
+                    {t("product.description")}
+                  </h3>
                   <div className="text-gray-700 space-y-4">
-                    {product.description.split('\n\n').map((p, i) => (
+                    {product.description.split("\n\n").map((p, i) => (
                       <p key={i}>{p}</p>
                     ))}
                   </div>
                 </div>
               )}
-              {activeTab === 'specifications' && (
+              {activeTab === "specifications" && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-3">{t('product.general')}</h4>
+                    <h4 className="font-bold text-gray-900 mb-3">
+                      {t("product.general")}
+                    </h4>
                     <div className="space-y-3">
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">{t('product.brand')}</span>
+                        <span className="text-gray-600">
+                          {t("product.brand")}
+                        </span>
                         <span className="font-medium">BrandName</span>
                       </div>
                       <div className="flex justify-between py-2 border-b border-gray-100">
-                        <span className="text-gray-600">{t('product.model')}</span>
+                        <span className="text-gray-600">
+                          {t("product.model")}
+                        </span>
                         <span className="font-medium">{product.reference}</span>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <h4 className="font-bold text-gray-900 mb-3">{t('product.technical')}</h4>
+                    <h4 className="font-bold text-gray-900 mb-3">
+                      {t("product.technical")}
+                    </h4>
                     <div className="space-y-3">
                       {product.tags?.slice(0, 4).map((tag, i) => (
-                        <div key={i} className="flex justify-between py-2 border-b border-gray-100">
+                        <div
+                          key={i}
+                          className="flex justify-between py-2 border-b border-gray-100">
                           <span className="text-gray-600">{tag.name}</span>
-                          <span className="font-medium text-purple-600">Yes</span>
+                          <span className="font-medium text-purple-600">
+                            Yes
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
                 </div>
               )}
-              {activeTab === 'reviews' && (
+              {activeTab === "reviews" && (
                 <ProductReviews
                   productId={product._id}
                   sellerId={currentSeller?.sellerId._id}

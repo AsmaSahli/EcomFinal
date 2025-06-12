@@ -1,13 +1,14 @@
 const { DeliveryPerson } = require("../models/User");
 const e = require("../utils/error");
-const Delivery = require('../models/Delivery');
-const Order = require('../models/Order');
-const mongoose = require('mongoose');
+const Delivery = require("../models/Delivery");
+const Order = require("../models/Order");
+const mongoose = require("mongoose");
 
 // Register a delivery person
 exports.registerDeliveryPerson = async (req, res, next) => {
   try {
-    const { email, vehicleType, vehicleNumber, deliveryArea, contactNumber } = req.body;
+    const { email, vehicleType, vehicleNumber, deliveryArea, contactNumber } =
+      req.body;
     const cv = req.files?.cv?.[0];
 
     // Check if email already exists
@@ -25,14 +26,15 @@ exports.registerDeliveryPerson = async (req, res, next) => {
       contactNumber,
       cv: cv?.path,
       status: "pending",
-      isActive: false
+      isActive: false,
     });
 
     await newDeliveryPerson.save();
 
     res.status(201).json({
-      message: "Application submitted successfully! Admin will review your request.",
-      deliveryPerson: newDeliveryPerson
+      message:
+        "Application submitted successfully! Admin will review your request.",
+      deliveryPerson: newDeliveryPerson,
     });
   } catch (error) {
     next(error);
@@ -42,7 +44,7 @@ exports.registerDeliveryPerson = async (req, res, next) => {
 // Get count of pending delivery person applications
 exports.getPendingDeliveriesCount = async (req, res, next) => {
   try {
-    const count = await DeliveryPerson.countDocuments({ status: 'pending' });
+    const count = await DeliveryPerson.countDocuments({ status: "pending" });
     res.status(200).json({ count });
   } catch (error) {
     next(error);
@@ -60,61 +62,74 @@ exports.getDeliveryStatus = async (req, res, next) => {
 };
 
 const getEstimatedDeliveryTimeRange = (deliveryMethod) => {
-  if (deliveryMethod === 'standard') {
-    return '3-5 days';
-  } else if (deliveryMethod === 'express') {
-    return '1-2 days';
+  if (deliveryMethod === "standard") {
+    return "3-5 days";
+  } else if (deliveryMethod === "express") {
+    return "1-2 days";
   } else {
-    return 'N/A'; 
+    return "N/A";
   }
 };
 exports.createDelivery = async (req, res) => {
   try {
-    const {
-      orderId,
-      suborderId,
-      sellerId,
-      pickupAddress
-    } = req.body;
+    const { orderId, suborderId, sellerId, pickupAddress } = req.body;
 
     // Basic validation
     if (!orderId || !suborderId || !sellerId || !pickupAddress) {
-      return res.status(400).json({ message: 'Order ID, suborder ID, seller ID, and pickup address are required.' });
+      return res
+        .status(400)
+        .json({
+          message:
+            "Order ID, suborder ID, seller ID, and pickup address are required.",
+        });
     }
 
     // Check if order exists and populate shippingInfo
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: 'Order not found.' });
+      return res.status(404).json({ message: "Order not found." });
     }
 
     // Check if suborder exists within the order
     const suborder = order.suborders.find(
-      sub => sub._id.toString() === suborderId.toString()
+      (sub) => sub._id.toString() === suborderId.toString()
     );
     if (!suborder) {
-      return res.status(404).json({ message: 'Suborder not found in the specified order.' });
+      return res
+        .status(404)
+        .json({ message: "Suborder not found in the specified order." });
     }
 
     // Check if sellerId matches the suborder's sellerId
     if (suborder.sellerId.toString() !== sellerId.toString()) {
-      return res.status(400).json({ message: 'Seller ID does not match the suborder.' });
+      return res
+        .status(400)
+        .json({ message: "Seller ID does not match the suborder." });
     }
 
     // Check for existing delivery for the same suborder
     const existing = await Delivery.findOne({ suborderId });
     if (existing) {
-      return res.status(409).json({ message: 'Delivery for this suborder already exists.' });
+      return res
+        .status(409)
+        .json({ message: "Delivery for this suborder already exists." });
     }
 
     // Check if suborder status is 'processing'
-    if (suborder.status !== 'processing') {
-      return res.status(400).json({ message: 'Suborder status must be processing to create a delivery.' });
+    if (suborder.status !== "processing") {
+      return res
+        .status(400)
+        .json({
+          message: "Suborder status must be processing to create a delivery.",
+        });
     }
 
     // Format the dropoffAddress from order.shippingInfo.address
-    const { street, apartment, city, postalCode, governorate } = order.shippingInfo.address;
-    const dropoffAddress = `${street}${apartment ? ', ' + apartment : ''}, ${city}, ${governorate}${postalCode ? ', ' + postalCode : ''}`;
+    const { street, apartment, city, postalCode, governorate } =
+      order.shippingInfo.address;
+    const dropoffAddress = `${street}${
+      apartment ? ", " + apartment : ""
+    }, ${city}, ${governorate}${postalCode ? ", " + postalCode : ""}`;
 
     // Create delivery
     const newDelivery = new Delivery({
@@ -123,19 +138,18 @@ exports.createDelivery = async (req, res) => {
       sellerId,
       pickupAddress,
       dropoffAddress,
-      logs: [{ status: 'pending' }]
+      logs: [{ status: "pending" }],
     });
 
     await newDelivery.save();
 
     res.status(201).json({
-      message: 'Delivery created successfully',
-      delivery: newDelivery
+      message: "Delivery created successfully",
+      delivery: newDelivery,
     });
-
   } catch (error) {
-    console.error('Create Delivery Error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Create Delivery Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -150,8 +164,8 @@ exports.getAllDeliveries = async (req, res) => {
       deliveryPersonId,
       page = 1,
       limit = 10,
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
+      sortBy = "createdAt",
+      sortOrder = "desc",
     } = req.query;
 
     // Build query object for filtering
@@ -168,41 +182,41 @@ exports.getAllDeliveries = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     // Validate sortBy field
-    const validSortFields = ['createdAt', 'updatedAt', 'status'];
-    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
-    const sortDirection = sortOrder === 'asc' ? 1 : -1;
+    const validSortFields = ["createdAt", "updatedAt", "status"];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : "createdAt";
+    const sortDirection = sortOrder === "asc" ? 1 : -1;
 
     // Fetch deliveries with population of related fields
     const deliveries = await Delivery.find(query)
       .populate({
-        path: 'orderId',
-        select: 'userId shippingInfo deliveryMethod total',
+        path: "orderId",
+        select: "userId shippingInfo deliveryMethod total",
         populate: [
           {
-            path: 'userId',
-            select: 'firstName lastName email'
+            path: "userId",
+            select: "firstName lastName email",
           },
           {
-            path: 'shippingInfo.address',
-            model: 'Order'
-          }
-        ]
+            path: "shippingInfo.address",
+            model: "Order",
+          },
+        ],
       })
       .populate({
-        path: 'sellerId',
-        select: 'firstName lastName email'
+        path: "sellerId",
+        select: "firstName lastName email",
       })
       .populate({
-        path: 'deliveryPersonId',
-        select: 'firstName lastName email'
+        path: "deliveryPersonId",
+        select: "firstName lastName email",
       })
       .populate({
-        path: 'suborderId',
-        select: 'sellerId items subtotal status',
+        path: "suborderId",
+        select: "sellerId items subtotal status",
         populate: {
-          path: 'items.productId',
-          select: 'name price'
-        }
+          path: "items.productId",
+          select: "name price",
+        },
       })
       .sort({ [sortField]: sortDirection })
       .skip(skip)
@@ -214,19 +228,18 @@ exports.getAllDeliveries = async (req, res) => {
 
     // Format response
     res.status(200).json({
-      message: 'Deliveries retrieved successfully',
+      message: "Deliveries retrieved successfully",
       deliveries,
       pagination: {
         total: totalDeliveries,
         page: pageNum,
         limit: limitNum,
-        totalPages: Math.ceil(totalDeliveries / limitNum)
-      }
+        totalPages: Math.ceil(totalDeliveries / limitNum),
+      },
     });
-
   } catch (error) {
-    console.error('Get All Deliveries Error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get All Deliveries Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -236,19 +249,27 @@ exports.updateDeliveryStatus = async (req, res) => {
 
     // Basic validation
     if (!deliveryId || !status) {
-      return res.status(400).json({ message: 'Delivery ID and status are required.' });
+      return res
+        .status(400)
+        .json({ message: "Delivery ID and status are required." });
     }
 
     // Validate status
-    const validStatuses = ['pending', 'assigned', 'in_progress', 'completed', 'cancelled'];
+    const validStatuses = [
+      "pending",
+      "assigned",
+      "in_progress",
+      "completed",
+      "cancelled",
+    ];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ message: 'Invalid status provided.' });
+      return res.status(400).json({ message: "Invalid status provided." });
     }
 
     // Check if delivery exists
     const delivery = await Delivery.findById(deliveryId);
     if (!delivery) {
-      return res.status(404).json({ message: 'Delivery not found.' });
+      return res.status(404).json({ message: "Delivery not found." });
     }
 
     // Update fields
@@ -260,47 +281,49 @@ exports.updateDeliveryStatus = async (req, res) => {
     await delivery.save();
 
     res.status(200).json({
-      message: 'Delivery status updated successfully',
-      delivery
+      message: "Delivery status updated successfully",
+      delivery,
     });
-
   } catch (error) {
-    console.error('Update Delivery Status Error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Update Delivery Status Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
 exports.getDeliveriesByDeliveryPersonId = async (req, res) => {
   try {
-    const { deliveryPersonId } = req.params; // Assuming deliveryPersonId is passed as a URL parameter
+    const { deliveryPersonId } = req.params;
 
     // Basic validation
     if (!deliveryPersonId) {
-      return res.status(400).json({ message: 'Delivery Person ID is required.' });
+      return res
+        .status(400)
+        .json({ message: "Delivery Person ID is required." });
     }
 
     // Check if deliveryPersonId is a valid ObjectId
     if (!mongoose.isValidObjectId(deliveryPersonId)) {
-      return res.status(400).json({ message: 'Invalid Delivery Person ID.' });
+      return res.status(400).json({ message: "Invalid Delivery Person ID." });
     }
 
     // Find deliveries by deliveryPersonId
     const deliveries = await Delivery.find({ deliveryPersonId })
-      .populate('orderId', 'orderNumber shippingInfo') // Optional: Populate order details
-      .populate('sellerId', 'name email') // Optional: Populate seller details
-      .select('-__v'); // Exclude version key
+      .populate("orderId", "orderNumber shippingInfo") // Optional: Populate order details
+      .populate("sellerId", "name email") // Optional: Populate seller details
+      .select("-__v"); // Exclude version key
 
     if (!deliveries || deliveries.length === 0) {
-      return res.status(404).json({ message: 'No deliveries found for this delivery person.' });
+      return res
+        .status(404)
+        .json({ message: "No deliveries found for this delivery person." });
     }
 
     res.status(200).json({
-      message: 'Deliveries retrieved successfully',
-      deliveries
+      message: "Deliveries retrieved successfully",
+      deliveries,
     });
-
   } catch (error) {
-    console.error('Get Deliveries By Delivery Person Error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error("Get Deliveries By Delivery Person Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

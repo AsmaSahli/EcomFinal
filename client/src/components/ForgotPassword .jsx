@@ -23,10 +23,9 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-50 to-purple-50">
-      <div 
+      <div
         className="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-100"
-        dir={t('dir')}
-      >
+        dir={t("dir")}>
         <h2 className="text-2xl font-bold text-center mb-4">
           {t("forgotPassword.title")}
         </h2>
@@ -51,16 +50,14 @@ const ForgotPassword = () => {
 
         <button
           onClick={handleForgotPassword}
-          className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
-        >
+          className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus">
           {t("forgotPassword.submitButton")}
         </button>
 
         <div className="text-center">
           <Link
             to="/login"
-            className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900"
-          >
+            className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900">
             {t("forgotPassword.backButton")}
           </Link>
         </div>

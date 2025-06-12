@@ -1,11 +1,11 @@
 const nodemailer = require("nodemailer");
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  }
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
 const sendOrderConfirmationEmail = async (email, order, user) => {
@@ -210,7 +210,11 @@ const sendOrderConfirmationEmail = async (email, order, user) => {
         <body>
           <div class="email-container">
             <div class="header">
-              ${process.env.STORE_LOGO_URL ? `<img src="${process.env.STORE_LOGO_URL}" class="logo" alt="${process.env.STORE_NAME}">` : ''}
+              ${
+                process.env.STORE_LOGO_URL
+                  ? `<img src="${process.env.STORE_LOGO_URL}" class="logo" alt="${process.env.STORE_NAME}">`
+                  : ""
+              }
               <h1>Order Confirmed</h1>
               <p class="subheader">Thank you for your purchase!</p>
             </div>
@@ -221,31 +225,52 @@ const sendOrderConfirmationEmail = async (email, order, user) => {
                 <span>${new Date(order.createdAt).toLocaleDateString()}</span>
               </div>
               
-              <p>Hi ${order.shippingInfo.firstName}, we're getting your order ready to be shipped.</p>
+              <p>Hi ${
+                order.shippingInfo.firstName
+              }, we're getting your order ready to be shipped.</p>
               
               <div class="divider"></div>
               
               <h2 class="section-title">Your Items</h2>
               
-              ${order.items.map(item => `
+              ${order.items
+                .map(
+                  (item) => `
                 <div class="product">
-                  <img src="${item.productId?.images?.[0]?.url || 'https://via.placeholder.com/80'}" class="product-image" alt="${item.productId?.name || 'Product'}">
+                  <img src="${
+                    item.productId?.images?.[0]?.url ||
+                    "https://via.placeholder.com/80"
+                  }" class="product-image" alt="${
+                    item.productId?.name || "Product"
+                  }">
                   <div class="product-details">
-                    <h3 class="product-name">${item.productId?.name || 'Unknown Product'}</h3>
-                    <p class="product-price">$${item.price.toFixed(2)} × ${item.quantity}</p>
+                    <h3 class="product-name">${
+                      item.productId?.name || "Unknown Product"
+                    }</h3>
+                    <p class="product-price">$${item.price.toFixed(2)} × ${
+                    item.quantity
+                  }</p>
                   </div>
-                  <div class="product-total">$${(item.price * item.quantity).toFixed(2)}</div>
+                  <div class="product-total">$${(
+                    item.price * item.quantity
+                  ).toFixed(2)}</div>
                 </div>
-              `).join('')}
+              `
+                )
+                .join("")}
               
               <div class="summary-section">
                 <div class="summary-row">
                   <span class="summary-label">Subtotal</span>
-                  <span class="summary-value">$${order.subtotal.toFixed(2)}</span>
+                  <span class="summary-value">$${order.subtotal.toFixed(
+                    2
+                  )}</span>
                 </div>
                 <div class="summary-row">
                   <span class="summary-label">Shipping</span>
-                  <span class="summary-value">$${order.shipping.toFixed(2)}</span>
+                  <span class="summary-value">$${order.shipping.toFixed(
+                    2
+                  )}</span>
                 </div>
                 <div class="summary-row">
                   <span class="summary-label">Tax</span>
@@ -260,32 +285,42 @@ const sendOrderConfirmationEmail = async (email, order, user) => {
               <div class="shipping-section">
                 <h2 class="section-title">Shipping Information</h2>
                 <div class="shipping-address">
-                  <p><strong>${order.shippingInfo.firstName} ${order.shippingInfo.lastName}</strong></p>
+                  <p><strong>${order.shippingInfo.firstName} ${
+        order.shippingInfo.lastName
+      }</strong></p>
                   <p>${order.shippingInfo.address.street}</p>
-                  <p>${order.shippingInfo.address.city}, ${order.shippingInfo.address.governorate}</p>
+                  <p>${order.shippingInfo.address.city}, ${
+        order.shippingInfo.address.governorate
+      }</p>
                   <p>${order.shippingInfo.address.postalCode}</p>
                   <p><strong>Phone:</strong> ${order.shippingInfo.phone}</p>
                 </div>
               </div>
               
-              <a href="http://localhost:5173/trackOrder/${order._id}" class="cta-button">Track Your Order</a>
+              <a href="http://localhost:5173/trackOrder/${
+                order._id
+              }" class="cta-button">Track Your Order</a>
               
-              <p style="text-align: center;">Need help? <a href="mailto:support@${process.env.STORE_DOMAIN}" style="color: #333; text-decoration: underline;">Contact our support team</a></p>
+              <p style="text-align: center;">Need help? <a href="mailto:support@${
+                process.env.STORE_DOMAIN
+              }" style="color: #333; text-decoration: underline;">Contact our support team</a></p>
             </div>
             
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} ${process.env.STORE_NAME}. All rights reserved.</p>
-              <p>${process.env.STORE_ADDRESS || ''}</p>
+              <p>&copy; ${new Date().getFullYear()} ${
+        process.env.STORE_NAME
+      }. All rights reserved.</p>
+              <p>${process.env.STORE_ADDRESS || ""}</p>
             </div>
           </div>
         </body>
         </html>
-      `
+      `,
     };
 
     await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Error sending order confirmation email:', error);
+    console.error("Error sending order confirmation email:", error);
     throw error;
   }
 };

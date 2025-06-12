@@ -1,13 +1,13 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   items: [],
   loading: false,
-  error: null
+  error: null,
 };
 
 const cartSlice = createSlice({
-  name: 'cart',
+  name: "cart",
   initialState,
   reducers: {
     setCart: (state, action) => {
@@ -20,12 +20,13 @@ const cartSlice = createSlice({
         ...action.payload,
         price: action.payload.price || 0,
         stock: action.payload.stock || 0,
-        quantity: action.payload.quantity || 1
+        quantity: action.payload.quantity || 1,
       };
       const existingItemIndex = state.items.findIndex(
-        item => 
-          item.productId._id === newItem.productId._id && 
-          (item.sellerId?._id === newItem.sellerId?._id || (!item.sellerId && !newItem.sellerId))
+        (item) =>
+          item.productId._id === newItem.productId._id &&
+          (item.sellerId?._id === newItem.sellerId?._id ||
+            (!item.sellerId && !newItem.sellerId))
       );
       if (existingItemIndex > -1) {
         state.items[existingItemIndex].quantity += newItem.quantity;
@@ -34,11 +35,11 @@ const cartSlice = createSlice({
       }
     },
     removeItem: (state, action) => {
-      state.items = state.items.filter(item => item._id !== action.payload);
+      state.items = state.items.filter((item) => item._id !== action.payload);
     },
     updateItemQuantity: (state, action) => {
       const { itemId, quantity } = action.payload;
-      const item = state.items.find(item => item._id === itemId);
+      const item = state.items.find((item) => item._id === itemId);
       if (item) {
         item.quantity = quantity;
       }
@@ -51,18 +52,18 @@ const cartSlice = createSlice({
     },
     setError: (state, action) => {
       state.error = action.payload;
-    }
-  }
+    },
+  },
 });
 
-export const { 
-  setCart, 
-  addItem, 
-  removeItem, 
+export const {
+  setCart,
+  addItem,
+  removeItem,
   updateItemQuantity,
   clearCart,
   setLoading,
-  setError
+  setError,
 } = cartSlice.actions;
 
 export default cartSlice.reducer;

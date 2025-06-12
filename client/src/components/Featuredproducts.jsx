@@ -1,16 +1,15 @@
-
-import React, { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import axios from 'axios';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import 'swiper/css';
-import 'swiper/css/pagination';
-import 'swiper/css/navigation';
-import { Pagination, Navigation } from 'swiper/modules';
-import { IoMdFlash } from 'react-icons/io';
-import ProductCard from './ProductCard';
-import { toast } from 'react-toastify';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import axios from "axios";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/navigation";
+import { Pagination, Navigation } from "swiper/modules";
+import { IoMdFlash } from "react-icons/io";
+import ProductCard from "./ProductCard";
+import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 const FeaturedProducts = () => {
   const { t } = useTranslation();
@@ -20,7 +19,7 @@ const FeaturedProducts = () => {
   const { currentUser } = useSelector((state) => state.user);
   const dispatch = useDispatch();
 
-  const API_URL = 'http://localhost:8000/api';
+  const API_URL = "http://localhost:8000/api";
 
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
@@ -28,11 +27,13 @@ const FeaturedProducts = () => {
       setError(null);
       try {
         const response = await axios.get(`${API_URL}/products?featured=true`);
-        const productsWithOffers = Array.isArray(response.data.products) ? response.data.products : response.data;
+        const productsWithOffers = Array.isArray(response.data.products)
+          ? response.data.products
+          : response.data;
         setFeaturedProducts(productsWithOffers);
       } catch (err) {
-        console.error('Error fetching featured products:', err);
-        setError(t('featuredProducts.error.load'));
+        console.error("Error fetching featured products:", err);
+        setError(t("featuredProducts.error.load"));
       } finally {
         setLoading(false);
       }
@@ -41,22 +42,24 @@ const FeaturedProducts = () => {
     const fetchWishlist = async () => {
       if (currentUser) {
         try {
-          const response = await axios.get(`${API_URL}/wishlist?userId=${currentUser.id}`);
+          const response = await axios.get(
+            `${API_URL}/wishlist?userId=${currentUser.id}`
+          );
           dispatch({
-            type: 'wishlist/setWishlist',
-            payload: response.data.items.map(item => ({
+            type: "wishlist/setWishlist",
+            payload: response.data.items.map((item) => ({
               ...item,
               price: item.price || item.productId?.price || 0,
               stock: item.stock || item.productId?.stock || 0,
               productId: {
                 ...item.productId,
                 reviews: item.productId.reviews || [],
-                promotions: item.productId.promotions || []
-              }
-            }))
+                promotions: item.productId.promotions || [],
+              },
+            })),
           });
         } catch (err) {
-          toast.error(t('featuredProducts.error.wishlist'));
+          toast.error(t("featuredProducts.error.wishlist"));
         }
       }
     };
@@ -72,17 +75,16 @@ const FeaturedProducts = () => {
   };
 
   // Filter products with active promotions for Flash Sale
-  const flashSaleProducts = featuredProducts
-    .flatMap(product =>
-      product.sellers
-        .filter(sellerOffer => sellerOffer.activePromotion)
-        .map(sellerOffer => ({ product, sellerOffer }))
-    );
+  const flashSaleProducts = featuredProducts.flatMap((product) =>
+    product.sellers
+      .filter((sellerOffer) => sellerOffer.activePromotion)
+      .map((sellerOffer) => ({ product, sellerOffer }))
+  );
 
   const flashSaleGroups = chunkArray(flashSaleProducts, 5); // Group by 5 for 5-column grid
   const featuredProductGroups = chunkArray(
-    featuredProducts.flatMap(product =>
-      product.sellers.map(sellerOffer => ({ product, sellerOffer }))
+    featuredProducts.flatMap((product) =>
+      product.sellers.map((sellerOffer) => ({ product, sellerOffer }))
     ),
     4
   );
@@ -104,8 +106,12 @@ const FeaturedProducts = () => {
                 <div className="absolute -inset-2 bg-white/20 rounded-full animate-ping"></div>
               </div>
               <div>
-                <h2 className="text-3xl font-bold text-white">{t('featuredProducts.flashSale.title')}</h2>
-                <p className="text-white/90">{t('featuredProducts.flashSale.subtitle')}</p>
+                <h2 className="text-3xl font-bold text-white">
+                  {t("featuredProducts.flashSale.title")}
+                </h2>
+                <p className="text-white/90">
+                  {t("featuredProducts.flashSale.subtitle")}
+                </p>
               </div>
             </div>
           </div>
@@ -129,8 +135,7 @@ const FeaturedProducts = () => {
                 768: { slidesPerView: 1 },
                 1024: { slidesPerView: 1 },
               }}
-              className="mySwiper"
-            >
+              className="mySwiper">
               {flashSaleGroups.map((group, index) => (
                 <SwiperSlide key={index}>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
@@ -147,7 +152,7 @@ const FeaturedProducts = () => {
             </Swiper>
           ) : (
             <div className="text-center py-8 text-white/90">
-              {t('featuredProducts.flashSale.empty')}
+              {t("featuredProducts.flashSale.empty")}
             </div>
           )}
         </div>
@@ -156,9 +161,11 @@ const FeaturedProducts = () => {
       {/* Featured Products Section */}
       <section className="container mx-auto px-4 py-16">
         <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold mb-4">{t('featuredProducts.featured.title')}</h2>
+          <h2 className="text-4xl font-bold mb-4">
+            {t("featuredProducts.featured.title")}
+          </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            {t('featuredProducts.featured.subtitle')}
+            {t("featuredProducts.featured.subtitle")}
           </p>
         </div>
 
@@ -181,8 +188,7 @@ const FeaturedProducts = () => {
               768: { slidesPerView: 1 },
               1024: { slidesPerView: 1 },
             }}
-            className="mySwiper"
-          >
+            className="mySwiper">
             {featuredProductGroups.map((group, index) => (
               <SwiperSlide key={index}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -199,7 +205,7 @@ const FeaturedProducts = () => {
           </Swiper>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            {t('featuredProducts.featured.empty')}
+            {t("featuredProducts.featured.empty")}
           </div>
         )}
       </section>

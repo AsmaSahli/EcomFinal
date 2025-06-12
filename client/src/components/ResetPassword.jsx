@@ -12,7 +12,9 @@ const ResetPassword = () => {
     e.preventDefault();
 
     try {
-      await axios.post(`http://localhost:8000/reset-password/${token}`, { password });
+      await axios.post(`http://localhost:8000/reset-password/${token}`, {
+        password,
+      });
       toast.success("Password reset successful. You can now sign in.");
       navigate("/login");
     } catch (err) {
@@ -43,8 +45,7 @@ const ResetPassword = () => {
 
         <button
           onClick={handleResetPassword}
-          className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
-        >
+          className="btn btn-primary w-full mb-4 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus">
           Reset Password
         </button>
       </div>

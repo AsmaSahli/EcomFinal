@@ -34,7 +34,7 @@ exports.updateProductTag = async (req, res) => {
   try {
     const tag = await ProductTag.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
-      runValidators: true
+      runValidators: true,
     });
     if (!tag) return res.status(404).json({ message: "Tag not found" });
     res.status(200).json(tag);

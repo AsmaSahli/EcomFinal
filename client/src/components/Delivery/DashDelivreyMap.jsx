@@ -1,9 +1,7 @@
-import React from 'react'
+import React from "react";
 
 const DashDelivreyMap = () => {
-  return (
-    <div>DashDelivreyMap</div>
-  )
-}
+  return <div>DashDelivreyMap</div>;
+};
 
-export default DashDelivreyMap
+export default DashDelivreyMap;

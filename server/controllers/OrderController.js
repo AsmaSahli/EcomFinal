@@ -1,10 +1,10 @@
-const mongoose = require('mongoose');
-const Order = require('../models/Order');
-const Product = require('../models/Product');
-const Cart = require('../models/Cart');
+const mongoose = require("mongoose");
+const Order = require("../models/Order");
+const Product = require("../models/Product");
+const Cart = require("../models/Cart");
 const { User } = require("../models/User");
-const { sendOrderConfirmationEmail } = require('../services/emailService');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { sendOrderConfirmationEmail } = require("../services/emailService");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 // Create a new order
 const createOrder = async (req, res) => {
@@ -19,16 +19,23 @@ const createOrder = async (req, res) => {
       shipping,
       tax,
       total,
-      paymentResult // Changed from paymentToken to paymentResult
+      paymentResult,
     } = req.body;
 
     // Validate input
     if (!userId || !items || !items.length || !shippingInfo || !paymentMethod) {
-      return res.status(400).json({ message: 'Missing required fields' });
+      return res.status(400).json({ message: "Missing required fields" });
     }
 
-    if (paymentMethod === 'stripe' && (!paymentResult || !paymentResult.id || paymentResult.status !== 'succeeded')) {
-      return res.status(400).json({ message: 'Valid Stripe payment result required' });
+    if (
+      paymentMethod === "stripe" &&
+      (!paymentResult ||
+        !paymentResult.id ||
+        paymentResult.status !== "succeeded")
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Valid Stripe payment result required" });
     }
 
     // Validate product availability and stock
@@ -36,7 +43,7 @@ const createOrder = async (req, res) => {
       const product = await Product.findById(item.productId);
       if (!product) {
         return res.status(404).json({
-          message: `Product with ID ${item.productId} not found`
+          message: `Product with ID ${item.productId} not found`,
         });
       }
 
@@ -45,13 +52,13 @@ const createOrder = async (req, res) => {
       );
       if (!sellerData) {
         return res.status(400).json({
-          message: `Seller with ID ${item.sellerId} not associated with product ${product.name}`
+          message: `Seller with ID ${item.sellerId} not associated with product ${product.name}`,
         });
       }
 
       if (sellerData.stock < item.quantity) {
         return res.status(400).json({
-          message: `Insufficient stock for product: ${product.name}`
+          message: `Insufficient stock for product: ${product.name}`,
         });
       }
     }
@@ -59,7 +66,7 @@ const createOrder = async (req, res) => {
     // Validate user
     const user = await User.findById(userId);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: "User not found" });
     }
 
     // Group items by seller for suborders
@@ -73,7 +80,7 @@ const createOrder = async (req, res) => {
           sellerId: item.sellerId,
           items: [],
           subtotal: 0,
-          status: 'pending'
+          status: "pending",
         });
       }
       const suborder = sellerMap.get(sellerId);
@@ -84,8 +91,9 @@ const createOrder = async (req, res) => {
     sellerMap.forEach((suborder) => suborders.push(suborder));
 
     // Set payment status based on payment method
-    let paymentStatus = paymentMethod === 'stripe' ? 'paid' : 'pending';
-    let stripePaymentIntentId = paymentMethod === 'stripe' ? paymentResult.id : null;
+    let paymentStatus = paymentMethod === "stripe" ? "paid" : "pending";
+    let stripePaymentIntentId =
+      paymentMethod === "stripe" ? paymentResult.id : null;
 
     // Create the order
     const order = new Order({
@@ -100,7 +108,7 @@ const createOrder = async (req, res) => {
       tax,
       total,
       paymentStatus,
-      stripePaymentIntentId
+      stripePaymentIntentId,
     });
 
     // Save the order
@@ -109,15 +117,15 @@ const createOrder = async (req, res) => {
     // Update product stock
     for (const item of items) {
       const updateResult = await Product.findOneAndUpdate(
-        { _id: item.productId, 'sellers.sellerId': item.sellerId },
-        { $inc: { 'sellers.$.stock': -item.quantity } },
+        { _id: item.productId, "sellers.sellerId": item.sellerId },
+        { $inc: { "sellers.$.stock": -item.quantity } },
         { new: true }
       );
 
       if (!updateResult) {
         await Order.deleteOne({ _id: savedOrder._id });
         return res.status(500).json({
-          message: `Failed to update stock for product ID ${item.productId}`
+          message: `Failed to update stock for product ID ${item.productId}`,
         });
       }
     }
@@ -129,7 +137,8 @@ const createOrder = async (req, res) => {
         (cartItem) =>
           !items.some(
             (orderItem) =>
-              orderItem.productId.toString() === cartItem.productId.toString() &&
+              orderItem.productId.toString() ===
+                cartItem.productId.toString() &&
               orderItem.sellerId.toString() === cartItem.sellerId.toString()
           )
       );
@@ -144,36 +153,37 @@ const createOrder = async (req, res) => {
     // Populate the saved order
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate({
-        path: 'userId',
-        select: 'name email'
+        path: "userId",
+        select: "name email",
       })
       .populate({
-        path: 'items.productId',
-        select: 'name images'
+        path: "items.productId",
+        select: "name images",
       })
       .populate({
-        path: 'items.sellerId',
-        select: 'name email'
+        path: "items.sellerId",
+        select: "name email",
       })
       .populate({
-        path: 'suborders.sellerId',
-        select: 'name email'
+        path: "suborders.sellerId",
+        select: "name email",
       });
 
     // Send order confirmation email (async)
-    sendOrderConfirmationEmail(user.email, populatedOrder, user)
-      .catch((err) => console.error('Error sending confirmation email:', err));
+    sendOrderConfirmationEmail(user.email, populatedOrder, user).catch((err) =>
+      console.error("Error sending confirmation email:", err)
+    );
 
     res.status(201).json({
-      message: 'Order created successfully',
+      message: "Order created successfully",
       order: populatedOrder,
-      paymentIntentId: stripePaymentIntentId
+      paymentIntentId: stripePaymentIntentId,
     });
   } catch (error) {
-    console.error('Error creating order:', error);
+    console.error("Error creating order:", error);
     res.status(500).json({
-      message: 'Failed to create order',
-      error: error.message
+      message: "Failed to create order",
+      error: error.message,
     });
   }
 };
@@ -184,23 +194,23 @@ const getSellerSuborders = async (req, res) => {
     const { sellerId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(sellerId)) {
-      return res.status(400).json({ message: 'Invalid sellerId' });
+      return res.status(400).json({ message: "Invalid sellerId" });
     }
 
     const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
 
-    const orders = await Order.find({ 'suborders.sellerId': sellerObjectId })
+    const orders = await Order.find({ "suborders.sellerId": sellerObjectId })
       .populate({
-        path: 'userId',
-        select: 'name email',
+        path: "userId",
+        select: "name email",
       })
       .populate({
-        path: 'suborders.items.productId',
-        select: 'name images',
+        path: "suborders.items.productId",
+        select: "name images",
       })
       .populate({
-        path: 'suborders.sellerId',
-        select: 'name email',
+        path: "suborders.sellerId",
+        select: "name email",
       })
       .lean();
 
@@ -232,17 +242,19 @@ const getSellerSuborders = async (req, res) => {
     );
 
     if (!sellerSuborders.length) {
-      return res.status(404).json({ message: 'No suborders found for this seller' });
+      return res
+        .status(404)
+        .json({ message: "No suborders found for this seller" });
     }
 
     res.status(200).json({
-      message: 'Suborders retrieved successfully',
+      message: "Suborders retrieved successfully",
       suborders: sellerSuborders,
     });
   } catch (error) {
-    console.error('Error fetching seller suborders:', error);
+    console.error("Error fetching seller suborders:", error);
     res.status(500).json({
-      message: 'Failed to fetch suborders',
+      message: "Failed to fetch suborders",
       error: error.message,
     });
   }
@@ -253,47 +265,47 @@ const getOrderById = async (req, res) => {
     const { orderId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ message: 'Invalid orderId' });
+      return res.status(400).json({ message: "Invalid orderId" });
     }
 
     const order = await Order.findById(orderId)
       .populate({
-        path: 'userId',
-        select: 'name email',
+        path: "userId",
+        select: "name email",
       })
       .populate({
-        path: 'items.productId',
-        select: 'name images price description',
+        path: "items.productId",
+        select: "name images price description",
       })
       .populate({
-        path: 'items.sellerId',
-        select: 'name email',
+        path: "items.sellerId",
+        select: "name email",
       })
       .populate({
-        path: 'items.promotion',
-        select: 'name discount',
+        path: "items.promotion",
+        select: "name discount",
       })
       .populate({
-        path: 'suborders.sellerId',
-        select: 'name email shopName',
+        path: "suborders.sellerId",
+        select: "name email shopName",
       })
       .populate({
-        path: 'suborders.items.productId',
-        select: 'name images price description',
+        path: "suborders.items.productId",
+        select: "name images price description",
       });
 
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     res.status(200).json({
-      message: 'Order retrieved successfully',
+      message: "Order retrieved successfully",
       order,
     });
   } catch (error) {
-    console.error('Error retrieving order:', error);
+    console.error("Error retrieving order:", error);
     res.status(500).json({
-      message: 'Failed to retrieve order',
+      message: "Failed to retrieve order",
       error: error.message,
     });
   }
@@ -304,48 +316,48 @@ const getUserOrders = async (req, res) => {
     const { userId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
-      return res.status(400).json({ message: 'Invalid userId' });
+      return res.status(400).json({ message: "Invalid userId" });
     }
 
     const orders = await Order.find({ userId })
       .populate({
-        path: 'userId',
-        select: 'name email',
+        path: "userId",
+        select: "name email",
       })
       .populate({
-        path: 'items.productId',
-        select: 'name images price description',
+        path: "items.productId",
+        select: "name images price description",
       })
       .populate({
-        path: 'items.sellerId',
-        select: 'name email',
+        path: "items.sellerId",
+        select: "name email",
       })
       .populate({
-        path: 'items.promotion',
-        select: 'name discount',
+        path: "items.promotion",
+        select: "name discount",
       })
       .populate({
-        path: 'suborders.sellerId',
-        select: 'name email',
+        path: "suborders.sellerId",
+        select: "name email",
       })
       .populate({
-        path: 'suborders.items.productId',
-        select: 'name images price description',
+        path: "suborders.items.productId",
+        select: "name images price description",
       })
       .sort({ createdAt: -1 });
 
     if (!orders || orders.length === 0) {
-      return res.status(404).json({ message: 'No orders found for this user' });
+      return res.status(404).json({ message: "No orders found for this user" });
     }
 
     res.status(200).json({
-      message: 'Orders retrieved successfully',
+      message: "Orders retrieved successfully",
       orders,
     });
   } catch (error) {
-    console.error('Error retrieving user orders:', error);
+    console.error("Error retrieving user orders:", error);
     res.status(500).json({
-      message: 'Failed to retrieve orders',
+      message: "Failed to retrieve orders",
       error: error.message,
     });
   }
@@ -356,25 +368,29 @@ const updateOrderStatus = async (req, res) => {
     const { orderId, suborderId, status } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ message: 'Invalid orderId' });
+      return res.status(400).json({ message: "Invalid orderId" });
     }
     if (!mongoose.Types.ObjectId.isValid(suborderId)) {
-      return res.status(400).json({ message: 'Invalid suborderId' });
+      return res.status(400).json({ message: "Invalid suborderId" });
     }
-    if (!['pending', 'processing', 'shipped', 'delivered', 'cancelled'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status' });
+    if (
+      !["pending", "processing", "shipped", "delivered", "cancelled"].includes(
+        status
+      )
+    ) {
+      return res.status(400).json({ message: "Invalid status" });
     }
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     const suborder = order.suborders.find(
       (sub) => sub._id.toString() === suborderId
     );
     if (!suborder) {
-      return res.status(404).json({ message: 'Suborder not found' });
+      return res.status(404).json({ message: "Suborder not found" });
     }
 
     suborder.status = status;
@@ -382,30 +398,38 @@ const updateOrderStatus = async (req, res) => {
 
     if (order.suborders.length === 1) {
       order.status = status;
-      if (status === 'delivered' && order.paymentMethod !== 'stripe') {
-        order.paymentStatus = 'paid';
+      if (status === "delivered" && order.paymentMethod !== "stripe") {
+        order.paymentStatus = "paid";
       }
     } else {
-      const suborderStatuses = order.suborders.map(sub => sub.status);
-      const hasProcessing = suborderStatuses.includes('processing');
-      const hasShipped = suborderStatuses.includes('shipped');
-      const hasDelivered = suborderStatuses.includes('delivered');
-      const allCancelled = suborderStatuses.every(status => status === 'cancelled');
-      const allDelivered = suborderStatuses.every(status => status === 'delivered');
+      const suborderStatuses = order.suborders.map((sub) => sub.status);
+      const hasProcessing = suborderStatuses.includes("processing");
+      const hasShipped = suborderStatuses.includes("shipped");
+      const hasDelivered = suborderStatuses.includes("delivered");
+      const allCancelled = suborderStatuses.every(
+        (status) => status === "cancelled"
+      );
+      const allDelivered = suborderStatuses.every(
+        (status) => status === "delivered"
+      );
 
       if (hasProcessing) {
-        order.status = 'processing';
+        order.status = "processing";
       } else if (allDelivered) {
-        order.status = 'delivered';
-        if (order.paymentMethod !== 'stripe') {
-          order.paymentStatus = 'paid';
+        order.status = "delivered";
+        if (order.paymentMethod !== "stripe") {
+          order.paymentStatus = "paid";
         }
       } else if (allCancelled) {
-        order.status = 'cancelled';
-      } else if (hasShipped || (hasDelivered && suborderStatuses.some(status => status !== 'delivered'))) {
-        order.status = 'shipped';
+        order.status = "cancelled";
+      } else if (
+        hasShipped ||
+        (hasDelivered &&
+          suborderStatuses.some((status) => status !== "delivered"))
+      ) {
+        order.status = "shipped";
       } else {
-        order.status = 'processing';
+        order.status = "processing";
       }
     }
 
@@ -415,38 +439,38 @@ const updateOrderStatus = async (req, res) => {
 
     const populatedOrder = await Order.findById(orderId)
       .populate({
-        path: 'userId',
-        select: 'name email',
+        path: "userId",
+        select: "name email",
       })
       .populate({
-        path: 'items.productId',
-        select: 'name images price description',
+        path: "items.productId",
+        select: "name images price description",
       })
       .populate({
-        path: 'items.sellerId',
-        select: 'name email',
+        path: "items.sellerId",
+        select: "name email",
       })
       .populate({
-        path: 'items.promotion',
-        select: 'name discount',
+        path: "items.promotion",
+        select: "name discount",
       })
       .populate({
-        path: 'suborders.sellerId',
-        select: 'name email',
+        path: "suborders.sellerId",
+        select: "name email",
       })
       .populate({
-        path: 'suborders.items.productId',
-        select: 'name images price description',
+        path: "suborders.items.productId",
+        select: "name images price description",
       });
 
     res.status(200).json({
-      message: 'Order and suborder status updated successfully',
+      message: "Order and suborder status updated successfully",
       order: populatedOrder,
     });
   } catch (error) {
-    console.error('Error updating order status:', error);
+    console.error("Error updating order status:", error);
     res.status(500).json({
-      message: 'Failed to update order status',
+      message: "Failed to update order status",
       error: error.message,
     });
   }
@@ -457,12 +481,14 @@ const getSellerStats = async (req, res) => {
     const { sellerId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(sellerId)) {
-      return res.status(400).json({ message: 'Invalid sellerId' });
+      return res.status(400).json({ message: "Invalid sellerId" });
     }
 
     const sellerObjectId = new mongoose.Types.ObjectId(sellerId);
 
-    const orders = await Order.find({ 'suborders.sellerId': sellerObjectId }).lean();
+    const orders = await Order.find({
+      "suborders.sellerId": sellerObjectId,
+    }).lean();
 
     const stats = {
       totalOrders: 0,
@@ -479,21 +505,21 @@ const getSellerStats = async (req, res) => {
       stats.totalOrders += sellerSuborders.length;
 
       sellerSuborders.forEach((suborder) => {
-        if (suborder.status === 'pending') stats.pending += 1;
-        else if (suborder.status === 'processing') stats.processing += 1;
-        else if (suborder.status === 'shipped') stats.shipped += 1;
-        else if (suborder.status === 'delivered') stats.delivered += 1;
+        if (suborder.status === "pending") stats.pending += 1;
+        else if (suborder.status === "processing") stats.processing += 1;
+        else if (suborder.status === "shipped") stats.shipped += 1;
+        else if (suborder.status === "delivered") stats.delivered += 1;
       });
     });
 
     res.status(200).json({
-      message: 'Stats retrieved successfully',
+      message: "Stats retrieved successfully",
       stats,
     });
   } catch (error) {
-    console.error('Error fetching seller stats:', error);
+    console.error("Error fetching seller stats:", error);
     res.status(500).json({
-      message: 'Failed to fetch stats',
+      message: "Failed to fetch stats",
       error: error.message,
     });
   }
@@ -503,46 +529,46 @@ const deleteOrder = async (req, res) => {
     const { orderId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({ message: 'Invalid orderId' });
+      return res.status(400).json({ message: "Invalid orderId" });
     }
 
     const order = await Order.findById(orderId);
     if (!order) {
-      return res.status(404).json({ message: 'Order not found' });
+      return res.status(404).json({ message: "Order not found" });
     }
 
     // Check if order can be deleted (e.g., only allow deletion for pending orders)
-    if (order.status !== 'pending') {
-      return res.status(400).json({ 
-        message: 'Cannot delete order that is not in pending status' 
+    if (order.status !== "pending") {
+      return res.status(400).json({
+        message: "Cannot delete order that is not in pending status",
       });
     }
 
     // Restore product stock
     for (const item of order.items) {
       const updateResult = await Product.findOneAndUpdate(
-        { _id: item.productId, 'sellers.sellerId': item.sellerId },
-        { $inc: { 'sellers.$.stock': item.quantity } },
+        { _id: item.productId, "sellers.sellerId": item.sellerId },
+        { $inc: { "sellers.$.stock": item.quantity } },
         { new: true }
       );
 
       if (!updateResult) {
         return res.status(500).json({
-          message: `Failed to restore stock for product ID ${item.productId}`
+          message: `Failed to restore stock for product ID ${item.productId}`,
         });
       }
     }
 
     // If the order was paid via Stripe, issue a refund
-    if (order.paymentMethod === 'stripe' && order.stripePaymentIntentId) {
+    if (order.paymentMethod === "stripe" && order.stripePaymentIntentId) {
       try {
         await stripe.refunds.create({
           payment_intent: order.stripePaymentIntentId,
         });
       } catch (stripeError) {
-        console.error('Error processing Stripe refund:', stripeError);
+        console.error("Error processing Stripe refund:", stripeError);
         return res.status(500).json({
-          message: 'Failed to process refund',
+          message: "Failed to process refund",
           error: stripeError.message,
         });
       }
@@ -552,12 +578,12 @@ const deleteOrder = async (req, res) => {
     await Order.deleteOne({ _id: orderId });
 
     res.status(200).json({
-      message: 'Order deleted successfully',
+      message: "Order deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting order:', error);
+    console.error("Error deleting order:", error);
     res.status(500).json({
-      message: 'Failed to delete order',
+      message: "Failed to delete order",
       error: error.message,
     });
   }

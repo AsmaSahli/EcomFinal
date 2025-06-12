@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
-import { signUpStart, signUpSuccess, signUpFailure } from "../redux/user/userSlice";
+import {
+  signUpStart,
+  signUpSuccess,
+  signUpFailure,
+} from "../redux/user/userSlice";
 import { useNavigate, Link } from "react-router-dom";
-import axios from "axios"; 
+import axios from "axios";
 import logo from "../assets/ecomLogo.png";
-import { ToastContainer, toast } from "react-toastify"; 
+import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from "react-i18next";
 
 const SignUp = () => {
   const { t } = useTranslation();
@@ -21,7 +25,7 @@ const SignUp = () => {
   const navigate = useNavigate();
 
   const handlePhoneChange = (e) => {
-    const value = e.target.value.replace(/\D/g, '');
+    const value = e.target.value.replace(/\D/g, "");
     if (value.length <= 8) {
       setPhoneNumber(value);
     }
@@ -31,38 +35,39 @@ const SignUp = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error(t('signUp.errors.passwordMismatch'));
+      toast.error(t("signUp.errors.passwordMismatch"));
       return;
     }
 
     if (phoneNumber.length !== 8) {
-      toast.error(t('signUp.errors.invalidPhone'));
+      toast.error(t("signUp.errors.invalidPhone"));
       return;
     }
 
-    dispatch(signUpStart()); 
+    dispatch(signUpStart());
 
     try {
       const response = await axios.post(
-        "http://localhost:8000/signup", 
-        { 
-          name, 
-          email, 
-          password, 
-          confirmPassword, 
-          role, 
-          address, 
-          phoneNumber: `+216${phoneNumber}`
+        "http://localhost:8000/signup",
+        {
+          name,
+          email,
+          password,
+          confirmPassword,
+          role,
+          address,
+          phoneNumber: `+216${phoneNumber}`,
         },
         { withCredentials: true }
       );
-      dispatch(signUpSuccess(response.data.user)); 
-      toast.success(t('signUp.success')); 
-      navigate("/"); 
+      dispatch(signUpSuccess(response.data.user));
+      toast.success(t("signUp.success"));
+      navigate("/");
     } catch (err) {
-      const errorMessage = err.response?.data?.message || t('signUp.errors.generic');
+      const errorMessage =
+        err.response?.data?.message || t("signUp.errors.generic");
       dispatch(signUpFailure(errorMessage));
-      toast.error(errorMessage); 
+      toast.error(errorMessage);
     }
   };
 
@@ -72,22 +77,24 @@ const SignUp = () => {
         <div className="flex justify-center mb-6">
           <img src={logo} alt="Ecom Logo" className="h-20" />
         </div>
-        <h2 className="text-2xl font-bold text-center mb-4">{t('signUp.title')}</h2>
-        <p className="text-center text-gray-600 mb-6">
-          {t('signUp.subtitle')}
-        </p>
+        <h2 className="text-2xl font-bold text-center mb-4">
+          {t("signUp.title")}
+        </h2>
+        <p className="text-center text-gray-600 mb-6">{t("signUp.subtitle")}</p>
 
         <form onSubmit={handleSignUp} className="space-y-4">
           {/* Name Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">{t('signUp.nameLabel')}</span>
+              <span className="label-text text-gray-600">
+                {t("signUp.nameLabel")}
+              </span>
             </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder={t('signUp.namePlaceholder')}
+              placeholder={t("signUp.namePlaceholder")}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
             />
@@ -96,13 +103,15 @@ const SignUp = () => {
           {/* Email Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">{t('signUp.emailLabel')}</span>
+              <span className="label-text text-gray-600">
+                {t("signUp.emailLabel")}
+              </span>
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('signUp.emailPlaceholder')}
+              placeholder={t("signUp.emailPlaceholder")}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
             />
@@ -111,13 +120,15 @@ const SignUp = () => {
           {/* Password Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">{t('signUp.passwordLabel')}</span>
+              <span className="label-text text-gray-600">
+                {t("signUp.passwordLabel")}
+              </span>
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder={t('signUp.passwordPlaceholder')}
+              placeholder={t("signUp.passwordPlaceholder")}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
               minLength={6}
@@ -127,13 +138,15 @@ const SignUp = () => {
           {/* Confirm Password Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">{t('signUp.confirmPasswordLabel')}</span>
+              <span className="label-text text-gray-600">
+                {t("signUp.confirmPasswordLabel")}
+              </span>
             </label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder={t('signUp.confirmPasswordPlaceholder')}
+              placeholder={t("signUp.confirmPasswordPlaceholder")}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
               minLength={6}
@@ -143,13 +156,15 @@ const SignUp = () => {
           {/* Address Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">{t('signUp.addressLabel')}</span>
+              <span className="label-text text-gray-600">
+                {t("signUp.addressLabel")}
+              </span>
             </label>
             <input
               type="text"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder={t('signUp.addressPlaceholder')}
+              placeholder={t("signUp.addressPlaceholder")}
               className="input input-bordered w-full bg-white border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
               required
             />
@@ -158,7 +173,9 @@ const SignUp = () => {
           {/* Phone Number Field */}
           <div className="form-control">
             <label className="label">
-              <span className="label-text text-gray-600">{t('signUp.phoneLabel')}</span>
+              <span className="label-text text-gray-600">
+                {t("signUp.phoneLabel")}
+              </span>
             </label>
             <div className="flex">
               <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-gray-300 bg-gray-50 text-gray-600">
@@ -168,7 +185,7 @@ const SignUp = () => {
                 type="tel"
                 value={phoneNumber}
                 onChange={handlePhoneChange}
-                placeholder={t('signUp.phonePlaceholder')}
+                placeholder={t("signUp.phonePlaceholder")}
                 className="flex-1 input input-bordered rounded-r-md border-l-0 border-gray-300 bg-white focus:border-primary focus:ring-2 focus:ring-primary/20"
                 maxLength={8}
                 required
@@ -176,7 +193,7 @@ const SignUp = () => {
             </div>
             <label className="label">
               <span className="label-text-alt text-gray-400">
-                {t('signUp.phoneHint')}
+                {t("signUp.phoneHint")}
               </span>
             </label>
           </div>
@@ -187,20 +204,20 @@ const SignUp = () => {
           {/* Sign Up Button */}
           <button
             type="submit"
-            className="btn btn-primary w-full mt-2 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus"
-          >
-            {t('signUp.submitButton')}
+            className="btn btn-primary w-full mt-2 text-white font-semibold py-2 rounded-lg transition-all duration-300 hover:bg-primary-focus">
+            {t("signUp.submitButton")}
           </button>
         </form>
 
         {/* Sign In Section */}
         <div className="text-center mt-4">
-          <p className="mb-2 text-gray-600">{t('signUp.existingAccountPrompt')}</p>
+          <p className="mb-2 text-gray-600">
+            {t("signUp.existingAccountPrompt")}
+          </p>
           <Link
             to="/login"
-            className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900"
-          >
-            {t('signUp.signInLink')}
+            className="btn btn-outline w-full border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400 hover:text-gray-900">
+            {t("signUp.signInLink")}
           </Link>
         </div>
       </div>

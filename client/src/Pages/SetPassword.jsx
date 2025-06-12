@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import logo from "../assets/ecomLogo.png"; // Import logo
+import logo from "../assets/ecomLogo.png";
 
 const SetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -21,7 +21,10 @@ const SetPassword = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post("http://localhost:8000/set-password", { token, password });
+      const response = await axios.post("http://localhost:8000/set-password", {
+        token,
+        password,
+      });
       setSuccess("Password set successfully! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
@@ -39,7 +42,9 @@ const SetPassword = () => {
           <img src={logo} alt="Ecom Logo" className="h-16" />
         </div>
 
-        <h2 className="text-xl font-bold text-center mb-4 text-gray-800">Set Your Password</h2>
+        <h2 className="text-xl font-bold text-center mb-4 text-gray-800">
+          Set Your Password
+        </h2>
 
         {/* Password Input */}
         <input
@@ -63,8 +68,7 @@ const SetPassword = () => {
         <button
           onClick={handleSetPassword}
           className="w-full bg-primary text-white py-2 rounded-md hover:bg-primary-focus focus:outline-none transition duration-300"
-          disabled={loading}
-        >
+          disabled={loading}>
           {loading ? "Setting Password..." : "Set Password"}
         </button>
 
@@ -72,7 +76,9 @@ const SetPassword = () => {
         {error && <p className="text-red-500 mt-4 text-center">{error}</p>}
 
         {/* Success Message */}
-        {success && <p className="text-green-500 mt-4 text-center">{success}</p>}
+        {success && (
+          <p className="text-green-500 mt-4 text-center">{success}</p>
+        )}
       </div>
     </div>
   );

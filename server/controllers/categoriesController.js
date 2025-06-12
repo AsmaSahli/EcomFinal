@@ -29,10 +29,14 @@ exports.deleteCategory = async (req, res) => {
     const category = await Category.findByIdAndDelete(id);
 
     if (!category) {
-      return res.status(404).json({ success: false, message: "Category not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
     }
 
-    res.status(200).json({ success: true, message: "Category deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Category deleted successfully" });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -48,11 +52,13 @@ exports.updateCategory = async (req, res) => {
     const updatedCategory = await Category.findByIdAndUpdate(
       categoryId,
       { name, subcategories },
-      { new: true, runValidators: true } 
+      { new: true, runValidators: true }
     );
 
     if (!updatedCategory) {
-      return res.status(404).json({ success: false, message: "Category not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
     }
 
     res.json({ success: true, category: updatedCategory });
@@ -68,26 +74,39 @@ exports.addSubcategory = async (req, res) => {
 
     // Validate input
     if (!group?.trim() || !items || !Array.isArray(items)) {
-      return res.status(400).json({ success: false, message: "Group and items are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Group and items are required" });
     }
 
     // Filter out empty strings and ensure items is non-empty
-    const validItems = items.filter(item => item?.trim());
+    const validItems = items.filter((item) => item?.trim());
     if (validItems.length === 0) {
-      return res.status(400).json({ success: false, message: "At least one valid item is required" });
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "At least one valid item is required",
+        });
     }
 
     // Find the category
     const category = await Category.findById(id);
     if (!category) {
-      return res.status(404).json({ success: false, message: "Category not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Category not found" });
     }
 
     // Check if the group already exists
-    const existingGroup = category.subcategories.find(sub => sub.group === group);
+    const existingGroup = category.subcategories.find(
+      (sub) => sub.group === group
+    );
     if (existingGroup) {
       // Add new items to the existing group's items array, avoiding duplicates
-      existingGroup.items = [...new Set([...existingGroup.items, ...validItems])];
+      existingGroup.items = [
+        ...new Set([...existingGroup.items, ...validItems]),
+      ];
     } else {
       // Add a new group with the provided items
       category.subcategories.push({ group, items: validItems });

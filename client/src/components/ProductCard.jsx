@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { FaStar, FaRegStar, FaShoppingCart, FaFireAlt } from 'react-icons/fa';
-import { IoMdHeart, IoMdHeartEmpty } from 'react-icons/io';
-import axios from 'axios';
-import { addItem as addWishlistItem, removeItem as removeWishlistItem } from '../redux/user/wishlistSlice';
-import { addItem as addCartItem } from '../redux/user/cartSlice';
-import { useSelector, useDispatch } from 'react-redux';
-import { toast } from 'react-toastify';
-import debounce from 'lodash.debounce';
-import { useTranslation } from 'react-i18next';
+import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
+import { FaStar, FaRegStar, FaShoppingCart, FaFireAlt } from "react-icons/fa";
+import { IoMdHeart, IoMdHeartEmpty } from "react-icons/io";
+import axios from "axios";
+import {
+  addItem as addWishlistItem,
+  removeItem as removeWishlistItem,
+} from "../redux/user/wishlistSlice";
+import { addItem as addCartItem } from "../redux/user/cartSlice";
+import { useSelector, useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import debounce from "lodash.debounce";
+import { useTranslation } from "react-i18next";
 
 const ProductCard = ({ product, sellerOffer }) => {
   const { t, i18n } = useTranslation();
@@ -21,26 +24,32 @@ const ProductCard = ({ product, sellerOffer }) => {
   const [reviewCount, setReviewCount] = useState(0);
   const [activePromotion, setActivePromotion] = useState(null);
 
-  const WISHLIST_API_URL = 'http://localhost:8000/api/wishlist';
-  const CART_API_URL = 'http://localhost:8000/api/cart';
-  const API_URL = 'http://localhost:8000/api';
+  const WISHLIST_API_URL = "http://localhost:8000/api/wishlist";
+  const CART_API_URL = "http://localhost:8000/api/cart";
+  const API_URL = "http://localhost:8000/api";
 
   const isWishlisted = wishlistItems.some(
     (item) =>
       item.productId._id === product._id &&
-      (item.sellerId?._id === sellerOffer?.sellerId?._id || (!item.sellerId && !sellerOffer?.sellerId))
+      (item.sellerId?._id === sellerOffer?.sellerId?._id ||
+        (!item.sellerId && !sellerOffer?.sellerId))
   );
 
   const price = (sellerOffer?.price || product?.price || 0).toFixed(2);
   const stock = sellerOffer?.stock ?? product?.stock ?? 0;
-  const status = stock > 0 ? t('productCard.inStock') : t('productCard.outOfStock');
+  const status =
+    stock > 0 ? t("productCard.inStock") : t("productCard.outOfStock");
   const sellerId = sellerOffer?.sellerId?._id || product?.sellerId?._id;
-  const shopName = sellerOffer?.sellerId?.shopName || product?.sellerId?.shopName || t('productCard.seller');
+  const shopName =
+    sellerOffer?.sellerId?.shopName ||
+    product?.sellerId?.shopName ||
+    t("productCard.seller");
 
   // Truncate product name to 50 characters
-  const truncatedName = product.name.length > 50 
-    ? `${product.name.substring(0, 50)}...` 
-    : product.name;
+  const truncatedName =
+    product.name.length > 50
+      ? `${product.name.substring(0, 50)}...`
+      : product.name;
 
   // Promotion details
   useEffect(() => {
@@ -49,7 +58,8 @@ const ProductCard = ({ product, sellerOffer }) => {
         (promo) =>
           promo.isActive &&
           promo.promotionId?._id &&
-          promo.promotionId._id.toString() === sellerOffer.activePromotion._id.toString()
+          promo.promotionId._id.toString() ===
+            sellerOffer.activePromotion._id.toString()
       );
       setActivePromotion(promotion || sellerOffer.activePromotion);
     } else {
@@ -58,28 +68,45 @@ const ProductCard = ({ product, sellerOffer }) => {
   }, [sellerOffer]);
 
   const hasActivePromotion = !!activePromotion;
-  const promotionName = hasActivePromotion ? activePromotion.promotionId?.name || activePromotion.name || t('product.specialOffer') : '';
-  const discountRate = hasActivePromotion ? activePromotion.promotionId?.discountRate || activePromotion.discountRate || 0 : 0;
-  const promotionImage = hasActivePromotion ? activePromotion.promotionId?.image?.url || activePromotion.promotionImage?.url : null;
+  const promotionName = hasActivePromotion
+    ? activePromotion.promotionId?.name ||
+      activePromotion.name ||
+      t("product.specialOffer")
+    : "";
+  const discountRate = hasActivePromotion
+    ? activePromotion.promotionId?.discountRate ||
+      activePromotion.discountRate ||
+      0
+    : 0;
+  const promotionImage = hasActivePromotion
+    ? activePromotion.promotionId?.image?.url ||
+      activePromotion.promotionImage?.url
+    : null;
   const promotionEndDate = hasActivePromotion
-    ? new Date(activePromotion.promotionId?.endDate || activePromotion.endDate).toLocaleDateString(i18n.language, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
+    ? new Date(
+        activePromotion.promotionId?.endDate || activePromotion.endDate
+      ).toLocaleDateString(i18n.language, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
       })
-    : '';
-  const newPrice = hasActivePromotion && activePromotion.newPrice
-    ? activePromotion.newPrice.toFixed(2)
-    : (price * (1 - discountRate / 100)).toFixed(2);
-  const oldPrice = hasActivePromotion && activePromotion.oldPrice
-    ? activePromotion.oldPrice.toFixed(2)
-    : price;
+    : "";
+  const newPrice =
+    hasActivePromotion && activePromotion.newPrice
+      ? activePromotion.newPrice.toFixed(2)
+      : (price * (1 - discountRate / 100)).toFixed(2);
+  const oldPrice =
+    hasActivePromotion && activePromotion.oldPrice
+      ? activePromotion.oldPrice.toFixed(2)
+      : price;
 
   useEffect(() => {
     const fetchReviews = async () => {
       if (!product?._id || !sellerId) return;
       try {
-        const response = await axios.get(`${API_URL}/reviews/${product._id}/${sellerId}`);
+        const response = await axios.get(
+          `${API_URL}/reviews/${product._id}/${sellerId}`
+        );
         const reviews = response.data;
         const avgRating =
           reviews.length > 0
@@ -91,7 +118,7 @@ const ProductCard = ({ product, sellerOffer }) => {
         setAverageRating(parseFloat(avgRating));
         setReviewCount(reviews.length);
       } catch (err) {
-        console.error('Error fetching reviews:', err);
+        console.error("Error fetching reviews:", err);
         setAverageRating(0);
         setReviewCount(0);
       }
@@ -104,7 +131,7 @@ const ProductCard = ({ product, sellerOffer }) => {
     e.stopPropagation();
 
     if (!currentUser) {
-      toast.error(t('productCard.wishlist.loginRequired'));
+      toast.error(t("productCard.wishlist.loginRequired"));
       return;
     }
 
@@ -123,7 +150,7 @@ const ProductCard = ({ product, sellerOffer }) => {
             data: { userId: currentUser.id, itemId: item._id },
           });
           dispatch(removeWishlistItem(item._id));
-          toast.success(t('productCard.wishlist.successRemove'));
+          toast.success(t("productCard.wishlist.successRemove"));
         }
       } else {
         const response = await axios.post(`${WISHLIST_API_URL}/add`, {
@@ -146,15 +173,15 @@ const ProductCard = ({ product, sellerOffer }) => {
 
         if (newItem) {
           dispatch(addWishlistItem(newItem));
-          toast.success(t('productCard.wishlist.successAdd'));
+          toast.success(t("productCard.wishlist.successAdd"));
         }
       }
     } catch (err) {
-      console.error('Wishlist toggle error:', err);
+      console.error("Wishlist toggle error:", err);
       const errorMessage =
         err.response?.status === 400
           ? err.response.data.message
-          : t('productCard.wishlist.error');
+          : t("productCard.wishlist.error");
       toast.error(errorMessage);
     } finally {
       setIsToggling(false);
@@ -177,12 +204,12 @@ const ProductCard = ({ product, sellerOffer }) => {
     e.stopPropagation();
 
     if (!currentUser) {
-      toast.error(t('productCard.cart.loginRequired'));
+      toast.error(t("productCard.cart.loginRequired"));
       return;
     }
 
     if (stock <= 0) {
-      toast.error(t('productCard.cart.outOfStock'));
+      toast.error(t("productCard.cart.outOfStock"));
       return;
     }
 
@@ -195,9 +222,10 @@ const ProductCard = ({ product, sellerOffer }) => {
         price: parseFloat(newPrice),
       });
 
-      const newItem = response.data.cart.items[response.data.cart.items.length - 1];
+      const newItem =
+        response.data.cart.items[response.data.cart.items.length - 1];
       if (!newItem || !newItem._id) {
-        throw new Error('Invalid cart item response');
+        throw new Error("Invalid cart item response");
       }
 
       dispatch(
@@ -213,10 +241,10 @@ const ProductCard = ({ product, sellerOffer }) => {
           stock,
         })
       );
-      toast.success(t('productCard.cart.success'));
+      toast.success(t("productCard.cart.success"));
     } catch (err) {
-      console.error('Add to cart error:', err);
-      toast.error(err.response?.data?.message || t('productCard.cart.error'));
+      console.error("Add to cart error:", err);
+      toast.error(err.response?.data?.message || t("productCard.cart.error"));
     }
   };
 
@@ -239,19 +267,19 @@ const ProductCard = ({ product, sellerOffer }) => {
     <div
       className="bg-white rounded-lg shadow-sm hover:shadow-md transition-all duration-200 border border-gray-100 relative group overflow-hidden flex flex-col h-full"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+      onMouseLeave={() => setIsHovered(false)}>
       <div className="relative pb-[100%] overflow-hidden">
         <Link
-          to={`/products/${product._id}${sellerId ? `?seller=${sellerId}` : ''}`}
-          className="absolute inset-0"
-        >
+          to={`/products/${product._id}${
+            sellerId ? `?seller=${sellerId}` : ""
+          }`}
+          className="absolute inset-0">
           {primaryImage && (
             <img
               src={primaryImage}
               alt={product.name}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
-                hoverImage && isHovered ? 'opacity-0' : 'opacity-100'
+                hoverImage && isHovered ? "opacity-0" : "opacity-100"
               }`}
               loading="lazy"
             />
@@ -261,14 +289,16 @@ const ProductCard = ({ product, sellerOffer }) => {
               src={hoverImage}
               alt={product.name}
               className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-200 ${
-                isHovered ? 'opacity-100' : 'opacity-0'
+                isHovered ? "opacity-100" : "opacity-0"
               }`}
               loading="lazy"
             />
           )}
           {!primaryImage && (
             <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
-              <span className="text-gray-400 text-sm">{t('product.noImage')}</span>
+              <span className="text-gray-400 text-sm">
+                {t("product.noImage")}
+              </span>
             </div>
           )}
         </Link>
@@ -345,10 +375,9 @@ const ProductCard = ({ product, sellerOffer }) => {
           <span
             className={`text-[10px] px-2 py-1 rounded-full font-medium ${
               stock > 0
-                ? 'text-green-800 bg-green-100/90 backdrop-blur-[1px]'
-                : 'text-gray-600 bg-gray-100/90 backdrop-blur-[1px]'
-            } ${hasActivePromotion ? 'ml-20' : ''}`}
-          >
+                ? "text-green-800 bg-green-100/90 backdrop-blur-[1px]"
+                : "text-gray-600 bg-gray-100/90 backdrop-blur-[1px]"
+            } ${hasActivePromotion ? "ml-20" : ""}`}>
             {status}
           </span>
           <button
@@ -356,11 +385,14 @@ const ProductCard = ({ product, sellerOffer }) => {
             disabled={isToggling}
             className={`p-1.5 rounded-full transition-all duration-300 ${
               isWishlisted
-                ? 'text-red-500 bg-white/80 shadow-sm'
-                : 'text-gray-400 hover:text-red-500 bg-white/80 hover:bg-white/90'
-            } ${isToggling ? 'opacity-50 cursor-not-allowed' : ''}`}
-            aria-label={isWishlisted ? t('productCard.wishlist.remove') : t('productCard.wishlist.add')}
-          >
+                ? "text-red-500 bg-white/80 shadow-sm"
+                : "text-gray-400 hover:text-red-500 bg-white/80 hover:bg-white/90"
+            } ${isToggling ? "opacity-50 cursor-not-allowed" : ""}`}
+            aria-label={
+              isWishlisted
+                ? t("productCard.wishlist.remove")
+                : t("productCard.wishlist.add")
+            }>
             {isToggling ? (
               <span className="loading loading-spinner loading-xs"></span>
             ) : isWishlisted ? (
@@ -374,9 +406,10 @@ const ProductCard = ({ product, sellerOffer }) => {
 
       <div className="p-3 flex-grow flex flex-col">
         <Link
-          to={`/products/${product._id}${sellerId ? `?seller=${sellerId}` : ''}`}
-          className="block mb-1 flex-grow"
-        >
+          to={`/products/${product._id}${
+            sellerId ? `?seller=${sellerId}` : ""
+          }`}
+          className="block mb-1 flex-grow">
           <h3 className="font-medium text-gray-900 line-clamp-2 hover:text-[#4C0ADA] transition-colors text-sm h-10 flex items-center">
             {truncatedName}
           </h3>
@@ -384,11 +417,10 @@ const ProductCard = ({ product, sellerOffer }) => {
 
         {sellerId && (
           <p className="text-xs text-gray-500 mb-1 truncate">
-            {t('productCard.soldBy')}:{' '}
+            {t("productCard.soldBy")}:{" "}
             <Link
               to={`/sellers/${sellerId}/products`}
-              className="text-[#4C0ADA] hover:underline"
-            >
+              className="text-[#4C0ADA] hover:underline">
               {shopName}
             </Link>
           </p>
@@ -397,32 +429,38 @@ const ProductCard = ({ product, sellerOffer }) => {
         <div className="flex items-center mb-1.5">
           <div className="flex mr-1">{renderStars()}</div>
           <span className="text-xs text-gray-500 ml-1">
-            {averageRating.toFixed(1)} ({reviewCount}{' '}
-            {reviewCount === 1 ? t('productCard.reviews.single') : t('productCard.reviews.multiple')})
+            {averageRating.toFixed(1)} ({reviewCount}{" "}
+            {reviewCount === 1
+              ? t("productCard.reviews.single")
+              : t("productCard.reviews.multiple")}
+            )
           </span>
         </div>
 
         <div className="flex items-center justify-between mt-auto">
           <div className="flex items-baseline gap-1.5">
-            <div className="text-base font-bold text-gray-900">
-              ${newPrice}
-            </div>
+            <div className="text-base font-bold text-gray-900">${newPrice}</div>
             {hasActivePromotion && (
-              <div className="text-xs text-gray-500 line-through">${oldPrice}</div>
+              <div className="text-xs text-gray-500 line-through">
+                ${oldPrice}
+              </div>
             )}
           </div>
           <button
             onClick={handleAddToCart}
             className={`px-2 py-1.5 rounded-md text-xs flex items-center gap-1 transition-all duration-200 ${
               stock > 0
-                ? 'bg-[#4C0ADA] text-white hover:bg-[#3A0AA5] shadow-md hover:shadow-lg active:scale-95'
-                : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                ? "bg-[#4C0ADA] text-white hover:bg-[#3A0AA5] shadow-md hover:shadow-lg active:scale-95"
+                : "bg-gray-200 text-gray-500 cursor-not-allowed"
             }`}
             disabled={stock <= 0}
-            aria-label={t('productCard.cart.add')}
-          >
+            aria-label={t("productCard.cart.add")}>
             <FaShoppingCart className="w-3 h-3" />
-            <span className="hidden sm:inline">{stock > 0 ? t('productCard.cart.add') : t('productCard.cart.soldOut')}</span>
+            <span className="hidden sm:inline">
+              {stock > 0
+                ? t("productCard.cart.add")
+                : t("productCard.cart.soldOut")}
+            </span>
           </button>
         </div>
       </div>

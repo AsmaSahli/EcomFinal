@@ -25,7 +25,12 @@ module.exports = {
       });
 
       await newSeller.save();
-      res.status(201).json({ message: "Seller registration request submitted successfully", seller: newSeller });
+      res
+        .status(201)
+        .json({
+          message: "Seller registration request submitted successfully",
+          seller: newSeller,
+        });
     } catch (error) {
       next(error);
     }
@@ -33,12 +38,12 @@ module.exports = {
   getSellerDetails: async (req, res, next) => {
     try {
       const { sellerId } = req.params;
-  
+
       const seller = await Seller.findById(sellerId).select("-password -__v");
       if (!seller) {
         return next(e.errorHandler(404, "Seller not found"));
       }
-  
+
       res.status(200).json({ seller });
     } catch (error) {
       next(error);
@@ -46,11 +51,10 @@ module.exports = {
   },
   getPendingSellersCount: async (req, res, next) => {
     try {
-      const count = await Seller.countDocuments({ status: 'pending' });
+      const count = await Seller.countDocuments({ status: "pending" });
       res.status(200).json({ count });
     } catch (error) {
       next(error);
     }
   },
-
 };
