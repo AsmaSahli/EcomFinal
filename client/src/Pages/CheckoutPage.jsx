@@ -13,7 +13,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 
 // Initialize Stripe with publishable key
 
-
+const stripePromise = loadStripe("pk_test_51RXB8eR0JuzwW2NjHpnGlvorMUFn3PHqq57fFASeLWm7jL4oT4CdvOYRfVJdEgNNscQmkwXA0TXAAOA14ifTEfzn00FulqPdkB");
 const CheckoutPage = () => {
 
 
