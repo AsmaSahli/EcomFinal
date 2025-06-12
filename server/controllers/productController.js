@@ -636,14 +636,17 @@ exports.searchProducts = async (req, res) => {
       limit = 20,
     } = req.query;
 
+    const trimmedQuery = q.trim(); // Trim whitespace for reference search
+    console.log('Search query:', trimmedQuery); // Debug log
+
     let query = {};
 
     // Text search
-    if (q) {
+    if (trimmedQuery) {
       query.$or = [
-        { name: { $regex: q, $options: 'i' } },
-        { description: { $regex: q, $options: 'i' } },
-        { reference: { $regex: q, $options: 'i' } },
+        { name: { $regex: trimmedQuery, $options: 'i' } },
+        { description: { $regex: trimmedQuery, $options: 'i' } },
+        { reference: { $regex: trimmedQuery, $options: 'i' } },
       ];
     }
 
@@ -673,7 +676,7 @@ exports.searchProducts = async (req, res) => {
       // Lookup seller details to populate shopName
       {
         $lookup: {
-          from: 'users', // Ensure this is the correct collection (e.g., 'users' or 'sellers')
+          from: 'users',
           localField: 'sellers.sellerId',
           foreignField: '_id',
           as: 'sellers.sellerDetails',
@@ -684,7 +687,7 @@ exports.searchProducts = async (req, res) => {
       {
         $unwind: {
           path: '$sellers.sellerDetails',
-          preserveNullAndEmptyArrays: true, // Keep products if seller details are missing
+          preserveNullAndEmptyArrays: true,
         },
       },
 
@@ -794,7 +797,7 @@ exports.searchProducts = async (req, res) => {
           sellers: {
             $push: {
               sellerId: '$sellers.sellerId',
-              shopName: '$sellers.sellerDetails.shopName', // Ensure shopName is included
+              shopName: '$sellers.sellerDetails.shopName',
               price: '$sellers.price',
               effectivePrice: '$sellers.effectivePrice',
               stock: '$sellers.stock',
@@ -817,15 +820,13 @@ exports.searchProducts = async (req, res) => {
       { $limit: Number(limit) },
     ];
 
-    const products = await Product.aggregate(pipeline);
-
-    // Count total matching products
+    // Define countPipeline for total count
     const countPipeline = [
       { $match: query },
       { $unwind: '$sellers' },
       {
         $lookup: {
-          from: 'users', // Ensure this is the correct collection
+          from: 'users',
           localField: 'sellers.sellerId',
           foreignField: '_id',
           as: 'sellers.sellerDetails',
@@ -913,6 +914,9 @@ exports.searchProducts = async (req, res) => {
       { $group: { _id: '$_id' } },
       { $count: 'total' },
     ];
+
+    const products = await Product.aggregate(pipeline);
+    console.log('Found products:', products.length); // Debug log
 
     const countResult = await Product.aggregate(countPipeline);
     const totalProducts = countResult.length > 0 ? countResult[0].total : 0;

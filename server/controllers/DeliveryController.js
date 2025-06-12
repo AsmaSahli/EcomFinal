@@ -147,6 +147,7 @@ exports.getAllDeliveries = async (req, res) => {
       sellerId,
       orderId,
       suborderId,
+      deliveryPersonId,
       page = 1,
       limit = 10,
       sortBy = 'createdAt',
@@ -159,6 +160,7 @@ exports.getAllDeliveries = async (req, res) => {
     if (sellerId) query.sellerId = sellerId;
     if (orderId) query.orderId = orderId;
     if (suborderId) query.suborderId = suborderId;
+    if (deliveryPersonId) query.deliveryPersonId = deliveryPersonId;
 
     // Calculate pagination
     const pageNum = parseInt(page, 10);
@@ -174,15 +176,15 @@ exports.getAllDeliveries = async (req, res) => {
     const deliveries = await Delivery.find(query)
       .populate({
         path: 'orderId',
-        select: 'userId shippingInfo deliveryMethod total', // Include deliveryMethod
+        select: 'userId shippingInfo deliveryMethod total',
         populate: [
           {
             path: 'userId',
             select: 'firstName lastName email'
           },
           {
-            path: 'shippingInfo.address', // Ensure address is populated if needed
-            model: 'Order' // Address is embedded, so no separate model population
+            path: 'shippingInfo.address',
+            model: 'Order'
           }
         ]
       })
@@ -196,10 +198,10 @@ exports.getAllDeliveries = async (req, res) => {
       })
       .populate({
         path: 'suborderId',
-        select: 'sellerId items subtotal status', // Populate suborder details
+        select: 'sellerId items subtotal status',
         populate: {
           path: 'items.productId',
-          select: 'name price' // Populate product details in suborder items
+          select: 'name price'
         }
       })
       .sort({ [sortField]: sortDirection })

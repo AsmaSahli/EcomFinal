@@ -718,7 +718,8 @@
     "paymentMethods": {
       "cod": "Cash on Delivery",
       "credit": "Credit Card",
-      "paypal": "PayPal"
+      "paypal": "PayPal",
+      "stripe":"Stripe"
     },
     "deliveryMethods": {
       "standard": "Standard Delivery",

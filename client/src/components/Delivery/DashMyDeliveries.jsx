@@ -88,7 +88,8 @@ const DashMyDeliveries = () => {
       setLoading(true);
       const response = await axios.get(`${API_BASE_URL}/delivery`, {
         params: {
-          status: 'pending',
+
+          status: ['pending', 'cancelled'], 
           page: pagination.page,
           limit: pagination.limit
         }

@@ -91,7 +91,7 @@ const DashAssignedDeliveries = () => {
       const response = await axios.get(`${API_BASE_URL}/delivery`, {
         params: {
           deliveryPersonId: currentUser.id,
-          status: ['assigned', 'in_progress'], // Modified to fetch both assigned and in_progress
+          status: ['assigned', 'in_progress'], 
           page: pagination.page,
           limit: pagination.limit
         }
@@ -332,7 +332,7 @@ const DashAssignedDeliveries = () => {
                               <FiRefreshCw className="h-4 w-4" />
                             </button>
                             <button
-                              onClick={() => handleStatusUpdate(delivery._id, 'cancelled')}
+                              onClick={() => handleStatusUpdate(delivery._id, 'pending')}
                               className="p-1.5 bg-red-100 text-red-600 rounded-md hover:bg-red-200"
                               title="Cancel Delivery"
                             >

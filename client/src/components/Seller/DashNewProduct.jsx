@@ -73,28 +73,30 @@ const DashAddInventory = () => {
       fetchData();
     }, []);
 
-    const handleReferenceSearch = async (query) => {
-      if (!query || query.length < 3) {
-        setSearchResults([]);
-        setShowSearchResults(false);
-        return;
-      }
-      
-      try {
-        setLoading(prev => ({ ...prev, searching: true }));
-        const response = await axios.get(`${API_BASE_URL}/products/search`, {
-          params: { query }
-        });
-        setSearchResults(response.data || []);
-        setShowSearchResults(true);
-      } catch (err) {
-        setSearchResults([]);
-        setError(err.response?.data?.message || err.message);
-      } finally {
-        setLoading(prev => ({ ...prev, searching: false }));
-      }
-    };
-
+const handleReferenceSearch = async (query) => {
+  if (!query || query.length < 3) {
+    setSearchResults([]);
+    setShowSearchResults(false);
+    return;
+  }
+  
+  try {
+    setLoading(prev => ({ ...prev, searching: true }));
+    console.log('Searching for:', query); // Debug log
+    const response = await axios.get(`${API_BASE_URL}/products/search`, {
+      params: { q: query } // Use 'q' instead of 'query'
+    });
+    console.log('Search response:', response.data); // Debug log
+    setSearchResults(response.data.products || []); // Use response.data.products
+    setShowSearchResults(true);
+  } catch (err) {
+    console.error('Search error:', err); // Debug log
+    setSearchResults([]);
+    setError(err.response?.data?.message || err.message);
+  } finally {
+    setLoading(prev => ({ ...prev, searching: false }));
+  }
+};
     const selectProduct = (product) => {
       setIsExistingProduct(true);
       setSelectedExistingProduct(product);

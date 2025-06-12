@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   FaStar, FaRegStar, FaShoppingCart, FaHome, FaCheck, FaFireAlt
@@ -31,13 +31,14 @@ const ProductDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState('description');
+  const [activeTab, setActiveTab] = useState(location.state?.openReviews ? 'reviews' : 'description');
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [showPromotionModal, setShowPromotionModal] = useState(false);
+  const reviewsRef = useRef(null);
 
   const API_URL = 'http://localhost:8000/api';
   const queryParams = new URLSearchParams(location.search);
@@ -95,6 +96,13 @@ const ProductDetailsPage = () => {
       setIsWishlisted(wishlisted);
     }
   }, [product, wishlistItems, currentUser, currentSeller]);
+
+  useEffect(() => {
+    if (location.state?.openReviews && reviewsRef.current && !loading) {
+      // Scroll to reviews section smoothly
+      reviewsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [location.state, loading]);
 
   const getKeyFeatures = () => {
     if (!product?.description) return [];
@@ -567,7 +575,7 @@ const ProductDetailsPage = () => {
             </div>
           </div>
 
-          <div className="border-t border-gray-200">
+          <div className="border-t border-gray-200" ref={reviewsRef}>
             <div className="flex border-b border-gray-200 overflow-x-auto">
               {['description', 'specifications', 'reviews'].map((tab) => (
                 <button

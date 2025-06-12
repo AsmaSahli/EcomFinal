@@ -16,7 +16,7 @@ import { Elements, CardElement, useStripe, useElements } from '@stripe/react-str
 const stripePromise = loadStripe("pk_test_51RXB8eR0JuzwW2NjHpnGlvorMUFn3PHqq57fFASeLWm7jL4oT4CdvOYRfVJdEgNNscQmkwXA0TXAAOA14ifTEfzn00FulqPdkB");
 const CheckoutPage = () => {
 
-
+ 
   const { t } = useTranslation();
   const { currentUser } = useSelector((state) => state.user);
   const cartItems = useSelector((state) => state.cart?.items || []);

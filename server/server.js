@@ -2,12 +2,12 @@ const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
-const jwt = require("jsonwebtoken"); // Ensure jsonwebtoken is installed
+const jwt = require("jsonwebtoken"); 
 
 require("dotenv").config();
 require("./config/mongoose");
 
-const port = process.env.PORT || 8000; // Default to 8000 if PORT is not set
+const port = process.env.PORT || 8000; 
 
 // CORS configuration
 app.use(cors({
@@ -36,6 +36,7 @@ const cartRoutes = require('./routes/Cart.routes');
 const orderRoutes = require('./routes/Order.routes');
 const wishlistRoutes = require('./routes/Wishlist.routes');
 const paymenetRoutes = require('./routes/payment.routes');
+app.use('/uploads', express.static('uploads'));
 
 app.use('/api/promotions', promotionRoutes);
 app.use('/api/reviews', reviewRoutes);
@@ -46,28 +47,48 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/payments', paymenetRoutes);
 
-// Metabase Embed Token Route
-const METABASE_SITE_URL = "http://localhost:3000"; // Your Metabase instance URL
-const METABASE_SECRET_KEY = "a0c561f13d99ba395a05e50a6b0ed47102c97459335923a8a3a97840c59101cb"; // Your secret key
+
+const METABASE_SITE_URL = "http://localhost:3000"; 
+const METABASE_SECRET_KEY = "a0c561f13d99ba395a05e50a6b0ed47102c97459335923a8a3a97840c59101cb"; 
 
 app.get('/api/metabase-embed-token/:dashboardId', (req, res) => {
   try {
-    const dashboardId = req.params.dashboardId;
-    const {  startDate, endDate } = req.query; // Optional filter parameters
+    const dashboardId = parseInt(req.params.dashboardId, 10); 
+    const { startDate, endDate } = req.query; 
 
-      const payload = {
-        resource: { dashboard: 2 },
-        params: {},
-        exp: Math.round(Date.now() / 1000) + (10 * 60) // 10 minute expiration
-      };
-      const token = jwt.sign(payload, METABASE_SECRET_KEY);
-          const embedUrl = `${METABASE_SITE_URL}/embed/dashboard/${token}#bordered=true&titled=true`;
-          res.json({ embedUrl });
-        } catch (error) {
-          console.error('Error generating embed token:', error);
-          res.status(500).json({ success: false, message: 'Failed to generate embed URL' });
-        }
-      });
+
+    if (!dashboardId || isNaN(dashboardId)) {
+      return res.status(400).json({ success: false, message: 'Invalid dashboard ID' });
+    }
+
+    const allowedDashboards = [2, 4];
+    if (!allowedDashboards.includes(dashboardId)) {
+      return res.status(403).json({ success: false, message: 'Unauthorized dashboard access' });
+    }
+
+
+    const payload = {
+      resource: { dashboard: dashboardId },
+      params: {
+        ...(startDate && { start_date: startDate }), 
+        ...(endDate && { end_date: endDate }),      
+      },
+      exp: Math.round(Date.now() / 1000) + (10 * 60), 
+    };
+
+
+    const token = jwt.sign(payload, METABASE_SECRET_KEY);
+
+
+    const embedUrl = `${METABASE_SITE_URL}/embed/dashboard/${token}#bordered=true&titled=true`;
+
+
+    res.json({ success: true, embedUrl });
+  } catch (error) {
+    console.error('Error generating embed token:', error);
+    res.status(500).json({ success: false, message: 'Failed to generate embed URL' });
+  }
+});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

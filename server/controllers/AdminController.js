@@ -129,76 +129,65 @@ exports.toggleUserStatus = async (req, res, next) => {
         next(error);
     }
 };
-
-exports.generateReport = async (req, res, next) => {
+// Admin Suspends Seller or Delivery Person
+exports.suspendUser = async (req, res, next) => {
     try {
-        const { stats, recentUsers } = req.body;
+        const { userId } = req.params;
 
-        // Format data with more context
-        const dataSummary = `
-            ### PLATFORM PERFORMANCE DATA ###
-            
-            USER BASE:
-            - Total Registered Users: ${stats.totalUsers || 0}
-            - New Users (7-day period): ${stats.newUsers || 0}
-            - Active Sellers: ${stats.activeSellers || 0} (${Math.round((stats.activeSellers / stats.totalUsers) * 100)}% of total users)
-            
-            PENDING ACTIONS:
-            - Seller Applications Pending: ${stats.pendingSellers || 0}
-            - Delivery Partner Applications: ${stats.pendingDeliveries || 0}
-            
-            TRANSACTION METRICS:
-            - Completed Deliveries: ${stats.completedDeliveries || 0}
-            - Platform Revenue: $${stats.revenue || 0}
-            
-            RECENT USER ACTIVITY (Last 5 entries):
-            ${recentUsers.map(u => `
-            - ${u.name} (${u.email})
-              Role: ${u.role}
-              Status: ${u.status}
-              ${u.lastActivity ? `Last Active: ${u.lastActivity}` : ''}
-            `).join('')}
-            `;
+        const user = await User.findById(userId);
+        if (!user || (user.role !== "seller" && user.role !== "delivery")) {
+            return res.status(404).json({ message: "User not found or not eligible for suspension" });
+        }
 
-        // Enhanced prompt with specific instructions
-        const prompt = `
-            You are a senior business analyst preparing an executive dashboard report. 
-            Create a comprehensive, professional report with these sections:
-    
-            1. EXECUTIVE SUMMARY (3-4 sentences highlighting key takeaways)
-            2. PERFORMANCE METRICS (tabular data visualization)
-            3. GROWTH ANALYSIS (trends with percentage changes)
-            4. OPERATIONAL BOTTLENECKS (identified issues)
-            5. STRATEGIC RECOMMENDATIONS (3-5 actionable items)
-            6. USER ENGAGEMENT STRATEGIES (specific to recent activity)
-            7. FINANCIAL PROJECTIONS (next quarter estimates)
-    
-            Format requirements:
-            - Use markdown formatting
-            - Include emojis for visual hierarchy (🎯, ⚠️, 📈)
-            - Add relevant KPIs and percentages
-            - Suggest 3 key focus areas for immediate action
-    
-            Data to analyze:
-            ${dataSummary}
-            `;
+        // Update user status to suspended and deactivate account
+        user.status = "suspended";
+        user.isActive = false;
+        await user.save();
 
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
-
-        res.json({
-            success: true,
-            report: text
+        // Send suspension email
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: user.email,
+            subject: "Your Account has been Suspended",
+            html: `<p>Your account has been suspended.</p>
+                   <p>Please contact support for more information.</p>`
         });
 
+        res.json({ message: "User suspended successfully", userId: user._id });
     } catch (error) {
-        console.error('Enhanced report error:', error);
-        res.status(500).json({
-            success: false,
-            message: "Report generation failed",
-            error: process.env.NODE_ENV === 'development' ? error.message : undefined
-        });
+        next(error);
     }
 };
+exports.cancelSuspension = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+
+        const user = await User.findById(userId);
+        if (!user || (user.role !== "seller" && user.role !== "delivery")) {
+            return res.status(404).json({ message: "User not found or not eligible for cancellation of suspension" });
+        }
+
+        if (user.status !== "suspended") {
+            return res.status(400).json({ message: "User is not suspended" });
+        }
+
+        // Update user status to approved and activate account
+        user.status = "approved";
+        user.isActive = true;
+        await user.save();
+
+        // Send cancellation email
+        await transporter.sendMail({
+            from: process.env.EMAIL_USER,
+            to: user.email,
+            subject: "Your Account Suspension has been Canceled",
+            html: `<p>Your account suspension has been canceled, and your account is now active.</p>
+                   <p>You can resume using your account as usual.</p>`
+        });
+
+        res.json({ message: "User suspension canceled successfully", userId: user._id });
+    } catch (error) {
+        next(error);
+    }
+};
+

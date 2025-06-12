@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaEdit, FaTag, FaFireAlt, FaPercentage } from 'react-icons/fa';
 import { FiZoomIn, FiZoomOut } from 'react-icons/fi';
 import axios from 'axios';
-import ProductPromotions from './ProductPromotions';
+
 import ProductReviews from './ProductReviews';
 import ProductDetailsTab from './ProductDetailsTab';
 
@@ -338,12 +338,6 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
                   Details
                 </button>
                 <button
-                  onClick={() => setActiveTab('promotions')}
-                  className={`px-4 py-2 text-sm font-medium ${activeTab === 'promotions' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
-                >
-                  Promotions
-                </button>
-                <button
                   onClick={() => setActiveTab('reviews')}
                   className={`px-4 py-2 text-sm font-medium ${activeTab === 'reviews' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
                 >
@@ -365,13 +359,7 @@ const ProductViewModal = ({ product, onClose, onUpdate }) => {
                 loading={loading}
               />
             )}
-            {activeTab === 'promotions' && (
-              <ProductPromotions
-                productId={product._id}
-                sellerId={sellerInfo?._id}
-                onUpdate={onUpdate}
-              />
-            )}
+
             {activeTab === 'reviews' && (
               <ProductReviews
                 productId={product._id}

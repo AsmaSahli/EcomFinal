@@ -7,7 +7,6 @@ import {
   FaTruck,
   FaDollarSign,
   FaUserEdit,
-  FaUserTimes,
   FaSearch,
   FaUserCheck,
   FaUserClock,
@@ -16,7 +15,6 @@ import {
   FaMapMarkerAlt,
   FaCar
 } from "react-icons/fa";
-
 
 const DashOverview = () => {
   const [stats, setStats] = useState({
@@ -63,27 +61,6 @@ const DashOverview = () => {
     fetchDashboardData();
   }, []);
 
-  const handleDeactivate = async (userId) => {
-    try {
-      await axios.patch(`http://localhost:8000/user/${userId}/deactivate`);
-      // Refresh data after deactivation
-      const fetchData = async () => {
-        const [buyersResponse, sellersResponse, deliveriesResponse] = await Promise.all([
-          axios.get("http://localhost:8000/users?limit=5&sort=-createdAt&role=buyer"),
-          axios.get("http://localhost:8000/users?limit=5&sort=-createdAt&role=seller"),
-          axios.get("http://localhost:8000/users?limit=5&sort=-createdAt&role=delivery")
-        ]);
-        setRecentBuyers(buyersResponse.data.users);
-        setRecentSellers(sellersResponse.data.users);
-        setRecentDeliveries(deliveriesResponse.data.users);
-      };
-      fetchData();
-    } catch (err) {
-      setError("Failed to deactivate user");
-      console.error("Deactivation error:", err);
-    }
-  };
-
   const renderBuyersTable = () => {
     return (
       <div className="overflow-x-auto">
@@ -94,7 +71,6 @@ const DashOverview = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -126,20 +102,11 @@ const DashOverview = () => {
                       {user.isActive ? 'active' : 'inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button 
-                      
-                      className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                      disabled={!user.isActive}
-                    >
-                      <FaUserTimes />
-                    </button>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
                   No clients found
                 </td>
               </tr>
@@ -160,7 +127,6 @@ const DashOverview = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -192,20 +158,11 @@ const DashOverview = () => {
                       {user.isActive ? 'active' : 'inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button 
-                      onClick={() => handleDeactivate(user._id)}
-                      className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                      disabled={!user.isActive}
-                    >
-                      <FaUserTimes />
-                    </button>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="4" className="px-6 py-4 text-center text-gray-500">
                   No sellers found
                 </td>
               </tr>
@@ -227,7 +184,6 @@ const DashOverview = () => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vehicle</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -241,7 +197,7 @@ const DashOverview = () => {
                         alt="Profile"
                         className="w-8 h-8 rounded-full object-cover"
                       />
-                      <span className="font-medium text-gray-900">{user.name || 'N/A'}</span>
+
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-500">{user.email}</td>
@@ -265,20 +221,11 @@ const DashOverview = () => {
                       {user.isActive ? 'active' : 'inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button 
-                      onClick={() => handleDeactivate(user._id)}
-                      className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                      disabled={!user.isActive}
-                    >
-                      <FaUserTimes />
-                    </button>
-                  </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                <td colSpan="5" className="px-6 py-4 text-center text-gray-500">
                   No delivery persons found
                 </td>
               </tr>
@@ -299,8 +246,8 @@ const DashOverview = () => {
 
   return (
     <div className="space-y-6">
-{/* Welcome Banner */}
-<div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white rounded-xl p-6 mb-6 shadow-lg">
+      {/* Welcome Banner */}
+      <div className="bg-gradient-to-r from-gray-800 to-gray-700 text-white rounded-xl p-6 mb-6 shadow-lg">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-2xl font-bold mb-2">Admin Dashboard</h2>
@@ -363,15 +310,12 @@ const DashOverview = () => {
             <span className="ml-2 text-gray-500">this month</span>
           </div>
         </div>
-
       </div>
-
 
       {/* Recent Users Table with Tabs */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
           <h3 className="text-lg font-semibold text-gray-800">Recent Users</h3>
-
         </div>
 
         {/* Tabs */}
@@ -421,84 +365,6 @@ const DashOverview = () => {
         {activeTab === "sellers" && renderSellersTable()}
         {activeTab === "deliveries" && renderDeliveriesTable()}
       </div>
-
- {/* Quick Stats Sections */}
- <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sellers Summary */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
-            <h3 className="text-lg font-semibold text-gray-800">Sellers Overview</h3>
-            <Link
-              to="/admin/sellers"
-              className="text-sm text-gray-700 font-medium hover:underline whitespace-nowrap"
-            >
-              View All Sellers
-            </Link>
-          </div>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Active Sellers</span>
-              <span className="font-medium">{stats.activeSellers}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Pending Approvals</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{stats.pendingDeliveries}</span>
-                <span className="text-yellow-500"><FaUserClock /></span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Verified Accounts</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{stats.completedDeliveries}</span>
-                <span className="text-green-500"><FaUserCheck /></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Deliveries Summary */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-4 gap-4">
-            <h3 className="text-lg font-semibold text-gray-800">Deliveries Overview</h3>
-            <Link
-              to="/admin/deliveries"
-              className="text-sm text-gray-700 font-medium hover:underline whitespace-nowrap"
-            >
-              View All Deliveries
-            </Link>
-          </div>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Active Delivery Persons</span>
-              <span className="font-medium">{stats.pendingDeliveries}</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Pending Approvals</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{stats.newUsers}</span>
-                <span className="text-yellow-500"><FaUserClock /></span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Verified Accounts</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{stats.completedDeliveries}</span>
-                <span className="text-green-500"><FaUserCheck /></span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      {showReportModal && (
-  <ReportModal 
-    onClose={() => setShowReportModal(false)}
-    stats={stats}
-    recentBuyers={recentBuyers}
-    recentSellers={recentSellers}
-    recentDeliveries={recentDeliveries}
-  />
-)}
     </div>
   );
 };

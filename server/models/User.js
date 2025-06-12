@@ -45,7 +45,7 @@ const SellerSchema = new mongoose.Schema({
     logo: { type: String },
     status: {
         type: String,
-        enum: ["pending", "under_review", "approved", "rejected"],
+        enum: ["pending", "under_review", "approved", "rejected", "suspended"],
         default: "pending",
     },
     rejectionReason: { type: String }, 
@@ -60,7 +60,7 @@ const DeliveryPersonSchema = new mongoose.Schema({
     reasonForRejection: { type: String },
     status: {
         type: String,
-        enum: ["pending", "under_review", "approved", "rejected"],
+        enum: ["pending", "under_review", "approved", "rejected", "suspended"],
         default: "pending",
     },
 

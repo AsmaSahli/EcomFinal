@@ -27,21 +27,21 @@ const DashSettings = () => {
         <button
           onClick={() => setActiveTab('language')}
           className={`px-4 py-2 font-medium ${activeTab === 'language' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-          disabled
+          
         >
           Language
         </button>
         <button
           onClick={() => setActiveTab('appearance')}
           className={`px-4 py-2 font-medium ${activeTab === 'appearance' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-          disabled
+          
         >
           Appearance
         </button>
         <button
           onClick={() => setActiveTab('data')}
           className={`px-4 py-2 font-medium ${activeTab === 'data' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-          disabled
+          
         >
           Data Management
         </button>

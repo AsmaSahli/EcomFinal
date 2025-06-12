@@ -188,24 +188,7 @@ const SellerDashboard = () => {
                 )}
               </Link>
             </li>
-            <li>
-              <Link 
-                to="/seller-dashboard?tab=customers" 
-                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'customers' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
-              >
-                <FaUsers className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
-                {sidebarOpen && t('sellerDashboard.sidebar.customers')}
-              </Link>
-            </li>
-            <li>
-              <Link 
-                to="/seller-dashboard?tab=sales" 
-                className={`flex items-center px-4 py-3 rounded-lg ${activeTab === 'sales' ? 'bg-[#4A12C4] text-white font-medium' : 'hover:bg-[#4A12C4] hover:text-white'} transition`}
-              >
-                <FaDollarSign className={`${sidebarOpen ? 'mr-3' : 'mx-auto'} text-purple-200`} />
-                {sidebarOpen && t('sellerDashboard.sidebar.sales')}
-              </Link>
-            </li>
+
             <li>
               <Link 
                 to="/seller-dashboard?tab=analytics" 

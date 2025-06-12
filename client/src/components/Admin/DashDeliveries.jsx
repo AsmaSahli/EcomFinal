@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { FaCheck, FaUsers, FaTimes, FaInfo, FaTrash, FaTruck, FaChartLine, FaSearch, FaBan, FaFilePdf, FaDownload } from "react-icons/fa";
+import { FaCheck, FaUsers, FaTimes, FaInfo, FaTrash, FaTruck, FaSearch, FaBan, FaFilePdf, FaDownload, FaUndo } from "react-icons/fa";
 
 const DashDeliveries = () => {
   const [deliveries, setDeliveries] = useState([]);
@@ -12,6 +12,9 @@ const DashDeliveries = () => {
 
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [deliveryToReject, setDeliveryToReject] = useState(null);
 
   const [stats, setStats] = useState({
     total: 0,
@@ -60,21 +63,34 @@ const DashDeliveries = () => {
     }
   };
 
-  const handleReject = async (userId) => {
-    const reason = prompt('Please enter the reason for rejection:');
-    if (!reason) return;
+  const openRejectModal = (deliveryId) => {
+    setDeliveryToReject(deliveryId);
+    setIsRejectModalOpen(true);
+  };
+
+  const closeRejectModal = () => {
+    setIsRejectModalOpen(false);
+    setRejectionReason("");
+    setDeliveryToReject(null);
+  };
+
+  const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+      alert('Please enter a rejection reason');
+      return;
+    }
 
     try {
-      await axios.put(`http://localhost:8000/reject/${userId}`, { reason }, {
+      await axios.put(`http://localhost:8000/reject/${deliveryToReject}`, { rejectionReason }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
 
       setDeliveries(deliveries.map(delivery =>
-        delivery._id === userId ? {
+        delivery._id === deliveryToReject ? {
           ...delivery,
           status: 'rejected',
           isActive: false,
-          rejectionReason: reason
+          rejectionReason
         } : delivery
       ));
 
@@ -82,6 +98,7 @@ const DashDeliveries = () => {
       setStats(statsResponse.data);
 
       alert('Delivery person rejected successfully');
+      closeRejectModal();
     } catch (error) {
       console.error('Failed to reject delivery person:', error);
       alert(error.response?.data?.message || 'Failed to reject delivery person');
@@ -106,6 +123,46 @@ const DashDeliveries = () => {
     } catch (error) {
       console.error("Failed to delete delivery person:", error);
       alert(error.response?.data?.message || "Failed to delete delivery person");
+    }
+  };
+
+  const handleSuspend = async (userId) => {
+    try {
+      await axios.put(`http://localhost:8000/suspend/${userId}`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      setDeliveries(deliveries.map(delivery =>
+        delivery._id === userId ? { ...delivery, status: 'suspended', isActive: false } : delivery
+      ));
+
+      const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
+      setStats(statsResponse.data);
+
+      alert('Delivery person suspended successfully');
+    } catch (error) {
+      console.error('Failed to suspend delivery person:', error);
+      alert(error.response?.data?.message || 'Failed to suspend delivery person');
+    }
+  };
+
+  const handleCancelSuspension = async (userId) => {
+    try {
+      await axios.put(`http://localhost:8000/cancel-suspension/${userId}`, {}, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
+
+      setDeliveries(deliveries.map(delivery =>
+        delivery._id === userId ? { ...delivery, status: 'approved', isActive: true } : delivery
+      ));
+
+      const statsResponse = await axios.get("http://localhost:8000/users/deliveries/stats");
+      setStats(statsResponse.data);
+
+      alert('Delivery person suspension canceled successfully');
+    } catch (error) {
+      console.error('Failed to cancel suspension:', error);
+      alert(error.response?.data?.message || 'Failed to cancel suspension');
     }
   };
 
@@ -259,9 +316,8 @@ const DashDeliveries = () => {
                         <FaInfo />
                       </button>
 
-                      {/* Show different buttons based on status */}
+                      {/* Status-specific actions */}
                       {delivery.status === 'rejected' ? (
-                        // Only show Trash for rejected delivery personnel
                         <button
                           onClick={() => handleDelete(delivery._id)}
                           className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
@@ -270,15 +326,25 @@ const DashDeliveries = () => {
                           <FaTrash />
                         </button>
                       ) : (
-                        // Show all other buttons for non-rejected delivery personnel
                         <>
-                          <button className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50">
-                            <FaBan />
-                          </button>
-                          <button className="text-gray-600 hover:text-gray-800 p-1 rounded hover:bg-gray-50">
-                            <FaChartLine />
-                          </button>
-                          
+                          {delivery.status === 'approved' && (
+                            <button
+                              onClick={() => handleSuspend(delivery._id)}
+                              className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                              title="Suspend"
+                            >
+                              <FaBan />
+                            </button>
+                          )}
+                          {delivery.status === 'suspended' && (
+                            <button
+                              onClick={() => handleCancelSuspension(delivery._id)}
+                              className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                              title="Cancel Suspension"
+                            >
+                              <FaUndo />
+                            </button>
+                          )}
                           {['pending', 'under_review'].includes(delivery.status) && (
                             <>
                               <button
@@ -289,7 +355,7 @@ const DashDeliveries = () => {
                                 <FaCheck />
                               </button>
                               <button
-                                onClick={() => handleReject(delivery._id)}
+                                onClick={() => openRejectModal(delivery._id)}
                                 className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
                                 title="Reject"
                               >
@@ -311,13 +377,11 @@ const DashDeliveries = () => {
       {/* Delivery Personnel Details Modal */}
       {isModalOpen && selectedDelivery && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Transparent overlay - click to close */}
           <div 
             className="absolute inset-0 bg-transparent"
             onClick={closeModal}
           ></div>
           
-          {/* Popup container */}
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200">
             <div className="p-6">
               <div className="flex justify-between items-start">
@@ -412,6 +476,53 @@ const DashDeliveries = () => {
                   className="px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700"
                 >
                   Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rejection Modal */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md border border-gray-200">
+            <div className="p-6">
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-bold text-gray-800">Reject Delivery Person</h3>
+                <button
+                  onClick={closeRejectModal}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <FaTimes />
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Reason for Rejection
+                </label>
+                <textarea
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-gray-700 focus:border-gray-700"
+                  rows={4}
+                  placeholder="Enter the reason for rejecting this delivery person..."
+                />
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={closeRejectModal}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleReject}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Confirm Rejection
                 </button>
               </div>
             </div>

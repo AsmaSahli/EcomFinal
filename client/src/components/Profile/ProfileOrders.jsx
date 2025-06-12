@@ -42,12 +42,8 @@ const ProfileOrders = () => {
     try {
       const response = await axios.delete(`http://localhost:8000/api/orders/${orderId}`);
       toast.success(t('profile.orders.cancelSuccess'));
-      
-      // Update the orders state by removing the cancelled order
       setOrders(orders.filter(order => order._id !== orderId));
       setFilteredOrders(filteredOrders.filter(order => order._id !== orderId));
-      
-      // Close expanded view if the cancelled order was expanded
       if (expandedOrder === orderId) {
         setExpandedOrder(null);
       }
@@ -88,6 +84,13 @@ const ProfileOrders = () => {
 
   const handleTrackOrder = (orderId) => {
     navigate(`/trackOrder/${orderId}`);
+  };
+
+  const handleLeaveReview = (productId, sellerId) => {
+    // Navigate to product details page with state to open reviews tab
+    navigate(`/products/${productId}${sellerId ? `?seller=${sellerId}` : ''}`, {
+      state: { openReviews: true }
+    });
   };
 
   if (loading) {
@@ -202,7 +205,10 @@ const ProfileOrders = () => {
                             <div className="text-right">
                               <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
                               {order.status === 'delivered' && (
-                                <button className="mt-2 text-xs text-purple-600 hover:text-purple-800 flex items-center space-x-1">
+                                <button 
+                                  onClick={() => handleLeaveReview(item.productId._id, item.sellerId?._id)}
+                                  className="mt-2 text-xs text-purple-600 hover:text-purple-800 flex items-center space-x-1"
+                                >
                                   <FaStar className="text-yellow-400" />
                                   <span>{t('profile.orders.leaveReview')}</span>
                                 </button>
@@ -274,7 +280,7 @@ const ProfileOrders = () => {
                             <FaTruck />
                             <span>{t('profile.orders.trackOrder')}</span>
                           </button>
-                          {(order.status === 'processing' || order.status === 'pending') && (
+                          {(order.status === 'pending') && (
                             <button 
                               onClick={() => handleCancelOrder(order._id)}
                               className="px-4 py-2 border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2"

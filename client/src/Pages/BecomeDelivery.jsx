@@ -4,6 +4,8 @@ import axios from "axios";
 import logo from "../assets/ecomLogo.png";
 import deliveryIllustration from "../assets/deliveryIllustration.png";
 import { useTranslation } from "react-i18next";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
 
 const BecomeDelivery = () => {
   const { t } = useTranslation();
@@ -71,10 +73,14 @@ const BecomeDelivery = () => {
         withCredentials: true,
       });
 
-      setAlert({
-        show: true,
-        type: "success",
-        message: t('delivery.successMessage'),
+      toast.success(t('delivery.successMessage'), {
+        position: "top-right",
+        autoClose: 2000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: "light",
       });
 
       setFormData({
@@ -85,7 +91,11 @@ const BecomeDelivery = () => {
         contactNumber: "",
         cv: null,
       });
-      navigate("/application-status");
+
+      setTimeout(() => {
+        navigate("/application-status");
+      }, 2000);
+
     } catch (err) {
       setAlert({
         show: true,
@@ -114,6 +124,8 @@ const BecomeDelivery = () => {
           </button>
         </div>
       )}
+
+      <ToastContainer />
 
       <div className="flex w-full max-w-5xl bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-100">
         <div className="w-1/2 p-8">
@@ -187,24 +199,24 @@ const BecomeDelivery = () => {
             </div>
 
             <div className="form-control">
-                <label className="label">
-                    <span className="label-text text-gray-600">{t('delivery.contactNumber')}</span>
-                </label>
-                <div className="flex items-stretch">
-                    <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-white text-gray-600 text-sm">
-                    +216
-                    </span>
-                    <input
-                    type="tel"
-                    name="contactNumber"
-                    value={formData.contactNumber.replace('+216', '')}
-                    onChange={handleChange}
-                    placeholder={t('delivery.contactNumberPlaceholder')}
-                    className="flex-1 input rounded-r-lg border-l-0 border-gray-300 bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100"
-                    maxLength={8}
-                    required
-                    />
-                </div>
+              <label className="label">
+                <span className="label-text text-gray-600">{t('delivery.contactNumber')}</span>
+              </label>
+              <div className="flex items-stretch">
+                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-white text-gray-600 text-sm">
+                  +216
+                </span>
+                <input
+                  type="tel"
+                  name="contactNumber"
+                  value={formData.contactNumber.replace('+216', '')}
+                  onChange={handleChange}
+                  placeholder={t('delivery.contactNumberPlaceholder')}
+                  className="flex-1 input rounded-r-lg border-l-0 border-gray-300 bg-white focus:border-indigo-400 focus:ring-1 focus:ring-indigo-100"
+                  maxLength={8}
+                  required
+                />
+              </div>
               <label className="label">
                 <span className="label-text-alt text-gray-500">
                   {t('delivery.phoneHint')}
@@ -237,16 +249,16 @@ const BecomeDelivery = () => {
             </button>
           </form>
           <div className="mt-4">
-                <p className="text-sm text-gray-600">
-                {t('delivery.checkStatus')}{" "}
-                <a
-                    href="/application-status"
-                    className="text-blue-500 hover:underline"
-                >
-                    {t('delivery.clickHere')}
-                </a>
-                </p>
-            </div>
+            <p className="text-sm text-gray-600">
+              {t('delivery.checkStatus')}{" "}
+              <a
+                href="/application-status"
+                className="text-blue-500 hover:underline"
+              >
+                {t('delivery.clickHere')}
+              </a>
+            </p>
+          </div>
         </div>
 
         <div className="w-1/2 bg-gradient-to-br from-indigo-600 to-purple-700 p-10 flex flex-col items-center justify-center relative overflow-hidden">

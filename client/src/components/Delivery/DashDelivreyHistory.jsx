@@ -3,11 +3,11 @@ import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { 
   FiTruck, FiClock, FiCheck, FiSearch, 
-  FiRefreshCw, FiChevronLeft, FiChevronRight, FiPackage,
+  FiRefreshCw, FiChevronLeft, FiChevronRight,
   FiDollarSign, FiUser, FiMapPin, FiCalendar,
-  FiMail, FiHome, FiNavigation
+  FiMail, FiHome, FiNavigation,
 } from 'react-icons/fi';
-import { FaBoxOpen, FaMapMarkerAlt, FaTimes, FaShippingFast } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaTimes, FaShippingFast , FaBoxOpen} from 'react-icons/fa';
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
@@ -47,13 +47,13 @@ const deliveryMethodDetails = {
 };
 
 const getGoogleMapsUrl = (address) => {
-  const encodedAddress = encodeURIComponent(address);
+  const encodedAddress = encodeURIComponent(address || '');
   return `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
 };
 
 const getGoogleMapsDirectionsUrl = (pickup, dropoff) => {
-  const encodedPickup = encodeURIComponent(pickup);
-  const encodedDropoff = encodeURIComponent(dropoff);
+  const encodedPickup = encodeURIComponent(pickup || '');
+  const encodedDropoff = encodeURIComponent(dropoff || '');
   return `https://www.google.com/maps/dir/?api=1&origin=${encodedPickup}&destination=${encodedDropoff}&travelmode=driving`;
 };
 
@@ -64,15 +64,21 @@ const DashDeliveryHistory = () => {
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
-    total: 0
+    total: 0,
+    totalPages: 1
   });
   const [selectedDelivery, setSelectedDelivery] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const currentUser = useSelector((state) => state.user?.currentUser);
 
   useEffect(() => {
-    fetchDeliveries();
-  }, [pagination.page]);
+    if (currentUser?.id) {
+      fetchDeliveries();
+    } else {
+      setError('Please log in to view your delivery history.');
+      setLoading(false);
+    }
+  }, [pagination.page, currentUser?.id]);
 
   const fetchDeliveries = async () => {
     try {
@@ -85,11 +91,11 @@ const DashDeliveryHistory = () => {
           limit: pagination.limit
         }
       });
-      setDeliveries(response.data.deliveries);
+      setDeliveries(response.data.deliveries || []);
       setPagination(prev => ({
         ...prev,
-        total: response.data.pagination.total,
-        totalPages: response.data.pagination.totalPages
+        total: response.data.pagination?.total || 0,
+        totalPages: response.data.pagination?.totalPages || 1
       }));
       setError(null);
     } catch (err) {
@@ -101,7 +107,7 @@ const DashDeliveryHistory = () => {
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage > 0 && newPage <= Math.ceil(pagination.total / pagination.limit)) {
+    if (newPage > 0 && newPage <= pagination.totalPages) {
       setPagination(prev => ({ ...prev, page: newPage }));
     }
   };
@@ -138,13 +144,13 @@ const DashDeliveryHistory = () => {
       {error && (
         <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-md shadow-sm mb-6">
           <div className="flex items-center">
-            <FiX className="w-5 h-5 mr-3" />
+            <FaTimes className="w-5 h-5 mr-3" />
             <span>{error}</span>
             <button 
               onClick={() => setError(null)} 
               className="ml-auto text-red-700 hover:text-red-900"
             >
-              <FiX className="h-5 w-5" />
+              <FaTimes className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -210,7 +216,7 @@ const DashDeliveryHistory = () => {
                       <div className="flex items-center">
                         <FaMapMarkerAlt className="text-red-500 mr-2" />
                         <div className="text-sm text-gray-900 max-w-xs truncate">
-                          {delivery.pickupAddress}
+                          {delivery.pickupAddress || 'N/A'}
                         </div>
                       </div>
                     </td>
@@ -276,8 +282,8 @@ const DashDeliveryHistory = () => {
               </button>
               <button
                 onClick={() => handlePageChange(pagination.page + 1)}
-                disabled={pagination.page * pagination.limit >= pagination.total}
-                className={`px-3 py-1 rounded-md ${pagination.page * pagination.limit >= pagination.total ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                disabled={pagination.page >= pagination.totalPages}
+                className={`px-3 py-1 rounded-md ${pagination.page >= pagination.totalPages ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
               >
                 <FiChevronRight className="h-5 w-5" />
               </button>
@@ -414,11 +420,12 @@ const DashDeliveryHistory = () => {
                         </span>
                         <div className="flex flex-col">
                           <span className="text-gray-900">
-                            {selectedDelivery.pickupAddress}
+                            {selectedDelivery.pickupAddress || 'N/A'}
                           </span>
                           <button
                             onClick={() => window.open(getGoogleMapsUrl(selectedDelivery.pickupAddress), '_blank')}
                             className="text-blue-600 hover:text-blue-800 flex items-center text-sm mt-1"
+                            disabled={!selectedDelivery.pickupAddress}
                           >
                             <FiMapPin className="h-3 w-3 mr-1" />
                             View on Map
@@ -465,11 +472,12 @@ const DashDeliveryHistory = () => {
                         </span>
                         <div className="flex flex-col">
                           <span className="text-gray-900">
-                            {selectedDelivery.dropoffAddress}
+                            {selectedDelivery.dropoffAddress || 'N/A'}
                           </span>
                           <button
                             onClick={() => window.open(getGoogleMapsUrl(selectedDelivery.dropoffAddress), '_blank')}
                             className="text-blue-600 hover:text-blue-800 flex items-center text-sm mt-1"
+                            disabled={!selectedDelivery.dropoffAddress}
                           >
                             <FiMapPin className="h-3 w-3 mr-1" />
                             View on Map
@@ -491,6 +499,7 @@ const DashDeliveryHistory = () => {
                       '_blank'
                     )}
                     className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    disabled={!selectedDelivery.pickupAddress || !selectedDelivery.dropoffAddress}
                   >
                     <FiNavigation className="mr-2" />
                     Get Directions
