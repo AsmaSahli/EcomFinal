@@ -108,6 +108,7 @@
     }
   },
     "categories": {
+      "cancelSuccess" : "تم إلغاء الطلب",
       "title": "جميع الفئات",
       "loading": "جاري التحميل...",
       "fetchError": "فشل تحميل الفئات",

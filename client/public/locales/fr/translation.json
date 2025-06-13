@@ -9,7 +9,7 @@
         "product": "Produit",
         "qty": "Qté",
         "moreItems": "articles supplémentaires",
-        "subtotal": "Sous-total",
+        "subtotal": "Sous-total", 
         "viewCart": "Voir le panier",
         "emptyCart": "Votre panier est vide",
         "startShopping": "Commencer à magasiner",
@@ -98,11 +98,12 @@
     "existingAccountPrompt": "Vous avez déjà un compte ?",
     "signInLink": "Se connecter",
     "success": "Inscription réussie !",
+
     "errors": {
       "passwordMismatch": "Les mots de passe ne correspondent pas !",
       "invalidPhone": "Veuillez entrer un numéro tunisien valide de 8 chiffres",
       "generic": "Quelque chose s'est mal passé !"
-    }
+    } 
   },
 
 "product": {
@@ -656,6 +657,7 @@
     "accountSettings": "Paramètres du Compte",
     "logout": "Déconnexion",
     "orders": {
+      "cancelSuccess" : "Commande annulée",
       "fetchError": "Échec de la récupération des commandes",
       "noOrders": "Aucune Commande Trouvée",
       "noOrdersDesc": "Vous n'avez pas encore passé de commande",

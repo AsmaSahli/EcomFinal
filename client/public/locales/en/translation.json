@@ -768,6 +768,7 @@
     "phone":"Phone Number",
     "logout": "Logout",
     "orders": {
+      "cancelSuccess":"Order Cancelled",
       "fetchError": "Failed to fetch orders",
       "noOrders": "No Orders Found",
       "noOrdersDesc": "You haven't placed any orders yet",

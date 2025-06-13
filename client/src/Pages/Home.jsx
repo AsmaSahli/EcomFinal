@@ -309,6 +309,10 @@ export const Home = () => {
                 <li>
                   <a
                     href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePromotionClick("Computers & IT", "Laptops");
+                    }}
                     className="text-gray-400 hover:text-white transition-colors">
                     {t("home.footer.shopLinks.laptops")}
                   </a>
@@ -316,6 +320,13 @@ export const Home = () => {
                 <li>
                   <a
                     href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePromotionClick(
+                        "Phones & Smartwatches",
+                        "Smartphones"
+                      );
+                    }}
                     className="text-gray-400 hover:text-white transition-colors">
                     {t("home.footer.shopLinks.smartphones")}
                   </a>
@@ -323,6 +334,10 @@ export const Home = () => {
                 <li>
                   <a
                     href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePromotionClick("Computers & IT");
+                    }}
                     className="text-gray-400 hover:text-white transition-colors">
                     {t("home.footer.shopLinks.tablets")}
                   </a>
@@ -330,6 +345,13 @@ export const Home = () => {
                 <li>
                   <a
                     href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePromotionClick(
+                        "Phones & Smartwatches",
+                        "Accessories"
+                      );
+                    }}
                     className="text-gray-400 hover:text-white transition-colors">
                     {t("home.footer.shopLinks.accessories")}
                   </a>
@@ -337,6 +359,10 @@ export const Home = () => {
                 <li>
                   <a
                     href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePromotionClick("Gaming");
+                    }}
                     className="text-gray-400 hover:text-white transition-colors">
                     {t("home.footer.shopLinks.gaming")}
                   </a>
